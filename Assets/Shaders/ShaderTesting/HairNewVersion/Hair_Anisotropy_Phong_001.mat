@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Hair_Anisotropy_Phong_001
+  m_Shader: {fileID: 4800000, guid: b1cf9d4444326e744ab8588965eb7a86, type: 3}
+  m_ShaderKeywords: _EMISSION _NORMALMAP
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AOMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _AnisoDir:
+        m_Texture: {fileID: 2800000, guid: c3a453771406050448927694e8a6842b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: b9bf4f159a8d2c4439fd1188ec60c470, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: b9bf4f159a8d2c4439fd1188ec60c470, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noise:
+        m_Texture: {fileID: 2800000, guid: 0efb01a9ecf61164ebf55d460df5504b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseMap:
+        m_Texture: {fileID: 2800000, guid: e8988012a060ced47ae4889f6f7a2d27, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 2800000, guid: 20fda1c7f74eb154e95f1fcc46b5799d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalTex:
+        m_Texture: {fileID: 2800000, guid: 812779dc47d722749842099c1ade78c6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RampMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _AOContrast: 1.5
+    - _AnisotropyPower: 2
+    - _AnisotropyPower2: 1.86
+    - _Cull: 0
+    - _Cutoff: 0.5
+    - _Darkness: 0.7
+    - _Exponent: 100
+    - _Exponent2: 80
+    - _FrenelLightness: 0.3
+    - _FrenelPower: 3
+    - _Glossness: 8
+    - _NoisePower: 0.64
+    - _NormalScale: 0.2
+    - _PrimaryShift: 0.12
+    - _ReceiveShadows: 0
+    - _SecondaryShift: -0.74
+    - _SoftDepth: 0.04
+    - _SpecPower: 1
+    - _Specular: 4.06
+    - _SpecularMultiplier: 224.89
+    - _SpecularMultiplier2: 363.79
+    m_Colors:
+    - _AnisotropyColor: {r: 0.0141509175, g: 0.6103238, b: 1, a: 1}
+    - _BaseColor: {r: 0.1462264, g: 0.6049204, b: 1, a: 1}
+    - _LightDebug: {r: 1, g: 1, b: 1, a: 1}
+    - _MainColor: {r: 0.745283, g: 0.22147557, b: 0.22147557, a: 1}
+    - _Remap: {r: 0.77, g: -1, b: -1, a: 1}
+    - _RimColor: {r: 0.9198113, g: 1, b: 0.99496853, a: 1}
+    - _SpecColor: {r: 0, g: 0.5919285, b: 1, a: 1}
+    - _SpecularColor: {r: 0.32075468, g: 0.15433756, b: 0, a: 1}
+    - _SpecularColor2: {r: 1, g: 0.74779147, b: 0.12735847, a: 1}
+    - _depthRemap: {r: 1, g: -1, b: -1, a: 1}
+  m_BuildTextureStacks: []
