@@ -3,6 +3,10 @@ Shader "LwyShaders/NPRSkin"
     Properties
     {
         _BaseMap ("Texture", 2D) = "white" { }
+
+        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP(" Enable normal map",float) = 0
+        _NormalMap("Normal map", 2D) = "White"{}
+        _NormalScale("Normal scale", float) = 1
         
         [Space(20)][Header(Ramp lights)]
         _RampMap ("Ramp Map", 2D) = "White" { }
@@ -100,6 +104,7 @@ Shader "LwyShaders/NPRSkin"
             #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile  _SHADOWS_SOFT
             #pragma shader_feature _ENABLEENVIROMENTLIGHT
+            #pragma shader_feature _ENABLENORMALMAP
 
             CBUFFER_START(UnityPerMaterial)
 
@@ -107,7 +112,7 @@ Shader "LwyShaders/NPRSkin"
                 float4 _MainTex_ST;
                 half _SpecPower;
                 float4 _SpecColor;
-                float _SpecRange;
+                float _SpecRange, _NormalScale;
                 float _SpecStrength;
                 float _Darkness;
                 float _OutLineWidth;
@@ -124,6 +129,8 @@ Shader "LwyShaders/NPRSkin"
                 float _HueBlue;
                 float _HueRed;
                 float _HueGreen;
+                // float4 _NormalMap;
+                float4 _NormalMap_ST;
                 // float4 _AOMap;
 
             CBUFFER_END
@@ -132,6 +139,7 @@ Shader "LwyShaders/NPRSkin"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_RampMap); SAMPLER(sampler_RampMap);
             TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
+            TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
             TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
             
             struct a2v
@@ -139,6 +147,7 @@ Shader "LwyShaders/NPRSkin"
 
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                float4 tangentOS : TANGENT;
                 float2 texcoord : TEXCOORD0;
                 // float2 secondTexcoord : TEXCOORD1;
             };
@@ -155,6 +164,8 @@ Shader "LwyShaders/NPRSkin"
                 float4 positionNDC : TEXCOORD6;
                 float4 scrPos : TEXCOORD7;
                 float4 shadowCoord : TEXCOORD8;
+                float3 tangentWS : TEXCOORD9;
+                float3 bitangentWS : TEXCOORD10;
             };
 
             v2f vert(a2v input)
@@ -163,9 +174,14 @@ Shader "LwyShaders/NPRSkin"
 
                 o.positionCS = TransformObjectToHClip(input.positionOS);
                 o.positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                o.normalWS = TransformObjectToWorldNormal(input.normalOS.xyz);
+                o.normalWS = TransformObjectToWorldNormal(input.normalOS.xyz, true);
+                o.tangentWS = TransformObjectToWorldDir(input.tangentOS);
                 // o.positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
                 // normalVS = TransformWorldToViewDir(normalWS, true);
+
+                o.bitangentWS = normalize(cross(o.normalWS,o.tangentWS) * input.tangentOS.w);
+
+
 
 
                 //NDC
@@ -198,6 +214,17 @@ Shader "LwyShaders/NPRSkin"
                 Light MainLight = GetMainLight(input.shadowCoord);
                 float3 LightDir = normalize(float3(MainLight.direction));
                 float4 LightColor = float4(MainLight.color, 1);
+
+
+                //Normal map
+                #if _ENABLENORMALMAP
+                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
+                float3 bump  = UnpackNormalScale(normalMap, _NormalScale);
+                // input.normalWS = TransformTangentToWorld(bump, float3x3(input.bitangentWS,input.tangentWS, input.normalWS  ));
+                float3x3 TBN = {input.bitangentWS,input.tangentWS, input.normalWS };
+                bump.z = pow((1- pow(bump.x,2) - pow(bump.y,2)), 0.5);
+                input.normalWS = mul(bump, TBN);
+                #endif
 
                 
 
