@@ -1,4 +1,4 @@
-Shader "LwyShaders/NDFBlinnPhong"
+Shader "LwyShaders/GGX_pbr"
 {
     Properties
     {
@@ -41,12 +41,15 @@ Shader "LwyShaders/NDFBlinnPhong"
         _HueRed ("Hue red", Range(-1, 1)) = 0
         _HueBlue ("Hue blue", Range(-1, 1)) = 0
         _HueGreen ("Hue green", Range(-1, 1)) = 0
+
+        [Space(20)]
+        _Cubemap ("cube map", Cube) = "_Skybox" {}
     }
     SubShader
     {
         pass
         {
-            Name "NPR skin"
+            Name "PBR skin"
             Tags { "LightMode" = "UniversalForward" }
             ZWrite On
 
@@ -90,6 +93,7 @@ Shader "LwyShaders/NDFBlinnPhong"
                 float _HueRed;
                 float _HueGreen; 
                 float _TempValue;
+                // float4 unity_SpecCube0_HDR;
                 // float4 _AOMap;
 
             CBUFFER_END
@@ -99,6 +103,11 @@ Shader "LwyShaders/NDFBlinnPhong"
             TEXTURE2D(_RampMap); SAMPLER(sampler_RampMap);
             TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
             TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
+            TEXTURECUBE(_Cubemap);SAMPLER(sampler_Cubemap);
+
+            
+// TEXTURECUBE(unity_SpecCube0);
+// SAMPLER(samplerunity_SpecCube0);
             
             struct a2v
             {
@@ -152,7 +161,21 @@ Shader "LwyShaders/NDFBlinnPhong"
             }
 
 
-            
+            float GeometrySchlickGGX(float NdotV, float k){
+                    float SchGGXNom = NdotV;
+                    float SchGGXDenom = NdotV * (1-k) + k;
+                    return SchGGXNom / SchGGXDenom;
+                }
+
+            float GeometrySmith(float3 N, float3 V, float3 L, float k)
+                {
+                    float NdotV = max(dot(N, V), 0.0);
+                    float NdotL = max(dot(N, L), 0.0);
+                    float ggx1 = GeometrySchlickGGX(NdotV, k); // 视线方向的几何遮挡
+                    float ggx2 = GeometrySchlickGGX(NdotL, k); // 光线方向的几何阴影
+                    
+                    return ggx1 * ggx2;
+                }
 
             float4 frag(v2f input) : SV_TARGET
             {
@@ -229,6 +252,8 @@ Shader "LwyShaders/NDFBlinnPhong"
                 
                 // return fresnelDepthRim;
 
+                //ggx
+
                 _TempValue = max(0.0001,_TempValue);
 
                 float3 H =normalize( viewDir + LightDir );
@@ -243,10 +268,43 @@ Shader "LwyShaders/NDFBlinnPhong"
                 denom = PI * denom *denom;
                 float ddx = nom/max(denom, 0.001);
 
+                //G
+                
+                float3 n = normalize(input.normalWS);
+
+                float G = GeometrySmith(n , viewDir, LightDir, _TempValue);
+
+                float NdotV = dot(n,viewDir);
+                float NdotL = dot(n,LightDir);
 
 
+                float brdfSpec = ddx*G/(4*NoH * NdotV);
 
-                return ( (ddx) + (saturate(Lambert) * (1 - _TempValue))  ) * difusse * LightColor ;
+                float ks = ddx;
+                float kd = (1-ks) * (1- _TempValue);
+
+
+                // float3 derectDiffColor = kd * difusse * LightColor * Lambert;
+
+
+            float3 reflectDirWS = reflect(-viewDir,input.normalWS);
+            // float4 Cubemap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, 10);
+            float4 Cubemap = SAMPLE_TEXTURECUBE_LOD(_Cubemap, sampler_Cubemap, reflectDirWS, 0.5 * 10);
+
+                float dirDiffColor = kd  *  saturate(NdotL)  ;
+
+                float4 final = float4(dirDiffColor * _GlossyEnvironmentColor + ks * LightColor * difusse ) ;
+
+            // float4 ifFlag = step(Cubemap,float4(0.5,0.5,0.5,0.5));
+            // float4 B = float4(1,0,0,0.5);
+            // float4 result = ifFlag * Cubemap * B * 2 + (1-ifFlag) * (1-(1-Cubemap)*(1-B)*2);
+            // float4 result  = Cubemap * (1-B.a) + B*(B.a);
+            // float4 Cubemap = IndirSpeCube();
+
+                // return  difusse * (ddx * LightColor + dirDiffColor* _GlossyEnvironmentColor * LightColor) + Cubemap *0.1;
+                // return   dirDiffColor  + Cubemap  * _GlossyEnvironmentColor + ddx *difusse * LightColor;
+                // return dirDiffColor + _GlossyEnvironmentColor * Cubemap  + ddx *difusse * LightColor;
+                return (ddx * LightColor * difusse +dirDiffColor * difusse + Cubemap * _GlossyEnvironmentColor) * float4(1,0,0,0) ;
             }
 
             ENDHLSL
