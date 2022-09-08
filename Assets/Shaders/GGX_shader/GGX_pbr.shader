@@ -266,7 +266,7 @@ Shader "LwyShaders/GGX_pbr"
                 float nom = temp2;
                 float denom = (NoH2 * (temp2 - 1) + 1);
                 denom = PI * denom *denom;
-                float ddx = nom/max(denom, 0.001);
+                float ggx = nom/max(denom, 0.001);
 
                 //G
                 
@@ -278,9 +278,9 @@ Shader "LwyShaders/GGX_pbr"
                 float NdotL = dot(n,LightDir);
 
 
-                float brdfSpec = ddx*G/(4*NoH * NdotV);
+                float brdfSpec = ggx*G/(4*NoH * NdotV);
 
-                float ks = ddx;
+                float ks = ggx;
                 float kd = (1-ks) * (1- _TempValue);
 
 
@@ -301,10 +301,10 @@ Shader "LwyShaders/GGX_pbr"
             // float4 result  = Cubemap * (1-B.a) + B*(B.a);
             // float4 Cubemap = IndirSpeCube();
 
-                // return  difusse * (ddx * LightColor + dirDiffColor* _GlossyEnvironmentColor * LightColor) + Cubemap *0.1;
-                // return   dirDiffColor  + Cubemap  * _GlossyEnvironmentColor + ddx *difusse * LightColor;
-                // return dirDiffColor + _GlossyEnvironmentColor * Cubemap  + ddx *difusse * LightColor;
-                return (ddx * LightColor * difusse +dirDiffColor * difusse + Cubemap * _GlossyEnvironmentColor) * float4(1,0,0,0) ;
+                // return  difusse * (ggx * LightColor + dirDiffColor* _GlossyEnvironmentColor * LightColor) + Cubemap *0.1;
+                // return   dirDiffColor  + Cubemap  * _GlossyEnvironmentColor + ggx *difusse * LightColor;
+                // return dirDiffColor + _GlossyEnvironmentColor * Cubemap  + ggx *difusse * LightColor;
+                return (ggx * LightColor * difusse + dirDiffColor * difusse + Cubemap * _GlossyEnvironmentColor) ;
             }
 
             ENDHLSL
