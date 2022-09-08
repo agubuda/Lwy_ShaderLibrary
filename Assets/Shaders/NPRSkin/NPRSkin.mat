@@ -33,6 +33,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: a23f9edf16376064496e496f5871ec06, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _RampMap:
         m_Texture: {fileID: 2800000, guid: 63c985a727b4eb248b3c6f1ded368e4c, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -46,11 +50,13 @@ Material:
     - _AOPower: 0.33
     - _Darkness: 0.5
     - _ENABLEENVIROMENTLIGHT: 1
+    - _ENABLENORMALMAP: 0
     - _FresnelPower: 3
     - _HueBlue: 0
     - _HueGreen: 0
     - _HueRed: 0
     - _LightInfluence: 0.6
+    - _NormalScale: 1
     - _OffsetMul: 0.004
     - _OutLineWidth: -0.04
     - _RampColum: 0.17
@@ -64,7 +70,7 @@ Material:
     - _enableEnviromentLight: 1
     m_Colors:
     - _OutLineColor: {r: 0.31132078, g: 0.26945698, b: 0.2599235, a: 1}
-    - _RimColor: {r: 0.47281063, g: 0.54911906, b: 0.8018868, a: 1}
-    - _SpecColor: {r: 0.39607844, g: 0.23921569, b: 0.3636432, a: 1}
+    - _RimColor: {r: 0.4745098, g: 0.68173087, b: 0.8, a: 1}
+    - _SpecColor: {r: 0.39607844, g: 0.23921569, b: 0.2622059, a: 1}
     - _SpecRange: {r: 1.16, g: 0.97, b: 0, a: 0}
   m_BuildTextureStacks: []
