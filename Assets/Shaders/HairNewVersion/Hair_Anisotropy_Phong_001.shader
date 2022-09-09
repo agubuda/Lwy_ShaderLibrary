@@ -32,22 +32,27 @@ Shader "LwyShaders/Hair_Anisotropy_Phong"
     }
     SubShader
     {
-        Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
+        Tags { "Queue" = "Geometry" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
         Pass
         {
             Name "Hair_Anis"
             Tags { "LightMode" = "UniversalForward" }
-            Cull off
+            // Cull off
+            ZWrite on
 
             HLSLPROGRAM
 
             #pragma vertex vert
             #pragma fragment frag
+            
             #pragma multi_compile_fog
+
             #pragma multi_compile  _MAIN_LIGHT_SHADOWS
             #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile  _SHADOWS_SOFT
+            #pragma shader_feature _ENABLEENVIROMENTLIGHT
+            #pragma shader_feature _ENABLENORMALMAP
 
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -284,7 +289,7 @@ Shader "LwyShaders/Hair_Anisotropy_Phong"
                 //Reciving shadows
                 finalColorBlin *= (mlight.shadowAttenuation + 0.5);
 
-                return finalColorBlin * saturate(clamp(AOMap, 0, 1) * _AOContrast);
+                return half4((finalColorBlin * saturate(clamp(AOMap, 0, 1) * _AOContrast)).rgb,1);
                 // return AOMap;
 
             };
