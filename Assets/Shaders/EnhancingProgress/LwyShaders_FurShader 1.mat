@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: LwyShaders_FurShader 1
+  m_Shader: {fileID: 4800000, guid: ea2c469a55b71964c88aa26188f90ba7, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _FurMask:
+        m_Texture: {fileID: 2800000, guid: 100f277c8b9877645baeda17f8b106ae, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FurTex:
+        m_Texture: {fileID: 2800000, guid: 4f74cbbb5bc72bc4288787458c20e589, type: 3}
+        m_Scale: {x: 6.5, y: 6}
+        m_Offset: {x: 0, y: 0}
+    - _FurTex2:
+        m_Texture: {fileID: 2800000, guid: 62c324a6ab8629541bb87bd19260a8ef, type: 3}
+        m_Scale: {x: 0.5, y: 2}
+        m_Offset: {x: 0, y: 0}
+    - _HgihtMap:
+        m_Texture: {fileID: 2800000, guid: 2c31dec510f4d124682d904b2b0802f7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 6590d35924e7c3842b467101d7d5effa, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseMap:
+        m_Texture: {fileID: 2800000, guid: 2c31dec510f4d124682d904b2b0802f7, type: 3}
+        m_Scale: {x: 4, y: 4}
+        m_Offset: {x: 0, y: 0}
+    - _RampMap:
+        m_Texture: {fileID: 2800000, guid: ac9e3b8db0b2e384cb4ee5edcda3c014, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - STEP: 0
+    - _Alpha: 1
+    - _Clip: 1
+    - _Cutoff: 0
+    - _CutoffEnd: 1
+    - _DstBlend: 10
+    - _EdgeFade: 0.5
+    - _FurAOInstensity: 0.31
+    - _FurDensity: 1
+    - _FurLength: 0.03
+    - _Gravity: 0
+    - _GravityStrength: 0.35
+    - _Height: 1
+    - _HeightAmount: 1
+    - _MixPower: 0.77
+    - _RimRange: 1.57
+    - _SrcBlend: 5
+    - _Thinkness: 0
+    - _Wind: 0
+    - _WindSpeed: 0
+    - _ZWrite: 1
+    - _fresnelPower: 1
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _FixedLightDir: {r: 1, g: 1, b: 1, a: 1}
+    - _Gravity: {r: 0.8, g: 0, b: 0, a: 0}
+    - _HeightTileSpeed: {r: 1, g: 1, b: 0.05, a: 0}
+    - _RimColor: {r: 0.30196083, g: 0.6375314, b: 0.90588236, a: 1}
