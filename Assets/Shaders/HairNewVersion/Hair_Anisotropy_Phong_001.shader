@@ -291,75 +291,75 @@ Shader "LwyShaders/Hair_Anisotropy_Phong"
             ENDHLSL
         }
 
-        Pass
-        {
-            Name "DepthOnly"
-            Tags { "LightMode" = "DepthOnly" }
+        // Pass
+        // {
+        //     Name "DepthOnly"
+        //     Tags { "LightMode" = "DepthOnly" }
 
-            ZWrite On
-            ColorMask 0
+        //     ZWrite On
+        //     ColorMask 0
 
-            HLSLPROGRAM
-            #pragma exclude_renderers gles gles3 glcore
-            #pragma target 4.5
+        //     HLSLPROGRAM
+        //     #pragma exclude_renderers gles gles3 glcore
+        //     #pragma target 4.5
 
-            #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
+        //     #pragma vertex DepthOnlyVertex
+        //     #pragma fragment DepthOnlyFragment
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+        //     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
 
 
-            CBUFFER_START(UnityPerMaterial)
-                half _Surface;
+        //     CBUFFER_START(UnityPerMaterial)
+        //         half _Surface;
 
-                half4 _BaseColor;
-                half4 _AnisotropyColor;
-                half _Darkness;
-                half _Glossness;
-                half _Cutoff;
-                half4 _SpecColor;
-                half _SpecPower;
+        //         half4 _BaseColor;
+        //         half4 _AnisotropyColor;
+        //         half _Darkness;
+        //         half _Glossness;
+        //         half _Cutoff;
+        //         half4 _SpecColor;
+        //         half _SpecPower;
                 
-                half4 _BaseMap_ST;
-                half4 _NormalMap_ST;
-                half4 _NoiseMap_ST;
-                half4 _AOMap_ST;
+        //         half4 _BaseMap_ST;
+        //         half4 _NormalMap_ST;
+        //         half4 _NoiseMap_ST;
+        //         half4 _AOMap_ST;
                 
-                half _NormalScale;
-                half _NoisePower;
-                half _AnisotropyPower;
-                half _FrenelPower;
-                half4 _RimColor;
-                half _Exponent;
-                half _FrenelLightness;
-                half _AOContrast;
+        //         half _NormalScale;
+        //         half _NoisePower;
+        //         half _AnisotropyPower;
+        //         half _FrenelPower;
+        //         half4 _RimColor;
+        //         half _Exponent;
+        //         half _FrenelLightness;
+        //         half _AOContrast;
 
-                float4 _DetailAlbedoMap_ST;
-                half4 _EmissionColor;
-                half _Smoothness;
-                half _Metallic;
-                half _BumpScale;
-                half _Parallax;
-                half _OcclusionStrength;
-                half _ClearCoatMask;
-                half _ClearCoatSmoothness;
-                half _DetailAlbedoMapScale;
-                half _DetailNormalMapScale;
-            CBUFFER_END
+        //         float4 _DetailAlbedoMap_ST;
+        //         half4 _EmissionColor;
+        //         half _Smoothness;
+        //         half _Metallic;
+        //         half _BumpScale;
+        //         half _Parallax;
+        //         half _OcclusionStrength;
+        //         half _ClearCoatMask;
+        //         half _ClearCoatSmoothness;
+        //         half _DetailAlbedoMapScale;
+        //         half _DetailNormalMapScale;
+        //     CBUFFER_END
 
-            // -------------------------------------
-            // Material Keywords
-            // #pragma shader_feature_local_fragment _ALPHATEST_ON
+        //     // -------------------------------------
+        //     // Material Keywords
+        //     // #pragma shader_feature_local_fragment _ALPHATEST_ON
 
-            //--------------------------------------
-            // GPU Instancing
-            // #pragma multi_compile_instancing
-            // #pragma multi_compile _ DOTS_INSTANCING_ON
+        //     //--------------------------------------
+        //     // GPU Instancing
+        //     // #pragma multi_compile_instancing
+        //     // #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            // #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
-            ENDHLSL
-        }
+        //     // #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
+        //     #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+        //     ENDHLSL
+        // }
 
         Pass
         {
@@ -436,81 +436,81 @@ Shader "LwyShaders/Hair_Anisotropy_Phong"
             ENDHLSL
         }
 
-        // Pass{
-        //     Tags { "Queue"="Geometry" "IgnoreProjector"="True" "LightMode"="SRPDefaultUnlit" }
-        //     Cull front
+        Pass{
+            Tags { "Queue"="Geometry" "IgnoreProjector"="True" "LightMode"="SRPDefaultUnlit" }
+            Cull front
 
             
-        //     HLSLPROGRAM
+            HLSLPROGRAM
 
             
 
-        //     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-        //     // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-        //     #pragma vertex vert
-        //     #pragma fragment frag
+            #pragma vertex vert
+            #pragma fragment frag
 
-        //     CBUFFER_START(UnityPerMaterial)
+            CBUFFER_START(UnityPerMaterial)
 
                 
-        //         float _OutLineWidth;
-        //         float4 _OutLineColor;
-        //         half _Cutoff;
+                float _OutLineWidth;
+                float4 _OutLineColor;
+                half _Cutoff;
 
-        //     CBUFFER_END
+            CBUFFER_END
 
             
-        //     TEXTURE2D(_BaseMap);
-        //     SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_BaseMap);
+            SAMPLER(sampler_BaseMap);
 
 
-        //     struct a2v{
-        //         float4 positionOS : POSITION;
-        //         float3 normal : NORMAL;
-        //         float4 tangent : TANGENT;
-        //         float2 uv : TEXCOORD0;
-        //         float3 vertColor : COLOR;
+            struct a2v{
+                float4 positionOS : POSITION;
+                float3 normal : NORMAL;
+                float4 tangent : TANGENT;
+                float2 uv : TEXCOORD0;
+                float3 vertColor : COLOR;
 
-        //     };
+            };
 
-        //     struct v2f{
-        //         float4 positionCS : SV_POSITION;
-        //         float3 positionWS : TEXCOORD0;
-        //         float2 worldNormal : TEXCOORD1;
-        //         float2 uv : TEXCOORD2;
-        //         // float3 vertColor : COLOR;
-        //     };
+            struct v2f{
+                float4 positionCS : SV_POSITION;
+                float3 positionWS : TEXCOORD0;
+                float2 worldNormal : TEXCOORD1;
+                float2 uv : TEXCOORD2;
+                // float3 vertColor : COLOR;
+            };
 
-        //     v2f vert(a2v input){
-        //         v2f o;
+            v2f vert(a2v input){
+                v2f o;
 
-        //         // input.positionOS.xyz += input.tangent * 0.01 *_OutLineWidth;
-        //         // o.positionCS = TransformObjectToHClip(input.positionOS.xyz + input.normal * _OutLineWidth *0.1);
-        //         o.positionCS = TransformObjectToHClip(input.positionOS);
-        //         o.uv = input.uv;
+                // input.positionOS.xyz += input.tangent * 0.01 *_OutLineWidth;
+                // o.positionCS = TransformObjectToHClip(input.positionOS.xyz + input.normal * _OutLineWidth *0.1);
+                o.positionCS = TransformObjectToHClip(input.positionOS);
+                o.uv = input.uv;
 
-        //         o.positionCS.xy += input.normal.xy * _OutLineWidth * 0.1 * o.positionCS.w * input.vertColor.r;
-        //         // o.vertColor = input.vertColor;
+                o.positionCS.xy += input.normal.xy * _OutLineWidth * 0.1 * o.positionCS.w * input.vertColor.r;
+                // o.vertColor = input.vertColor;
 
                 
-        //         // o.uv = input.uv;
+                // o.uv = input.uv;
                 
 
-        //         return o;
-        //     }
+                return o;
+            }
             
-        //     half4 frag(v2f input):SV_TARGET{
-        //         half4 diffuseColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-        //         // _OutLineColor.a *= diffuseColor.a;
-        //         clip(diffuseColor.a - _Cutoff);
+            half4 frag(v2f input):SV_TARGET{
+                half4 diffuseColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
+                // _OutLineColor.a *= diffuseColor.a;
+                clip(diffuseColor.a - _Cutoff);
 
-        //         return _OutLineColor;
-        //     }
+                return _OutLineColor;
+            }
 
-        //     ENDHLSL
+            ENDHLSL
 
-        // }
+        }
     }
 }
 

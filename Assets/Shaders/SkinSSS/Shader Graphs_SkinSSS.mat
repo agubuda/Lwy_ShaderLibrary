@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Shader Graphs_SkinSSS
-  m_Shader: {fileID: -6465566751694194690, guid: 1ec5385266549714db1c9b07eb85196d, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 8396ffdd39ddef14d94f750bed2a1707, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -124,6 +124,7 @@ Material:
     - Vector1_e02762234d224b599403b285c9f89744: 0
     - Vector1_f33905cf70da42dfa9a734f2504c0c81: 1
     - _AOPower: 1.5
+    - _Contrast: 1
     - _InfluenceSSS: 0.8
     - _NormalStrength: 1
     - _QueueControl: 0
