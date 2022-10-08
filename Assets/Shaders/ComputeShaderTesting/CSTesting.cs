@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
+// using UnityEditor;
 
 public class CSTesting : MonoBehaviour
 {
@@ -16,7 +16,7 @@ public class CSTesting : MonoBehaviour
 
         shader.SetTexture(kernelHandle, "Result", tex);
         shader.Dispatch(kernelHandle, 256/8, 256/8, 1);
-        AssetDatabase.CreateAsset(tex,"Assets/test.renderTexture");
+        // AssetDatabase.CreateAsset(tex,"Assets/test.renderTexture");
         
     }
 
