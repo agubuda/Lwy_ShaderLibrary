@@ -2,10 +2,11 @@ Shader "ComputeShader/VertexMover"
 {
     Properties
     {
-        _Spring("Sping",float) = 1.0
-        _Damper("_Damper",float) = 5.0
-        _MoveScale("_MoveScale",float) = 1.0
-        // _Gravity("_Gravity",float) = 1.0
+        _Smooth("smooth", float) = 1.0
+        _Spring ("Sping", float) = 1.0
+        _Damper ("_Damper", float) = 5.0
+        _MoveScale ("_MoveScale", float) = 1.0
+        // _Gravity ("_Gravity", float) = 1.0
         [Space(20)]
         _MainTex ("Texture", 2D) = "white" { }
         _NormalMap ("Normal Map", 2D) = "white" { }
@@ -71,7 +72,7 @@ Shader "ComputeShader/VertexMover"
                 float _AnisotropyPower;
                 float _FrenelPower;
                 // float _SoftDepth;
-                float _Damper, _Spring, _Gravity, _MoveScale;
+                float _Damper, _Spring, _Gravity, _MoveScale, _Smooth;
 
             CBUFFER_END
 
@@ -89,6 +90,7 @@ Shader "ComputeShader/VertexMover"
             struct v2f
             {
                 float4 pos : SV_POSITION;
+                float4 posOS : TEXCOORD8;
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
                 float3 worldPos : TEXCOORD2;
@@ -133,28 +135,37 @@ Shader "ComputeShader/VertexMover"
                 // VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
 
                 o.pos = TransformObjectToHClip(input.vertex.xyz);
+                o.worldNormal = TransformObjectToWorldNormal(input.normal);
 
-            if(abs(time - data.time)>1e-3){
+                o.posOS = input.vertex;
+
+
+
+                if (abs(time - data.time) > 1e-3)
+                {
                     float3 targetPosWS = TransformObjectToWorld(input.vertex.xyz);
-                    //物体本帧位置-上一帧求出差值
+                    
                     float3 dPosWS = targetPosWS - data.posWS;
-                    //弹簧度乘以位置差，
-                    float3 forceWS = _Sprin+g * dPosWS - data.velocityWS * _Damper ;
+                    
+                    float3 forceWS = _Spring * dPosWS - data.velocityWS * _Damper ;
 
                     float dt = 1.0 / 60;
                     data.velocityWS += forceWS * dt;
-                    data.posWS += data.velocityWS *dt;
+                    data.posWS += data.velocityWS * dt;
                     data.dPosWS = (data.posWS - targetPosWS) * _MoveScale;
                     // float move = length(data.dPosWS);
                     // data.dPosWS = min(move, 1.0) / max(move, 0.01) * data.dPosWS;
                     data.time = time;
 
-                    o.pos.xyz += data.dPosWS;
+                    o.pos.x += data.dPosWS.x * (pow((abs(input.vertex.x)), _Smooth));
+
+                    o.pos.y -= data.dPosWS.y * (pow(abs(input.vertex.y), _Smooth));
+                    o.pos.z += data.dPosWS.z * (pow(abs(input.vertex.z), _Smooth));
                     _Buffer[input.id] = data;
-            }
+                }
 
 
-                o.worldNormal = TransformObjectToWorldNormal(input.normal);
+
                 o.worldPos = TransformObjectToWorld(input.vertex.xyz);
                 o.worldTangent = TransformObjectToWorldDir(input.tangent.xyz);
                 
@@ -197,8 +208,7 @@ Shader "ComputeShader/VertexMover"
                 float3 diffuseColorFog;
                 diffuseColorFog = MixFog(diffuseColor.rgb, inside.fogFactor);
 
-                return diffuseColor * Lambert;
-
+                return diffuseColor ;
             };
 
 
