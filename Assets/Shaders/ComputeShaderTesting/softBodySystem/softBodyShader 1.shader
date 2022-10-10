@@ -1,4 +1,4 @@
-Shader "ComputeShader/VertexMover"
+Shader "ComputeShader/softBodyShader"
 {
     Properties
     {
@@ -179,7 +179,7 @@ Shader "ComputeShader/VertexMover"
                 //fog
                 o.fogFactor = ComputeFogFactor(o.pos.z);
 
-                return o;
+                return (o);
             };
 
 
