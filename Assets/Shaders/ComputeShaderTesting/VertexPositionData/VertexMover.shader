@@ -2,10 +2,12 @@ Shader "ComputeShader/VertexMover"
 {
     Properties
     {
-        _Smooth("smooth", float) = 1.0
+        _Smooth ("smooth", float) = 1.0
         _Spring ("Sping", float) = 1.0
         _Damper ("_Damper", float) = 5.0
         _MoveScale ("_MoveScale", float) = 1.0
+        _SoftBodyMusk ("_SoftBodyMusk", 2D) = "white" { }
+
         // _Gravity ("_Gravity", float) = 1.0
         [Space(20)]
         _MainTex ("Texture", 2D) = "white" { }
@@ -20,10 +22,6 @@ Shader "ComputeShader/VertexMover"
         _NormalScale ("Normal scale", float) = 1
         _Cutoff ("Alpha Clip threshold", float) = 0.5
         // _LightDebug ("light Debug", vector) = (0,0,0,0)
-        _NoiseMap ("Hair Noise", 2D) = "white" { }
-        _AnisotropyColor ("anistropy color", color) = (1, 1, 1, 1)
-        _AnisotropyPower ("anistropy power", float) = 1
-        _NoisePower ("Noise Power", float) = 0.2
         _FrenelPower ("Frenel Power", float) = 1
         // _SoftDepth ("soft depth", float) = 1
 
@@ -35,7 +33,7 @@ Shader "ComputeShader/VertexMover"
         Pass
         {
             ZWrite On
-            Cull off
+            Cull back
 
             HLSLPROGRAM
 
@@ -64,12 +62,10 @@ Shader "ComputeShader/VertexMover"
                 // float4 _RampMap_ST;
                 float4 _MainTex_ST;
                 float4 _NormalMap_ST;
-                float4 _NoiseMap_ST;
+                float4 _SoftBodyMusk_ST;
                 half4 _Remap;
                 // half3 _LightDebug;
                 float _NormalScale;
-                float _NoisePower;
-                float _AnisotropyPower;
                 float _FrenelPower;
                 // float _SoftDepth;
                 float _Damper, _Spring, _Gravity, _MoveScale, _Smooth;
@@ -90,10 +86,9 @@ Shader "ComputeShader/VertexMover"
             struct v2f
             {
                 float4 pos : SV_POSITION;
-                float4 posOS : TEXCOORD8;
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
-                float3 worldPos : TEXCOORD2;
+                float3 positionWS : TEXCOORD2;
                 float3 worldTangent : TEXCOORD3;
                 float3 worlBbitangent : TEXCOORD4;
                 float4 screenPos : TEXCOORD5;
@@ -114,14 +109,11 @@ Shader "ComputeShader/VertexMover"
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
 
-            // TEXTURE2D(_RampMap);
-            // SAMPLER(sampler_RampMap);
-
             TEXTURE2D(_NormalMap);
             SAMPLER(sampler_NormalMap);
-
-            TEXTURE2D(_NoiseMap);
-            SAMPLER(sampler_NoiseMap);
+            
+            TEXTURE2D(_SoftBodyMusk);
+            SAMPLER(sampler_SoftBodyMusk);
 
 
             v2f vert(a2v input)
@@ -134,44 +126,52 @@ Shader "ComputeShader/VertexMover"
 
                 // VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
 
-                o.pos = TransformObjectToHClip(input.vertex.xyz);
-                o.worldNormal = TransformObjectToWorldNormal(input.normal);
+                // o.worldNormal = TransformObjectToWorldNormal(input.normal);
+                o.positionWS = TransformObjectToWorld(input.vertex.xyz);
 
-                o.posOS = input.vertex;
+                // o.uv = TRANSFORM_TEX(input.texcoord, _RampMap);
+                o.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
+                o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
+                o.uv = TRANSFORM_TEX(input.texcoord, _SoftBodyMusk);
+                o.worldNormal = TransformObjectToWorldNormal(input.normal, true);
 
 
+                float4 softBodyMusk = SAMPLE_TEXTURE2D_LOD(_SoftBodyMusk, sampler_SoftBodyMusk, o.uv, 0);
 
                 if (abs(time - data.time) > 1e-3)
                 {
                     float3 targetPosWS = TransformObjectToWorld(input.vertex.xyz);
-                    
                     float3 dPosWS = targetPosWS - data.posWS;
-                    
                     float3 forceWS = _Spring * dPosWS - data.velocityWS * _Damper ;
 
                     float dt = 1.0 / 60;
                     data.velocityWS += forceWS * dt;
                     data.posWS += data.velocityWS * dt;
                     data.dPosWS = (data.posWS - targetPosWS) * _MoveScale;
-                    // float move = length(data.dPosWS);
-                    // data.dPosWS = min(move, 1.0) / max(move, 0.01) * data.dPosWS;
+
+                    float move = length(data.dPosWS);
+                    data.dPosWS = min(move, 1.0) / max(move, 0.01) * data.dPosWS;
+                    // if(move < 0.001){data.dPosWS = 0;}
+
+                    o.positionWS.x += data.dPosWS.x * softBodyMusk;
+                    // o.positionWS.y *= abs(1+data.dPosWS.x * softBodyMusk);
+                    // o.positionWS.z *= abs(1+data.dPosWS.x * softBodyMusk);
+
+                    o.positionWS.y += data.dPosWS.y * softBodyMusk;
+                    o.positionWS.z += data.dPosWS.z * softBodyMusk;
+
                     data.time = time;
 
-                    o.pos.x += data.dPosWS.x * (pow((abs(input.vertex.x)), _Smooth));
-
-                    o.pos.y -= data.dPosWS.y * (pow(abs(input.vertex.y), _Smooth));
-                    o.pos.z += data.dPosWS.z * (pow(abs(input.vertex.z), _Smooth));
                     _Buffer[input.id] = data;
                 }
 
+                // o.pos = TransformObjectToHClip(input.vertex.xyz);
+                //弹性影响过的模型的顶点位置，从世界空间转换为裁剪空间
+                o.pos = TransformWorldToHClip(o.positionWS);
 
-
-                o.worldPos = TransformObjectToWorld(input.vertex.xyz);
                 o.worldTangent = TransformObjectToWorldDir(input.tangent.xyz);
                 
-                // o.uv = TRANSFORM_TEX(input.texcoord, _RampMap);
-                o.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
-                o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
+
 
                 //for depth tex
                 o.screenPos = ComputeScreenPos(o.pos);
@@ -198,7 +198,7 @@ Shader "ComputeShader/VertexMover"
 
                 //normal map
                 float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, inside.uv);
-                float3 bump = UnpackNormalScale(normalMap, _NormalScale);
+                float3 bump = SafeNormalize(UnpackNormalScale(normalMap, _NormalScale));
                 inside.worldNormal = TransformTangentToWorld(bump, half3x3(inside.worldTangent, inside.worlBbitangent, inside.worldNormal));
 
                 //lambert
@@ -208,7 +208,7 @@ Shader "ComputeShader/VertexMover"
                 float3 diffuseColorFog;
                 diffuseColorFog = MixFog(diffuseColor.rgb, inside.fogFactor);
 
-                return diffuseColor ;
+                return diffuseColor * Lambert ;
             };
 
 

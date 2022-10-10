@@ -10,6 +10,7 @@ public class VertexPositionData : MonoBehaviour
     // Start is called before the first frame update
     void OnEnable()
     {
+
         int numVertices = 0;
 
         //如果是没有蒙皮的obj
@@ -30,7 +31,7 @@ public class VertexPositionData : MonoBehaviour
         var renderer = GetComponent<Renderer>();
         if(!renderer) return;
 
-        _buffer = new ComputeBuffer(numVertices*4,12*3+4);
+        _buffer = new ComputeBuffer(numVertices*2,12*3+4);
         Graphics.SetRandomWriteTarget(1,_buffer,true);
 
         foreach(var mat in renderer.materials){
@@ -40,7 +41,6 @@ public class VertexPositionData : MonoBehaviour
         
     }
 
-    // Update is called once per frame
     void OnDisable() {
         if(_buffer == null) return;
         _buffer.Dispose();
