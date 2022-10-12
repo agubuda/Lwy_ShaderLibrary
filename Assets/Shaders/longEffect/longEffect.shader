@@ -54,6 +54,8 @@ Shader "LwyShaders/longEffect"
 
         Tags { "Queue" = "AlphaTest" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
+
+
         Pass
         {
             Name "DepthOnly"
@@ -69,8 +71,38 @@ Shader "LwyShaders/longEffect"
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+            CBUFFER_START(UnityPerMaterial)
 
+                float4 _BaseMap_ST;
+                float4 _MainTex_ST;
+                float4 _EmissiveMap_ST;
+                half _SpecPower;
+                float4 _SpecColor;
+                float4 _EmissiveColor;
+                float _SpecRange, _NormalScale , _brightness, _darkness , _darkAreaEdge ,_darkArea;
+                // float _SpecStrength;
+                float _OutLineWidth;
+                float _OffsetMul;
+                float _Threshold;
+                float4 _RimColor;
+                float _FresnelPower;
+                float _AOPower;
+                float _SpacSmoothness;
+                float _SpecAOPower;
+                float _SpecMaskPower;
+                float _LightInfluence;
+                float _HueBlue;
+                float _HueRed;
+                float _HueGreen;
+                float _FresnelStepValue;
+                float4 _BaseColor;
+                // float4 _NormalMap;
+                float4 _NormalMap_ST;
+                // float4 _AOMap;
+
+            CBUFFER_END
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
 
             // -------------------------------------
             // Material Keywords
@@ -81,7 +113,7 @@ Shader "LwyShaders/longEffect"
             // #pragma multi_compile_instancing
             // #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
+            // #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
             ENDHLSL
         }
@@ -90,7 +122,7 @@ Shader "LwyShaders/longEffect"
         {
             Name "NPR skin"
             Tags { "LightMode" = "UniversalForward" }
-            ZWrite On
+            // ZWrite On
             Cull off
 
 
@@ -98,7 +130,7 @@ Shader "LwyShaders/longEffect"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-
+            
             #pragma vertex vert
             #pragma fragment frag
 
@@ -140,7 +172,6 @@ Shader "LwyShaders/longEffect"
 
             CBUFFER_END
 
-        
             TEXTURE2D(_EmissiveMap); SAMPLER(sampler_EmissiveMap);
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
@@ -248,7 +279,6 @@ Shader "LwyShaders/longEffect"
                 
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
 
-
                 //rim light
 
                 float depth = input.positionNDC.z / input.positionNDC.w;
@@ -282,6 +312,7 @@ Shader "LwyShaders/longEffect"
 
             ENDHLSL
         }
+
 
         // Pass
         // {
