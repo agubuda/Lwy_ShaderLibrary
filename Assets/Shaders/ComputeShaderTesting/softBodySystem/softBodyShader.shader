@@ -1,4 +1,4 @@
-Shader "ComputeShader/softBodyShader1"
+Shader "ComputeShader/softBodyShader"
 {
     Properties
     {
@@ -15,9 +15,15 @@ Shader "ComputeShader/softBodyShader1"
         // _RampMap ("Ramp Map", 2D) = "white" { }
         _Remap ("Remap value", vector) = (1, -1, -1, 1)
         _BaseColor ("Color", Color) = (2, 1, 1, 1)
+        _SpecColor ("Specular color", Color) = (1, 1, 1, 1)
+        _SpecPower ("Specular power", float) = 1
         _Darkness ("Darkness", range(0, 1)) = 0.5
+        _Glossness ("Glossness", float) = 8
         _NormalScale ("Normal scale", float) = 1
         _Cutoff ("Alpha Clip threshold", float) = 0.5
+        // _LightDebug ("light Debug", vector) = (0,0,0,0)
+        _FrenelPower ("Frenel Power", float) = 1
+        // _SoftDepth ("soft depth", float) = 1
 
     }
     SubShader
@@ -48,12 +54,19 @@ Shader "ComputeShader/softBodyShader1"
                 half4 _BaseColor;
                 half4 _AnisotropyColor;
                 float _Darkness;
+                float _Glossness;
                 float _Cutoff;
+                half4 _SpecColor;
+                float _SpecPower;
+                // half4 _RampMap;
+                // float4 _RampMap_ST;
                 float4 _MainTex_ST;
                 float4 _NormalMap_ST;
                 float4 _SoftBodyMusk_ST;
+                half4 _Remap;
                 // half3 _LightDebug;
                 float _NormalScale;
+                float _FrenelPower;
                 // float _SoftDepth;
                 float _Damper, _Spring, _Gravity, _MoveScale, _Smooth;
 
@@ -76,10 +89,10 @@ Shader "ComputeShader/softBodyShader1"
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
                 float3 positionWS : TEXCOORD2;
-                // float3 worldTangent : TEXCOORD3;
-                // float3 worlBbitangent : TEXCOORD4;
-                // float4 screenPos : TEXCOORD5;
-                // half fogFactor : TEXCOORD6;
+                float3 worldTangent : TEXCOORD3;
+                float3 worlBbitangent : TEXCOORD4;
+                float4 screenPos : TEXCOORD5;
+                half fogFactor : TEXCOORD6;
                 uint id : TEXCOORD7;
             };
 
@@ -156,15 +169,13 @@ Shader "ComputeShader/softBodyShader1"
                 //弹性影响过的模型的顶点位置，从世界空间转换为裁剪空间
                 o.pos = TransformWorldToHClip(o.positionWS);
 
-                // o.worldTangent = TransformObjectToWorldDir(input.tangent.xyz);
+                o.worldTangent = TransformObjectToWorldDir(input.tangent.xyz);
                 
+                //for depth tex
+                o.screenPos = ComputeScreenPos(o.pos);
 
-
-                // //for depth tex
-                // o.screenPos = ComputeScreenPos(o.pos);
-
-                // //fog
-                // o.fogFactor = ComputeFogFactor(o.pos.z);
+                //fog
+                o.fogFactor = ComputeFogFactor(o.pos.z);
 
                 return (o);
             };
@@ -186,14 +197,14 @@ Shader "ComputeShader/softBodyShader1"
                 //normal map
                 float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, inside.uv);
                 float3 bump = SafeNormalize(UnpackNormalScale(normalMap, _NormalScale));
-                // inside.worldNormal = TransformTangentToWorld(bump, half3x3(inside.worldTangent, inside.worlBbitangent, inside.worldNormal));
+                inside.worldNormal = TransformTangentToWorld(bump, half3x3(inside.worldTangent, inside.worlBbitangent, inside.worldNormal));
 
                 //lambert
                 float Lambert = dot(mlight.direction, inside.worldNormal) * 0.5 + _Darkness;
 
-                // //Mix with fog
-                // float3 diffuseColorFog;
-                // diffuseColorFog = MixFog(diffuseColor.rgb, inside.fogFactor);
+                //Mix with fog
+                float3 diffuseColorFog;
+                diffuseColorFog = MixFog(diffuseColor.rgb, inside.fogFactor);
 
                 return diffuseColor * Lambert ;
             };

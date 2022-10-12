@@ -6,8 +6,10 @@ using UnityEditor;
 [RequireComponent(typeof(Renderer))]
 public class VertexPositionData : MonoBehaviour
 {
+    public string buffer;
     ComputeBuffer _buffer = null;
     public Material material;
+    public int registerField;
     private void OnEnable()
     {
 
@@ -34,7 +36,8 @@ public class VertexPositionData : MonoBehaviour
         if (!renderer) return;
 
         _buffer = new ComputeBuffer(numVertices * 2, 12 * 3 + 4);
-        Graphics.SetRandomWriteTarget(1, _buffer, false);
+        Graphics.SetRandomWriteTarget(registerField, _buffer, true);
+        Debug.Log(_buffer);
 
         // foreach(var mat in renderer.materials){
         //     mat.SetBuffer("_Buffer", _buffer);

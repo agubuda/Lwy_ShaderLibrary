@@ -1,4 +1,4 @@
-Shader "ComputeShader/softBodyShader"
+Shader "ComputeShader/softBodyShader1"
 {
     Properties
     {
@@ -7,6 +7,7 @@ Shader "ComputeShader/softBodyShader"
         _Damper ("_Damper", float) = 5.0
         _MoveScale ("_MoveScale", float) = 1.0
         _SoftBodyMusk ("_SoftBodyMusk", 2D) = "white" { }
+        _registerField("_registerField", float) = 1.0
 
         // _Gravity ("_Gravity", float) = 1.0
         [Space(20)]
@@ -69,6 +70,7 @@ Shader "ComputeShader/softBodyShader"
                 float _FrenelPower;
                 // float _SoftDepth;
                 float _Damper, _Spring, _Gravity, _MoveScale, _Smooth;
+                int _registerField;
 
             CBUFFER_END
 
