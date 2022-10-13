@@ -7,9 +7,12 @@ public class CustomPostProcessRenderer : ScriptableRendererFeature
 {
     CustomPostProcessPass pass;
 
+    [SerializeField]
+    CustomPostProcessingMaterials mat;
+
     public override void Create()
     {
-        pass = new CustomPostProcessPass();
+        pass = new CustomPostProcessPass(mat);
 
     }
 
