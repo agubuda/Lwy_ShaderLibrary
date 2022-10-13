@@ -8,11 +8,11 @@ public class CustomPostProcessRenderer : ScriptableRendererFeature
     CustomPostProcessPass pass;
 
     [SerializeField]
-    CustomPostProcessingMaterials mat;
+    public Material customEffect;
 
     public override void Create()
     {
-        pass = new CustomPostProcessPass(mat);
+        pass = new CustomPostProcessPass(customEffect);
 
     }
 

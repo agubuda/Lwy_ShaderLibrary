@@ -10,12 +10,12 @@ public class CustomPostProcessPass : ScriptableRenderPass
     RenderTargetIdentifier destinationB;
     RenderTargetIdentifier latestDest;
 
-    readonly CustomPostProcessingMaterials _mat;
+    readonly Material _mat;
 
     readonly int temporatyRTIdA = Shader.PropertyToID("_TempRT");
     readonly int temporatyRTIdB = Shader.PropertyToID("_TempRTB");
 
-    public CustomPostProcessPass(CustomPostProcessingMaterials mat)
+    public CustomPostProcessPass(Material mat)
     {
         //set the render pass event
         renderPassEvent  = RenderPassEvent.BeforeRenderingPostProcessing;
@@ -76,7 +76,7 @@ public class CustomPostProcessPass : ScriptableRenderPass
         var customEffect  = stack.GetComponent<CustomEffectComponent>();
         if(customEffect.IsActive()){
             // var material = materials.customEffect;
-            var material = _mat.customEffect;
+            var material = _mat;
             material.SetFloat(Shader.PropertyToID("_Intensity"), customEffect.intensity.value);
             material.SetColor(Shader.PropertyToID("_OverlayColor"), customEffect.overlayColor.value);
 
