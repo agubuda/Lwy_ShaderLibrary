@@ -84,6 +84,7 @@ public class CustomPostProcessPass : ScriptableRenderPass
         }
 
         Blit(cmd, latestDest, source);
+        context.ExecuteCommandBuffer(cmd);
         CommandBufferPool.Release(cmd);
 
     }
