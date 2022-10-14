@@ -10,13 +10,16 @@ public class CustomPostProcessPass : ScriptableRenderPass
     RenderTargetIdentifier destinationB;
     RenderTargetIdentifier latestDest;
 
+    readonly Material _mat;
+
     readonly int temporatyRTIdA = Shader.PropertyToID("_TempRT");
     readonly int temporatyRTIdB = Shader.PropertyToID("_TempRTB");
 
-    public CustomPostProcessPass()
+    public CustomPostProcessPass(Material mat)
     {
         //set the render pass event
         renderPassEvent  = RenderPassEvent.BeforeRenderingPostProcessing;
+        _mat = mat;
     }
 
     public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
@@ -37,14 +40,12 @@ public class CustomPostProcessPass : ScriptableRenderPass
 
     //
 
-
-
     public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
     {
         if(renderingData.cameraData.isSceneViewCamera)return;
 
-        var materials = CustomPostProcessingMaterials.Instance;
-        if(materials == null){
+        // var materials = CustomPostProcessingMaterials.Instance;
+        if(_mat == null){
             Debug.LogError("Custom post processing mat instance is null");
             return;
         }
@@ -70,7 +71,7 @@ public class CustomPostProcessPass : ScriptableRenderPass
 
         var customEffect  = stack.GetComponent<CustomEffectComponent>();
         if(customEffect.IsActive()){
-            var material = materials.customEffect;
+            var material = _mat;
             material.SetFloat(Shader.PropertyToID("_Intensity"), customEffect.intensity.value);
             material.SetColor(Shader.PropertyToID("_OverlayColor"), customEffect.overlayColor.value);
 
@@ -78,6 +79,7 @@ public class CustomPostProcessPass : ScriptableRenderPass
         }
 
         Blit(cmd, latestDest, source);
+        context.ExecuteCommandBuffer(cmd);
         CommandBufferPool.Release(cmd);
 
     }

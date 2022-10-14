@@ -6,10 +6,14 @@ using UnityEngine;
 public class CustomPostProcessRenderer : ScriptableRendererFeature
 {
     CustomPostProcessPass pass;
+    [SerializeField]
+    Material customEffect;
+
 
     public override void Create()
     {
-        pass = new CustomPostProcessPass();
+        // _Instance = new CustomPostProcessingMaterials();
+        pass = new CustomPostProcessPass(customEffect);
 
     }
 
