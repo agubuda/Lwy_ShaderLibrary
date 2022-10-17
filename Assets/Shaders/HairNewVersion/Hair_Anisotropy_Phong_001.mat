@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Hair_Anisotropy_Phong_001
-  m_Shader: {fileID: 4800000, guid: 4649272fbfacd584eadc6309ef7618aa, type: 3}
+  m_Shader: {fileID: 4800000, guid: 5726a4ebe4cd8804db0c56735b48002f, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _EMISSION
@@ -23,7 +23,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _AOMap:
-        m_Texture: {fileID: 2800000, guid: d800b59034a19c74ebac9e942c910db9, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _AnisoDir:
@@ -43,7 +43,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NoiseMap:
-        m_Texture: {fileID: 2800000, guid: e8988012a060ced47ae4889f6f7a2d27, type: 3}
+        m_Texture: {fileID: 2800000, guid: 5cf1a52c626bb3744b625ec5aab547cf, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
@@ -65,7 +65,7 @@ Material:
     - _AnisotropyPower2: 1.86
     - _Cull: 0
     - _Cutoff: 0.5
-    - _Darkness: 0.7
+    - _Darkness: 0.5
     - _Exponent: 100
     - _Exponent2: 80
     - _FrenelLightness: 0.3
@@ -84,13 +84,13 @@ Material:
     - _SpecularMultiplier2: 363.79
     m_Colors:
     - _AnisotropyColor: {r: 0.0141509175, g: 0.6103238, b: 1, a: 1}
-    - _BaseColor: {r: 0.1462264, g: 0.6049204, b: 1, a: 1}
+    - _BaseColor: {r: 0.2688679, g: 0.6632943, b: 1, a: 1}
     - _LightDebug: {r: 1, g: 1, b: 1, a: 1}
     - _MainColor: {r: 0.745283, g: 0.22147557, b: 0.22147557, a: 1}
     - _OutLineColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _Remap: {r: 0.77, g: -1, b: -1, a: 1}
     - _RimColor: {r: 0.9198113, g: 1, b: 0.99496853, a: 1}
-    - _SpecColor: {r: 0, g: 0.5919285, b: 1, a: 1}
+    - _SpecColor: {r: 0.40899786, g: 0.6751681, b: 0.8584906, a: 1}
     - _SpecularColor: {r: 0.32075468, g: 0.15433756, b: 0, a: 1}
     - _SpecularColor2: {r: 1, g: 0.74779147, b: 0.12735847, a: 1}
     - _depthRemap: {r: 1, g: -1, b: -1, a: 1}
