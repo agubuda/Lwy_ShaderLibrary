@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shader Graphs_testing
+  m_Name: Shader Graphs_testing 1
   m_Shader: {fileID: -6465566751694194690, guid: 265eb630a4c6d5e4e8b25107c158366e, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -25,7 +25,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _AlphaTexture:
-        m_Texture: {fileID: 2800000, guid: c9708dcf8e15cde42be19fa5f5fe72bf, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2eabe5c9fa668bb438cb72c2e4420ec8, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -37,7 +37,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTexure:
-        m_Texture: {fileID: 2800000, guid: e9b7db309bb4913489f2911e1134f86e, type: 3}
+        m_Texture: {fileID: 2800000, guid: f3d971e18b4aba740b2c7e71d55c2736, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mask:
@@ -45,7 +45,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskTexture:
-        m_Texture: {fileID: 2800000, guid: ba4d808e307100c4f8d9d0cd6fde11bc, type: 3}
+        m_Texture: {fileID: 2800000, guid: c10f5b6c8bf460946a29095f980d6d77, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -62,7 +62,13 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BaseHue: 0
+    - _BaseSaturation: 1
+    - _BaseValue: 0
     - _Base_color_Shift: 26.8
+    - _RimHue: 0
+    - _RimSaturation: 1
+    - _RimValue: 0
     - _Rim_color_shift: 69.2
     - _Rim_shift: 230.5
     - _base_Shift: 0
