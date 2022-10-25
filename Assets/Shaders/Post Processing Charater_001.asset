@@ -34,6 +34,29 @@ MonoBehaviour:
   highlightsEnd:
     m_OverrideState: 1
     m_Value: 1
+--- !u!114 &-6792696974520044484
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53a20cf0af8b2fb49b77c767480e78a9, type: 3}
+  m_Name: SnowEffectComponent
+  m_EditorClassIdentifier: 
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  Offset:
+    m_OverrideState: 0
+    m_Value: 0
+  overlayColor:
+    m_OverrideState: 0
+    m_Value: {r: 0, g: 1, b: 1, a: 1}
+    hdr: 0
 --- !u!114 &-4283031722837774909
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -46,7 +69,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5485954d14dfb9a4c8ead8edb0ded5b1, type: 3}
   m_Name: LiftGammaGain
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   lift:
     m_OverrideState: 1
     m_Value: {x: 0.9987408, y: 1, z: 0.9229331, w: -0.0000000014094881}
@@ -85,13 +108,13 @@ MonoBehaviour:
   m_Name: Post Processing Charater_001
   m_EditorClassIdentifier: 
   components:
-  - {fileID: 8117990007363944532}
   - {fileID: 874799653311413876}
   - {fileID: -303916781921588029}
+  - {fileID: 8117990007363944532}
   - {fileID: -4283031722837774909}
   - {fileID: -8179179755375720668}
   - {fileID: 8037337331047956027}
-  - {fileID: 3507431894560279047}
+  - {fileID: -6792696974520044484}
 --- !u!114 &874799653311413876
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -120,6 +143,34 @@ MonoBehaviour:
   saturation:
     m_OverrideState: 1
     m_Value: -100
+--- !u!114 &3185712379446254328
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: SnowEffect
+  m_EditorClassIdentifier: Assembly-CSharp::SnowEffect
+  active: 1
+  <displayName>k__BackingField: 
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  Offset:
+    m_OverrideState: 0
+    m_Value: 0
+  overlayColor:
+    m_OverrideState: 0
+    m_Value:
+      r: 0
+      g: 1
+      b: 1
+      a: 1
+    hdr: 0
 --- !u!114 &3507431894560279047
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -132,13 +183,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53a20cf0af8b2fb49b77c767480e78a9, type: 3}
   m_Name: CustomEffectComponent
   m_EditorClassIdentifier: 
-  active: 0
+  active: 1
   intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  Offset:
     m_OverrideState: 1
     m_Value: 1
   overlayColor:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 0.79607844, b: 0, a: 1}
+    m_Value: {r: 0.509434, g: 0.10488348, b: 0, a: 1}
+    hdr: 0
+--- !u!114 &5682271317387304095
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: SnowEffectComponent
+  m_EditorClassIdentifier: Assembly-CSharp::SnowEffectComponent
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  Offset:
+    m_OverrideState: 0
+    m_Value: 0
+  overlayColor:
+    m_OverrideState: 0
+    m_Value: {r: 0, g: 1, b: 1, a: 1}
     hdr: 0
 --- !u!114 &8037337331047956027
 MonoBehaviour:

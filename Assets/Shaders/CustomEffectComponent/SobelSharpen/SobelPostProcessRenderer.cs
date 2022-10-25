@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using UnityEngine.Rendering.Universal;
 using UnityEngine;
 
-public class CustomPostProcessRenderer : ScriptableRendererFeature
+public class SobelPostProcessRenderer : ScriptableRendererFeature
 {
-    CustomPostProcessPass pass;
+    SobelPostProcessPass pass;
     [SerializeField]
-    Material customEffect;
+    Material sobelEffect;
 
 
     public override void Create()
     {
         // _Instance = new CustomPostProcessingMaterials();
-        pass = new CustomPostProcessPass(customEffect);
+        pass = new SobelPostProcessPass(sobelEffect);
 
     }
 

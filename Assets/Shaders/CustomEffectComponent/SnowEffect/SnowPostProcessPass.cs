@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 [System.Serializable]
-public class CustomPostProcessPass : ScriptableRenderPass
+public class SnowPostProcessPass : ScriptableRenderPass
 {
     RenderTargetIdentifier source;
     RenderTargetIdentifier destinationA;
@@ -15,7 +15,7 @@ public class CustomPostProcessPass : ScriptableRenderPass
     readonly int temporatyRTIdA = Shader.PropertyToID("_TempRT");
     readonly int temporatyRTIdB = Shader.PropertyToID("_TempRTB");
 
-    public CustomPostProcessPass(Material mat)
+    public SnowPostProcessPass(Material mat)
     {
         //set the render pass event
         renderPassEvent  = RenderPassEvent.BeforeRenderingPostProcessing;
@@ -69,11 +69,12 @@ public class CustomPostProcessPass : ScriptableRenderPass
 
         latestDest = source;
 
-        var customEffect  = stack.GetComponent<CustomEffectComponent>();
-        if(customEffect.IsActive()){
+        var snowEffect  = stack.GetComponent<SnowEffectComponent>();
+        if(snowEffect.IsActive()){
             var material = _mat;
-            material.SetFloat(Shader.PropertyToID("_Intensity"), customEffect.intensity.value);
-            material.SetColor(Shader.PropertyToID("_OverlayColor"), customEffect.overlayColor.value);
+            material.SetFloat(Shader.PropertyToID("_Intensity"), snowEffect.intensity.value);
+            material.SetColor(Shader.PropertyToID("_OverlayColor"), snowEffect.overlayColor.value);
+            material.SetInt(Shader.PropertyToID("_Offset"), snowEffect.Offset.value);
 
             BlitTo(material);
         }
@@ -91,3 +92,4 @@ public class CustomPostProcessPass : ScriptableRenderPass
 
     }
 }
+
