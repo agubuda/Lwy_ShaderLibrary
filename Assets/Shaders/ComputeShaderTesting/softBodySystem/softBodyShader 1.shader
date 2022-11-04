@@ -106,7 +106,7 @@ Shader "ComputeShader/softBodyShader1"
                 float time;
             };
 
-            RWStructuredBuffer<MoverData> _Buffer : register(u1);
+            RWStructuredBuffer<MoverData> _Buffer : register(u2);
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);

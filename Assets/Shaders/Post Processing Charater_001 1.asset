@@ -72,6 +72,25 @@ MonoBehaviour:
   gain:
     m_OverrideState: 1
     m_Value: {x: 1, y: 1, z: 1, w: 0.2835821}
+--- !u!114 &-4804612243004028328
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb9b18b10ed824aa3585796e26c860, type: 3}
+  m_Name: SobelEffectComponent
+  m_EditorClassIdentifier: 
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0.245
+  Offset:
+    m_OverrideState: 1
+    m_Value: 1
 --- !u!114 &-4426411189252404376
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -111,6 +130,7 @@ MonoBehaviour:
   - {fileID: -8907037531948929906}
   - {fileID: -4426411189252404376}
   - {fileID: 6346372059762365471}
+  - {fileID: -4804612243004028328}
 --- !u!114 &3598078013726629541
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -164,13 +184,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53a20cf0af8b2fb49b77c767480e78a9, type: 3}
   m_Name: CustomEffectComponent
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   intensity:
     m_OverrideState: 1
     m_Value: 1
   Offset:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: -4
   overlayColor:
     m_OverrideState: 1
     m_Value: {r: 0, g: 1, b: 1, a: 1}

@@ -6,7 +6,7 @@ using UnityEditor;
 [RequireComponent(typeof(Renderer))]
 public class VertexPositionData : MonoBehaviour
 {
-    public string buffer;
+    // public string buffer;
     ComputeBuffer _buffer = null;
     public Material material;
     public int registerField;

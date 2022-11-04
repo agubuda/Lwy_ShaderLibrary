@@ -214,7 +214,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839d71c63da63c243bcc4808b774734c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buffer: 
   material: {fileID: 2100000, guid: aaa26381e50eb5f4b937155385409095, type: 2}
   registerField: 0
 --- !u!1 &751602312
@@ -403,9 +402,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839d71c63da63c243bcc4808b774734c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buffer: 
   material: {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  registerField: 0
+  registerField: 1
 --- !u!135 &880809412
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -523,7 +521,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 65777cf2405148f438f713a6c0f4e9e9, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 70c94b874ba5e064190a35afa5d5a2d2, type: 2}
+      objectReference: {fileID: 2100000, guid: 5e311d66949eec242975cb3d772e9a08, type: 2}
     - target: {fileID: -5754084199372789682, guid: 65777cf2405148f438f713a6c0f4e9e9, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -560,9 +558,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839d71c63da63c243bcc4808b774734c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buffer: 
-  material: {fileID: 2100000, guid: 70c94b874ba5e064190a35afa5d5a2d2, type: 2}
-  registerField: 2
+  material: {fileID: 2100000, guid: 5e311d66949eec242975cb3d772e9a08, type: 2}
+  registerField: 1
 --- !u!1 &1083836299
 GameObject:
   m_ObjectHideFlags: 0
@@ -699,7 +696,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839d71c63da63c243bcc4808b774734c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buffer: 
   material: {fileID: 2100000, guid: fdc5560a29a521f41a7ed4fb8da4f960, type: 2}
   registerField: 0
 --- !u!23 &1486222560
@@ -864,9 +860,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839d71c63da63c243bcc4808b774734c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buffer: _buffer1
-  material: {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  registerField: 1
+  material: {fileID: 2100000, guid: 14e6c3e0a7a8ca24196ceaecdef31cce, type: 2}
+  registerField: 2
 --- !u!135 &1923248647
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -900,7 +895,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 14e6c3e0a7a8ca24196ceaecdef31cce, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
