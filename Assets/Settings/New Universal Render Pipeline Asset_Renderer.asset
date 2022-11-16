@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3116844a35cb23d45adcba4e6df85c6e, type: 3}
   m_Name: SnowPostProcessRenderer
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   snowEffect: {fileID: 2100000, guid: cbba4fa0300c2a24d99f648cff35d914, type: 2}
 --- !u!114 &11400000
 MonoBehaviour:
@@ -63,7 +63,7 @@ MonoBehaviour:
     zFailOperation: 0
   m_ShadowTransparentReceive: 1
   m_RenderingMode: 0
-  m_DepthPrimingMode: 0
+  m_DepthPrimingMode: 1
   m_AccurateGbufferNormals: 0
   m_ClusteredRendering: 0
   m_TileSize: 32
@@ -80,5 +80,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e80cf53b71dfa044e9bdcc87372169a4, type: 3}
   m_Name: SobelPostProcessRenderer
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   sobelEffect: {fileID: 2100000, guid: e76bc44e95959aa47aa6934fe47e980d, type: 2}
