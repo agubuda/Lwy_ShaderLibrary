@@ -9,6 +9,7 @@ public class BlendShapeDriver : MonoBehaviour
     Mesh skinnedMesh;
     float blendOne = 0f;
     float blendTwo = 0f;
+    public bool singleLoop = false;
     public float blendSpeed1 = 10f;
     public float blendSpeed2 = 10f;
     public float blendSpeed3 = 10f;
@@ -17,8 +18,6 @@ public class BlendShapeDriver : MonoBehaviour
     public float Strentgh2 = 1f;
     public float Strentgh3 = 1f;
     public float Strentgh4 = 1f;
-    bool blendoneFinished = false;
-
     float SINETIME = 0f;
     float SINETIME2 = 0f;
     float COSINETIME = 0f;
@@ -53,8 +52,8 @@ public class BlendShapeDriver : MonoBehaviour
                 Debug.Log(SINETIME);
 
 
-        if(SINETIME> 0 ){
-            skinnedMeshRenderer.SetBlendShapeWeight(0, SINETIME * Strentgh1);
+        if(SINETIME> 0 || singleLoop ){
+            skinnedMeshRenderer.SetBlendShapeWeight(0, Mathf.Abs(SINETIME * Strentgh1));
         }
         else{
             skinnedMeshRenderer.SetBlendShapeWeight(1, Mathf.Abs(SINETIME) * Strentgh2);
