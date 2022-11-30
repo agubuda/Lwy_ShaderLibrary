@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3116844a35cb23d45adcba4e6df85c6e, type: 3}
   m_Name: SnowPostProcessRenderer
   m_EditorClassIdentifier: 
-  m_Active: 0
+  m_Active: 1
   snowEffect: {fileID: 2100000, guid: cbba4fa0300c2a24d99f648cff35d914, type: 2}
 --- !u!114 &11400000
 MonoBehaviour:
@@ -31,7 +31,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: -8001754560841530593}
   - {fileID: 630724087493481841}
-  m_RendererFeatureMap: 1fc32d3d9f0ef49071d5544237c8c008
+  - {fileID: 5119730570837361844}
+  m_RendererFeatureMap: 1fc32d3d9f0ef49071d5544237c8c008b4047824d4ef0c47
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -80,5 +81,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e80cf53b71dfa044e9bdcc87372169a4, type: 3}
   m_Name: SobelPostProcessRenderer
   m_EditorClassIdentifier: 
-  m_Active: 0
+  m_Active: 1
   sobelEffect: {fileID: 2100000, guid: e76bc44e95959aa47aa6934fe47e980d, type: 2}
+--- !u!114 &5119730570837361844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3116844a35cb23d45adcba4e6df85c6e, type: 3}
+  m_Name: SnowPostProcessRenderer
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  snowEffect: {fileID: 2100000, guid: 17c443ec2cfa6194cbcbabcba4b9eff8, type: 2}
