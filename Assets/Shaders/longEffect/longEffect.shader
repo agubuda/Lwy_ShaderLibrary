@@ -16,7 +16,7 @@ Shader "LwyShaders/longEffect"
         _darkAreaEdge("dark area edge", Range(0,1)) = 0.55
 
         [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP(" Enable normal map",float) = 0
-        _NormalMap("Normal map", 2D) = "White"{}
+        _NormalMap("Normal map", 2D) = "bump"{}
         _NormalScale("Normal scale", float) = 1
         
         // [Space(20)][Header(Outline settings)]
