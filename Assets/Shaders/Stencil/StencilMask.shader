@@ -24,7 +24,7 @@ Shader "LwyShaders/StencilMask"
             ZWrite On
 
             Stencil{
-                Ref [_RefNumber]                    //参考值为2，stencilBuffer值默认为0  
+                Ref [_RefNumber]          //参考值为2，stencilBuffer值默认为0  
                 Comp always               //stencil比较方式是永远通过  
                 Pass replace              //pass的处理是替换，就是拿2替换buffer 的值  
                 ZFail decrWrap            //ZFail的处理是溢出型减1 

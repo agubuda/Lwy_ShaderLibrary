@@ -1,13 +1,13 @@
 Shader "LwyShaders/StencilObj"
 {
-     Properties
+    Properties
     {
-        [Space(20)][Header(base settings)]   
+        [Space(20)][Header(base settings)]
         _BaseMap ("Texture", 2D) = "white" { }
-        _BaseColor("baseColor", color) = (1,0,0,1)
+        _BaseColor ("baseColor", color) = (1, 0, 0, 1)
 
-        // _ShadowAlpha("Shadow alpha", Range(0,1)) = 0.8
-        _RefNumber("Reference Number", Range(0,255)) = 1
+        // _ShadowAlpha ("Shadow alpha", Range(0,1)) = 0.8
+        _RefNumber ("Reference Number", Range(0, 255)) = 1
     }
 
     SubShader
@@ -22,14 +22,16 @@ Shader "LwyShaders/StencilObj"
             
             // Cull back
             // Blend Zero One
-            // ZWrite off
+            
 
-            Stencil{
-                Ref [_RefNumber]                //参考值为2  
-                Comp NotEqual          //stencil比较方式是相同，只有等于2的才能通过  
-                Pass keep           //stencil和Zbuffer都测试通过时，选择保持  
-                Fail decrWrap        //stencil没通过，选择溢出型减1，所以被平面挡住的那层stencil值就变成254  
-                ZFail keep           //stencil通过，深度测试没通过时，选择保持 
+            Stencil
+            {
+                Ref [_RefNumber]       //参考值为2
+                Comp NotEqual          //stencil比较方式是相同，只有等于2的才能通过
+                Pass keep              //stencil和Zbuffer都测试通过时，选择保持
+                Fail decrWrap          //stencil没通过，选择溢出型减1，所以被平面挡住的那层stencil值就变成254
+                ZFail keep             //stencil通过，深度测试没通过时，选择保持
+
             }
 
 
@@ -68,6 +70,7 @@ Shader "LwyShaders/StencilObj"
                 float4 tangentOS : TANGENT;
                 float2 texcoord : TEXCOORD0;
                 // float2 secondTexcoord : TEXCOORD1;
+
             };
 
             struct v2f
@@ -91,7 +94,7 @@ Shader "LwyShaders/StencilObj"
                 // o.shadowCoord = TransformWorldToShadowCoord(o.positionWS); do not cuculate this in vert, could cause glitch problem.
                 
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-              
+                
 
                 return o;
             }
@@ -108,7 +111,7 @@ Shader "LwyShaders/StencilObj"
 
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 
-                float4 color = (difusse  * _BaseColor) ;
+                float4 color = (difusse * _BaseColor) ;
 
                 //recive shadow
 
@@ -189,7 +192,5 @@ Shader "LwyShaders/StencilObj"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
             ENDHLSL
         }
-
-    
-}
+    }
 }
