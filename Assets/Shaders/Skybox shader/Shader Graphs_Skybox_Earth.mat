@@ -1,18 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-1949654359885559911
-MonoBehaviour:
-  m_ObjectHideFlags: 11
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  version: 5
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
@@ -20,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shader Graphs_Skybox
+  m_Name: Shader Graphs_Skybox_Earth
   m_Shader: {fileID: -6465566751694194690, guid: 2bf86343c083b0f489d0cb404fdd8425, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -38,27 +25,23 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _CloudMask:
-        m_Texture: {fileID: 2800000, guid: 147d6f97dc844444ab23201848b94e43, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _CloudMask2:
-        m_Texture: {fileID: 2800000, guid: 147d6f97dc844444ab23201848b94e43, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Cubemap:
-        m_Texture: {fileID: 8900000, guid: 3152d75c2182f474280c717821521a35, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SampleCubemap_f65e25fb383f48b09b41d1a8cdf0e511_Cube_1:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _StarMap:
-        m_Texture: {fileID: 2800000, guid: 7182af7cdac1bd146b9e6228822dba20, type: 3}
+        m_Texture: {fileID: 2800000, guid: adae0d712f00df44fafaff0c37840730, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _StarMusk:
-        m_Texture: {fileID: 2800000, guid: 8acc449dfb500904eaa05c75ff220196, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -76,57 +59,51 @@ Material:
     m_Ints: []
     m_Floats:
     - _Aurora_Tiling: 17
-    - _CloudMaskSpeed: 0.1
-    - _CloudMuskSize: 30
-    - _CloudSpeed: 0.01
-    - _Cloud_height_falloff: 3
-    - _Final_Hue_Adjustment: 0
-    - _FlipbookSpeed: 1.87
-    - _HorizonPower: 1
+    - _Cloud_height_falloff: 4.28
+    - _HorizonPower: 0.54
     - _LOD: 0
-    - _MaskSpeed: 0.02
-    - _MuskSpeed: 5
-    - _OffsetX: 9.63
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _ShiningSpeed: 3
-    - _StarDensity: 74.7
     - _StarIntensityMax: 1
     - _StarIntensityMin: 0
     - _StarMovement: 0.3
-    - _StarPower: 999
-    - _StarSize: 137.4
     - _Star_Hue: 0.835
-    - _SunSize: -0.999
-    - _TEMP: 700
-    - _Wind: 0.01
-    - _Wind2: 0.02
-    - _WindSpeed: 0.22
-    - _ZenithPower: 1
+    - _TEMP: 730.99
+    - _ZenithPower: 0.3
     m_Colors:
     - _AuroraWidth: {r: 0.55, g: 1.2, b: 0, a: 0}
-    - _Aurora_Color: {r: 0, g: 8.163617, b: 16.94838, a: 0}
+    - _Aurora_Color: {r: 0, g: 0.36078432, b: 0.7490196, a: 0}
     - _BackgroundColor: {r: 1, g: 1, b: 1, a: 0}
     - _CloudDensity: {r: 0.63, g: 1, b: 0, a: 0}
     - _CloudTilling: {r: 3, g: 3, b: 0, a: 0}
-    - _Cloud_Color: {r: 0, g: 0.70987976, b: 0.44367486, a: 1}
-    - _HorizonColor: {r: 1, g: 1, b: 1, a: 0}
+    - _Cloud_Color: {r: 0.6084906, g: 0.9698838, b: 1, a: 1}
+    - _HorizonColor: {r: 0.07079922, g: 0.20624866, b: 0.4056604, a: 0}
     - _Mask2Density: {r: 0.3, g: 1, b: 0, a: 0}
     - _Mask2_tiling: {r: 3.35, g: 3, b: 0, a: 0}
     - _MaskDensity: {r: 0.6, g: 1, b: 0, a: 0}
     - _MaskMovement: {r: 0.01, g: 0.04, b: 0, a: 0}
     - _MaskMovement2: {r: 0.008, g: -0.02, b: 0, a: 0}
     - _Mask_tiling: {r: 2, g: 2, b: 0, a: 0}
-    - _Offset: {r: 18.32, g: -0.86, b: 0, a: 0}
     - _StarColor: {r: 1, g: 1, b: 1, a: 0}
-    - _StarMovementDirection: {r: 0.003, g: 0.009, b: 0, a: 0}
+    - _StarMovementDirection: {r: -0.01, g: 0.09, b: 0, a: 0}
     - _StarMuskDensity: {r: -1.2, g: 1, b: 0, a: 0}
     - _StarMuskTiling: {r: 3, g: 3, b: 0, a: 0}
-    - _StarSize: {r: 2, g: 2, b: 0, a: 0}
+    - _StarSize: {r: 3, g: 3, b: 0, a: 0}
     - _SunColor: {r: 1.866512, g: 3.5648696, b: 2.2304456, a: 1}
-    - _SunSize: {r: 0, g: 1, b: 0, a: 0}
-    - _Tilling: {r: 1, g: 1, b: 0, a: 0}
-    - _Wind: {r: 0, g: 0.01, b: 0, a: 0}
-    - _Wind2: {r: 0.01, g: 0.02, b: 0, a: 0}
-    - _ZenithColor: {r: 1, g: 1, b: 1, a: 0}
+    - _SunSize: {r: -0.998, g: -0.999, b: 0, a: 0}
+    - _Wind: {r: 0, g: 0.12, b: 0, a: 0}
+    - _ZenithColor: {r: 1.5437328, g: 5.1547422, b: 9.828432, a: 0}
   m_BuildTextureStacks: []
+--- !u!114 &7604497338275487165
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 5
