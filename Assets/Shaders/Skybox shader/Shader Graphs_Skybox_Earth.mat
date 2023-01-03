@@ -59,8 +59,9 @@ Material:
     m_Ints: []
     m_Floats:
     - _Aurora_Tiling: 17
-    - _Cloud_height_falloff: 4.28
-    - _HorizonPower: 0.54
+    - _Cloud_height_falloff: 9.45
+    - _HorizonPower: 0.2
+    - _HorizonWidth: 0.12
     - _LOD: 0
     - _QueueControl: 0
     - _QueueOffset: 0
@@ -69,6 +70,7 @@ Material:
     - _StarMovement: 0.3
     - _Star_Hue: 0.835
     - _TEMP: 730.99
+    - _ZenithFallout: 0.38
     - _ZenithPower: 0.3
     m_Colors:
     - _AuroraWidth: {r: 0.55, g: 1.2, b: 0, a: 0}
@@ -76,15 +78,15 @@ Material:
     - _BackgroundColor: {r: 1, g: 1, b: 1, a: 0}
     - _CloudDensity: {r: 0.63, g: 1, b: 0, a: 0}
     - _CloudTilling: {r: 3, g: 3, b: 0, a: 0}
-    - _Cloud_Color: {r: 0.6084906, g: 0.9698838, b: 1, a: 1}
-    - _HorizonColor: {r: 0.07079922, g: 0.20624866, b: 0.4056604, a: 0}
+    - _Cloud_Color: {r: 0.23921569, g: 0.49019608, b: 0.50980395, a: 1}
+    - _HorizonColor: {r: 0.18892616, g: 0.31984058, b: 0.75570464, a: 0}
     - _Mask2Density: {r: 0.3, g: 1, b: 0, a: 0}
     - _Mask2_tiling: {r: 3.35, g: 3, b: 0, a: 0}
     - _MaskDensity: {r: 0.6, g: 1, b: 0, a: 0}
     - _MaskMovement: {r: 0.01, g: 0.04, b: 0, a: 0}
     - _MaskMovement2: {r: 0.008, g: -0.02, b: 0, a: 0}
     - _Mask_tiling: {r: 2, g: 2, b: 0, a: 0}
-    - _StarColor: {r: 1, g: 1, b: 1, a: 0}
+    - _StarColor: {r: 2.9960785, g: 2.227451, b: 2.227451, a: 0}
     - _StarMovementDirection: {r: -0.01, g: 0.09, b: 0, a: 0}
     - _StarMuskDensity: {r: -1.2, g: 1, b: 0, a: 0}
     - _StarMuskTiling: {r: 3, g: 3, b: 0, a: 0}
@@ -92,7 +94,7 @@ Material:
     - _SunColor: {r: 1.866512, g: 3.5648696, b: 2.2304456, a: 1}
     - _SunSize: {r: -0.998, g: -0.999, b: 0, a: 0}
     - _Wind: {r: 0, g: 0.12, b: 0, a: 0}
-    - _ZenithColor: {r: 1.5437328, g: 5.1547422, b: 9.828432, a: 0}
+    - _ZenithColor: {r: 0.5570543, g: 5.334828, b: 13.121728, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &7604497338275487165
 MonoBehaviour:
