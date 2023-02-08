@@ -86,7 +86,7 @@ Shader "LwyShaders/Matcap"
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
                 float2 texcoord : TEXCOORD0;
-                float4 color : COLOR;
+                // float4 color : COLOR;
                 // float2 secondTexcoord : TEXCOORD1;
             };
 
@@ -100,32 +100,32 @@ Shader "LwyShaders/Matcap"
                 float3 normalWS : TEXCOORD3;
                 // float3 normalVS : TEXCOORD5;
                 // float4 positionNDC : TEXCOORD6;
-                float4 scrPos : TEXCOORD7;
-                float4 shadowCoord : TEXCOORD8;
+                // float4 scrPos : TEXCOORD7;
+                // float4 shadowCoord : TEXCOORD8;
                 float3 tangentWS : TEXCOORD9;
                 float3 bitangentWS : TEXCOORD10;
-                float4 vertexColor :TEXCOORD11;
+                // float4 vertexColor :TEXCOORD11;
             };
 
             v2f vert(a2v input)
             {
                 v2f o;
 
-                o.positionCS = TransformObjectToHClip(input.positionOS);
+                o.positionCS = TransformObjectToHClip(input.positionOS.xyzw);
                 o.positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS.xyz, true);
-                o.tangentWS = TransformObjectToWorldDir(input.tangentOS);
+                o.tangentWS = TransformObjectToWorldDir(input.tangentOS.xyz);
 
                 o.bitangentWS = normalize(cross(o.normalWS,o.tangentWS) * input.tangentOS.w);
 
                 //scr pos
-                o.scrPos = ComputeScreenPos(o.positionCS);
+                // o.scrPos = ComputeScreenPos(o.positionCS);
 
                 // //recive shadow
                 // o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
                 
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                o.vertexColor = input.color;
+                // o.vertexColor = input.color;
                 
 
                 return o;
@@ -137,10 +137,10 @@ Shader "LwyShaders/Matcap"
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
 
-                float3 matCapUV = mul(UNITY_MATRIX_IT_MV,input.normalWS).xyz;
+                float3 matCapUV = mul(UNITY_MATRIX_V,float4(input.normalWS.xyz,0));
 
                 //initialize main light
-                Light MainLight = GetMainLight(input.shadowCoord);
+                Light MainLight = GetMainLight();
                 half3 LightDir = normalize(half3(MainLight.direction));
                 half3 LightColor = MainLight.color.rgb;
 
@@ -188,6 +188,60 @@ Shader "LwyShaders/Matcap"
                 return color;
             }
 
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode" = "ShadowCaster" }
+
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull[_Cull]
+
+            HLSLPROGRAM
+            #pragma exclude_renderers gles gles3 glcore
+            #pragma target 4.5
+
+            
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ParallaxMapping.hlsl"
+            CBUFFER_START(UnityPerMaterial)
+
+                // float4 _BaseMap_ST;
+                float4 _MainTex_ST;
+                float  _NormalScale , _FresnelStepValue2;
+                float _OutLineWidth;
+                float4 _RimColor;
+                float _FresnelPower;
+                float _AOPower;
+                float _LightInfluence;
+                float _FresnelStepValue;
+                // float4 _BaseColor;
+                float4 _NormalMap_ST;
+                float _MatCapIntensity;
+
+            CBUFFER_END
+
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #pragma vertex ShadowPassVertex
+            #pragma fragment ShadowPassFragment
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
 
