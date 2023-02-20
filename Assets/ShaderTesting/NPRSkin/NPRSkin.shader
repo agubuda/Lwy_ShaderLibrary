@@ -86,7 +86,7 @@ Shader "LwyShaders/NPRSkin"
         pass
         {
             Name "NPR skin"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             ZWrite On
 
 

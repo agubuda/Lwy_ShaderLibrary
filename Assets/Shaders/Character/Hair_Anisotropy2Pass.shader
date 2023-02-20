@@ -102,7 +102,7 @@
 
 		Pass
 		{
-			Tags { "LightMode" = "UniversalForward" }
+			Tags { "LightMode" = "SRPDefaultUnlit" }
 			ZWrite Off
 			Cull [_Cull]
 			Blend SrcAlpha OneMinusSrcAlpha

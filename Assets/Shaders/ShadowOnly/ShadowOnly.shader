@@ -21,7 +21,7 @@ Shader "LwyShaders/ShadowOnly"
         pass
         {
             Name "ghostEffect"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             
             Cull back
             Blend SrcAlpha OneMinusSrcAlpha

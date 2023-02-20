@@ -21,7 +21,7 @@ Shader "LwyShaders/ScreenDistortion"
         pass
         {
             Name "ScreenDistortion"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             
             Cull back
             // ZTest off

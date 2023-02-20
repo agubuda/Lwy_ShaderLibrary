@@ -50,7 +50,7 @@ Shader "LwyShaders/GGX_pbr"
         pass
         {
             Name "PBR skin"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             ZWrite On
 
 

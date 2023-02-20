@@ -12,7 +12,7 @@ Shader "Unlit/NewUnlitShader"
         Pass
         {
             Name "Stencil"
-            Tags {"LightMode" = "UniversalForward"}
+            Tags {"LightMode" = "SRPDefaultUnlit"}
 
             CGINCLUDE
             

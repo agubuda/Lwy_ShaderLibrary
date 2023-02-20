@@ -36,7 +36,7 @@ Shader "LwyShaders/Hair_Anisotropy_Phong"
 
         Pass
         {
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             Cull off
 
             HLSLPROGRAM

@@ -123,7 +123,7 @@ Shader "LwyShaders/BottleEffect_01"
         pass
         {
             Name "BottleEffect"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             // ZWrite On
             Cull off
             // ZTest on

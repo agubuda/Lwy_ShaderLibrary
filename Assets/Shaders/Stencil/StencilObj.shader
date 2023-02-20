@@ -18,7 +18,7 @@ Shader "LwyShaders/StencilObj"
         pass
         {
             Name "StencilObj"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             
             // Cull back
             // Blend Zero One

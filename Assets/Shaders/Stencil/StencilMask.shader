@@ -17,7 +17,7 @@ Shader "LwyShaders/StencilMask"
         pass
         {
             Name "StencilMask"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             
             // Cull back
             // Blend Zero One
