@@ -242,7 +242,7 @@ Shader "LwyShaders/NPRSkin"
                 //Lambert & ramp
 
                 float Lambert = dot(LightDir, input.normalWS)  ;
-                float halfLambert = (Lambert * _Darkness + _Darkness) * pow(MaskMap.g, _AOPower)  ;
+                float halfLambert = (Lambert / 2 + _Darkness) * pow(MaskMap.g, _AOPower)  ;
                 float4 rampLambertColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, float2(halfLambert, _RampColum))  ;
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
 

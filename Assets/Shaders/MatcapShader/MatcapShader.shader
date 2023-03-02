@@ -39,6 +39,7 @@ Shader "LwyShaders/Matcap"
             Tags { "LightMode" = "SRPDefaultUnlit" }
             
             Cull back
+            ZTest LEqual
             // Blend SrcAlpha OneMinusSrcAlpha
 
 

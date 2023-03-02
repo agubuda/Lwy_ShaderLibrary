@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: Lwy
-  productName: CarCollection_foward-512
+  productName: carCollection
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -57,7 +57,7 @@ PlayerSettings:
   m_MTRendering: 1
   mipStripping: 0
   numberOfMipsStripped: 0
-  m_StackTraceTypes: 010000000100000001000000010000000100000001000000
+  m_StackTraceTypes: 020000000200000002000000020000000200000001000000
   iosShowActivityIndicatorOnLoading: -1
   androidShowActivityIndicatorOnLoading: 2
   iosUseCustomAppBackgroundBehavior: 0
@@ -166,7 +166,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: com.Lwy.CarCollection_foward512
+    Android: com.Lwy.carCollection
     Standalone: com.Lwy.testingURP-PP
   buildNumber:
     Standalone: 0
@@ -445,7 +445,7 @@ PlayerSettings:
     m_Automatic: 0
   m_BuildTargetVRSettings: []
   openGLRequireES31: 0
-  openGLRequireES31AEP: 0
+  openGLRequireES31AEP: 1
   openGLRequireES32: 0
   m_TemplateCustomTags: {}
   mobileMTRendering:
