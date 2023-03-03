@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: b55cd6a8921009740bd99df027dd779d, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 131ccfa6385c2d648b898df8ec7390a1, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -1437,7 +1437,7 @@ Transform:
   m_Children:
   - {fileID: 1163714392}
   m_Father: {fileID: 0}
-  m_RootOrder: 22
+  m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &300033738
 GameObject:
@@ -2450,7 +2450,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 23
+  m_RootOrder: 13
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &595208720
 Animator:
@@ -2535,7 +2535,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 19
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &595437606
 GameObject:
@@ -3175,7 +3175,7 @@ PrefabInstance:
     - target: {fileID: 3943474332033452245, guid: ed06378267a080f4c83e1c3ec7e39694, type: 3}
       propertyPath: m_PropertySheet.m_NamedObject.m_Array.Array.data[0].m_Value
       value: 
-      objectReference: {fileID: 1073978315}
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ed06378267a080f4c83e1c3ec7e39694, type: 3}
 --- !u!1 &842023575
@@ -4994,6 +4994,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c967601e8bf03f4da1c7dc6cfb70aa9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  singleLoop: 0
   blendSpeed1: 10
   blendSpeed2: 6.54
   blendSpeed3: 5.17
@@ -5407,7 +5408,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: -16.254, y: -0.522, z: 8.896}
 --- !u!1001 &1539872277
 PrefabInstance:
@@ -6283,6 +6284,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c967601e8bf03f4da1c7dc6cfb70aa9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  singleLoop: 0
   blendSpeed1: 10
   blendSpeed2: 6.54
   blendSpeed3: 5.17
