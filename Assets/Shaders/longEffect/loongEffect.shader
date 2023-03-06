@@ -1,4 +1,8 @@
-Shader "LwyShaders/longEffect"
+/* You have to change the universal renderer data 
+-> Rendering-> Depth priming Mode to FORCED, 
+or write a render feature instead. */
+
+Shader "LwyShaders/loongEffect"
 {
      Properties
     {
@@ -71,9 +75,24 @@ Shader "LwyShaders/longEffect"
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
 
+
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+
+            // -------------------------------------
+            // Material Keywords
+            // #pragma shader_feature_local_fragment _ALPHATEST_ON
+
+            //--------------------------------------
+            // GPU Instancing
+            // #pragma multi_compile_instancing
+            // #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
+            
             CBUFFER_START(UnityPerMaterial)
 
-                float4 _BaseMap_ST;
+                // float4 _BaseMap_ST;
                 float4 _MainTex_ST;
                 float4 _EmissiveMap_ST;
                 half _SpecPower;
@@ -95,25 +114,13 @@ Shader "LwyShaders/longEffect"
                 float _HueRed;
                 float _HueGreen;
                 float _FresnelStepValue;
-                float4 _BaseColor;
+                // float4 _BaseColor;
                 // float4 _NormalMap;
                 float4 _NormalMap_ST;
                 // float4 _AOMap;
 
             CBUFFER_END
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-
-            // -------------------------------------
-            // Material Keywords
-            // #pragma shader_feature_local_fragment _ALPHATEST_ON
-
-            //--------------------------------------
-            // GPU Instancing
-            // #pragma multi_compile_instancing
-            // #pragma multi_compile _ DOTS_INSTANCING_ON
-
-            // #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
             ENDHLSL
         }
