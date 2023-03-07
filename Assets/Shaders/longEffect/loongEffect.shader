@@ -1,27 +1,27 @@
-/* You have to change the universal renderer data 
--> Rendering-> Depth priming Mode to FORCED, 
+/* You have to change the universal renderer data
+-> Rendering-> Depth priming Mode to FORCED,
 or write a render feature instead. */
 
 Shader "LwyShaders/loongEffect"
 {
-     Properties
+    Properties
     {
         [Space(20)][Header(emissive map)]
         _EmissiveMap ("_EmissiveMap", 2D) = "white" { }
-        [HDR]_EmissiveColor("_EmissiveColor", color) = (1,0,0,1)
+        [HDR]_EmissiveColor ("_EmissiveColor", color) = (1, 0, 0, 1)
 
-        [Space(20)][Header(base settings)]   
+        [Space(20)][Header(base settings)]
         _BaseMap ("Texture", 2D) = "white" { }
-        _BaseColor("baseColor", color) = (0,0,0,1)
+        _BaseColor ("baseColor", color) = (0, 0, 0, 1)
 
-        _darkness("darkness", Range(0,1)) = 0.05
-        _brightness("brightness",  Range(0,1)) = 0.09
-        _darkArea("dark area", Range(0,1)) = 0.5
-        _darkAreaEdge("dark area edge", Range(0,1)) = 0.55
+        _darkness ("darkness", Range(0, 1)) = 0.05
+        _brightness ("brightness", Range(0, 1)) = 0.09
+        _darkArea ("dark area", Range(0, 1)) = 0.5
+        _darkAreaEdge ("dark area edge", Range(0, 1)) = 0.55
 
-        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP(" Enable normal map",float) = 0
-        _NormalMap("Normal map", 2D) = "bump"{}
-        _NormalScale("Normal scale", float) = 1
+        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP (" Enable normal map", float) = 0
+        _NormalMap ("Normal map", 2D) = "bump" { }
+        _NormalScale ("Normal scale", float) = 1
         
         // [Space(20)][Header(Outline settings)]
         // _OutLineWidth ("Outline width", float) = -0.04
@@ -58,12 +58,10 @@ Shader "LwyShaders/loongEffect"
 
         Tags { "Queue" = "AlphaTest" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-
-
         Pass
         {
             Name "DepthOnly"
-            Tags { "LightMode" = "DepthOnly"}
+            Tags { "LightMode" = "DepthOnly" }
 
             ZWrite On
             ColorMask 0
@@ -98,7 +96,7 @@ Shader "LwyShaders/loongEffect"
                 half _SpecPower;
                 float4 _SpecColor;
                 float4 _EmissiveColor;
-                float _SpecRange, _NormalScale , _brightness, _darkness , _darkAreaEdge ,_darkArea;
+                float _SpecRange, _NormalScale, _brightness, _darkness, _darkAreaEdge, _darkArea;
                 // float _SpecStrength;
                 float _OutLineWidth;
                 float _OffsetMul;
@@ -156,7 +154,7 @@ Shader "LwyShaders/loongEffect"
                 half _SpecPower;
                 float4 _SpecColor;
                 float4 _EmissiveColor;
-                float _SpecRange, _NormalScale , _brightness, _darkness , _darkAreaEdge ,_darkArea;
+                float _SpecRange, _NormalScale, _brightness, _darkness, _darkAreaEdge, _darkArea;
                 // float _SpecStrength;
                 float _OutLineWidth;
                 float _OffsetMul;
@@ -192,6 +190,7 @@ Shader "LwyShaders/loongEffect"
                 float4 tangentOS : TANGENT;
                 float2 texcoord : TEXCOORD0;
                 // float2 secondTexcoord : TEXCOORD1;
+
             };
 
             struct v2f
@@ -221,7 +220,7 @@ Shader "LwyShaders/loongEffect"
                 // o.positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
                 // normalVS = TransformWorldToViewDir(normalWS, true);
 
-                o.bitangentWS = normalize(cross(o.normalWS,o.tangentWS) * input.tangentOS.w);
+                o.bitangentWS = normalize(cross(o.normalWS, o.tangentWS) * input.tangentOS.w);
 
                 //NDC
                 float4 ndc = input.positionOS * 0.5f;
@@ -254,12 +253,14 @@ Shader "LwyShaders/loongEffect"
 
                 //Normal map
                 #if _ENABLENORMALMAP
-                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
-                float3 bump  = UnpackNormalScale(normalMap, _NormalScale);
-                // input.normalWS = TransformTangentToWorld(bump, float3x3(input.bitangentWS,input.tangentWS, input.normalWS  ));
-                float3x3 TBN = {input.bitangentWS,input.tangentWS, input.normalWS };
-                bump.z = pow((1- pow(bump.x,2) - pow(bump.y,2)), 0.5);
-                input.normalWS = mul(bump, TBN);
+                    float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
+                    float3 bump = UnpackNormalScale(normalMap, _NormalScale);
+                    // input.normalWS = TransformTangentToWorld(bump, float3x3(input.bitangentWS,input.tangentWS, input.normalWS  ));
+                    float3x3 TBN = {
+                        input.bitangentWS, input.tangentWS, input.normalWS
+                    };
+                    bump.z = pow((1 - pow(bump.x, 2) - pow(bump.y, 2)), 0.5);
+                    input.normalWS = mul(bump, TBN);
                 #endif
 
                 //EmissiveMap
@@ -272,9 +273,8 @@ Shader "LwyShaders/loongEffect"
                 //Blinn_phong
                 float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
                 float3 HalfWay = normalize(viewDir + LightDir);
-                half blinnPhong = (pow(saturate(max(0,dot(input.normalWS, HalfWay))), _SpecPower)) * (MaskMap.a * _SpecMaskPower);
+                half blinnPhong = (pow(saturate(max(0, dot(input.normalWS, HalfWay))), _SpecPower)) * (MaskMap.a * _SpecMaskPower);
                 half4 blinnPhongNPR = smoothstep(_SpecRange, _SpecRange + _SpacSmoothness, blinnPhong) * _SpecColor;
-
 
                 //Lambert & ramp
 
@@ -306,13 +306,12 @@ Shader "LwyShaders/loongEffect"
                 // fresnelDepthRim = smoothstep(0.1,0.12,fresnelRim);
 
                 // if(((1 - smoothstep(0,0.3,Lambert) ) * ambient) = 0){}
-                float4 color = (difusse  * _BaseColor * stepHalfLambert + blinnPhongNPR + rimIntensity * _RimColor + EmissiveMap) ;
+                float4 color = (difusse * _BaseColor * stepHalfLambert + blinnPhongNPR + rimIntensity * _RimColor + EmissiveMap) ;
 
                 // //hue
                 //     color.r = color.r + _HueRed;
                 //     color.g = color.g + _HueGreen;
                 //     color.b = color.b + _HueBlue;
-
 
                 return color;
             }
@@ -327,10 +326,10 @@ Shader "LwyShaders/loongEffect"
         //     Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "SRPDefaultUnlit" }
         //     Cull Front
 
-            
+        
         //     HLSLPROGRAM
 
-            
+        
 
         //     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         //     // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -340,7 +339,7 @@ Shader "LwyShaders/loongEffect"
 
         //     CBUFFER_START(UnityPerMaterial)
 
-                
+        
         //         float _OutLineWidth;
         //         float4 _OutLineColor;
 
@@ -377,13 +376,13 @@ Shader "LwyShaders/loongEffect"
         //         o.positionCS.xy += input.normal.xy * _OutLineWidth * 0.1 * input.vertColor.r;
         //         // o.vertColor = input.vertColor;
 
-                
+        
         //         // o.uv = input.uv;
-                
+        
 
         //         return o;
         //     }
-            
+        
         //     half4 frag(v2f input) : SV_TARGET
         //     {
         //         return _OutLineColor;
@@ -391,5 +390,6 @@ Shader "LwyShaders/loongEffect"
 
         //     ENDHLSL
         // }
-}
+
+    }
 }
