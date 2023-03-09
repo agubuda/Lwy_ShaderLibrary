@@ -28,7 +28,7 @@ public class LensFocus : MonoBehaviour
     bool isHit;
     float hitDistance;
     
-    void Update()
+    void FixedUpdate()
     {
         //set ray of camera
 
