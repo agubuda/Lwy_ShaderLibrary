@@ -8,16 +8,18 @@ public class ChangingObejects : MonoBehaviour
     public GameObject[] cars;
     private int i;
 
-    public void OnStartButtonClick(){
+    public void OnStartButtonClick()
+    {
         i++;
 
-        if(i>=cars.Length){
-            i= 0;
-            cars[cars.Length-1].SetActive(false);
+        if (i >= cars.Length)
+        {
+            i = 0;
+            cars[cars.Length - 1].SetActive(false);
         }
 
-        if(i>0)
-            cars[i-1].SetActive(false);
+        if (i > 0)
+            cars[i - 1].SetActive(false);
 
         cars[i].SetActive(true);
 
@@ -27,14 +29,13 @@ public class ChangingObejects : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        for (int n = 0; n < cars.Length; n++)
+        {
+            cars[n].SetActive(false);
+        }
         int i = 0;
         cars[i].SetActive(true);
         // GameObject[] cars = new ;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }
