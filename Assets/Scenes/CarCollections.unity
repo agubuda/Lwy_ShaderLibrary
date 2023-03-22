@@ -3876,6 +3876,10 @@ PrefabInstance:
       propertyPath: m_RenderingLayerMask
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: -1230109672233554765, guid: 5ee9983299e28a94995dd03ad3b8029d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 2270202cddf29b14381e120237cb4b67, type: 2}
     - target: {fileID: 919132149155446097, guid: 5ee9983299e28a94995dd03ad3b8029d, type: 3}
       propertyPath: m_Name
       value: huangjinpaoche
@@ -3886,7 +3890,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 5ee9983299e28a94995dd03ad3b8029d, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3770423116484666580, guid: 5ee9983299e28a94995dd03ad3b8029d, type: 3}
       propertyPath: m_Layer
@@ -4823,7 +4827,8 @@ MonoBehaviour:
   ikActive: 1
   rightHandObj: {fileID: 1008008800}
   lookObj: {fileID: 1008008800}
-  IKWeight: 1
+  IKPositionWeight: 1
+  IKRotationWeight: 0
 --- !u!1001 &1697700673
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5184,7 +5189,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a36ac7bace093b441bac727af21a9591, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a36ac7bace093b441bac727af21a9591, type: 3}
       propertyPath: m_StaticEditorFlags

@@ -878,6 +878,28 @@ Transform:
   m_Father: {fileID: 1083836300}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1634401578 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2040646527533139527, guid: 3569ae155c87b9347a91641702b1fbdb, type: 3}
+  m_PrefabInstance: {fileID: 6659427510254292760}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1818360609 &1634401580
+RotationConstraint:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1634401578}
+  m_Enabled: 1
+  m_Weight: 1
+  m_RotationAtRest: {x: 1.78, y: -84.721, z: 176.934}
+  m_RotationOffset: {x: 0, y: 0, z: 0}
+  m_AffectRotationX: 1
+  m_AffectRotationY: 1
+  m_AffectRotationZ: 1
+  m_IsContraintActive: 1
+  m_IsLocked: 1
+  m_Sources: []
 --- !u!1 &1657085358
 GameObject:
   m_ObjectHideFlags: 0
