@@ -2,7 +2,7 @@ Shader "ComputeShader/softBodyShader"
 {
     Properties
     {
-        _Smooth ("smooth", float) = 1.0
+        // _Smooth ("smooth", float) = 1.0
         _Spring ("Sping", float) = 1.0
         _Damper ("_Damper", float) = 5.0
         _MoveScale ("_MoveScale", float) = 1.0
@@ -70,7 +70,7 @@ Shader "ComputeShader/softBodyShader"
                 float _NormalScale;
                 float _FrenelPower;
                 // float _SoftDepth;
-                float _Damper, _Spring, _Gravity, _MoveScale, _Smooth;
+                float _Damper, _Spring, _Gravity, _MoveScale /*_Smooth*/;
 
             CBUFFER_END
 
