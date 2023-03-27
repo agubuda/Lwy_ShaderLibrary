@@ -21,7 +21,7 @@ public class Texturing : MonoBehaviour
         computeShader.Dispatch(kernelIndex,1024/8, 1024/8, 1);
 
         material.mainTexture = mRenderTexture;
-        material.SetTexture("_NormalMap", mRenderTexture);
+        // material.SetTexture("_NormalMap", mRenderTexture);
     }
 
     // Update is called once per frame

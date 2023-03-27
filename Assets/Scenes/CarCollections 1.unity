@@ -2290,7 +2290,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1066623941}
-  m_LocalRotation: {x: 0.098912224, y: 0.091019854, z: -0.009085811, w: 0.99088305}
+  m_LocalRotation: {x: 0.10103598, y: 0.07311322, z: -0.0074454015, w: 0.99216473}
   m_LocalPosition: {x: 5.038901, y: 5.952819, z: -7.7020936}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -4170,7 +4170,7 @@ MeshCollider:
   m_GameObject: {fileID: 1386953812}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: 30
@@ -5156,6 +5156,25 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a36ac7bace093b441bac727af21a9591, type: 3}
   m_PrefabInstance: {fileID: 1747705358}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1747705361 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3164620057644310073, guid: a36ac7bace093b441bac727af21a9591, type: 3}
+  m_PrefabInstance: {fileID: 1747705358}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &1747705362
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1747705361}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 0
+  serializedVersion: 4
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 8551546850003100986, guid: a36ac7bace093b441bac727af21a9591, type: 3}
 --- !u!1 &1761603689
 GameObject:
   m_ObjectHideFlags: 0
@@ -5924,8 +5943,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2025344422}
-  m_LocalRotation: {x: 0.098912224, y: 0.091019854, z: -0.009085811, w: 0.99088305}
-  m_LocalPosition: {x: -2.3556018, y: 2.78, z: -10.285788}
+  m_LocalRotation: {x: 0.10103598, y: 0.07311322, z: -0.0074454015, w: 0.99216473}
+  m_LocalPosition: {x: -1.937057, y: 2.757141, z: -10.124039}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

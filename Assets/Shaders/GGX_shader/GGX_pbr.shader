@@ -1,46 +1,49 @@
+//processing, not finished.
+
 Shader "LwyShaders/GGX_pbr"
 {
     Properties
     {
-        _TempValue("temp value", Range(0,1)) = 1
+        _Metalic("Metalic", Range(0,1)) = 1
         _BaseMap ("Texture", 2D) = "white" { }
+        _BaseColor ("BaseColor", color) = (1.0,1.0,1.0,1.0)
         
-        [Space(20)][Header(Ramp lights)]
-        _RampMap ("Ramp Map", 2D) = "White" { }
-        _RampColum ("Ramp colum", float) = 0.8
+        // [Space(20)][Header(Ramp lights)]
+        // _RampMap ("Ramp Map", 2D) = "White" { }
+        // _RampColum ("Ramp colum", float) = 0.8
         _Darkness ("Darkness", float) = 0.5
 
-        [Space(20)][Header(Outline settings)]
-        _OutLineWidth ("Outline width", float) = -0.04
-        _OutLineColor ("Outline color", color) = (0.4, 0.3, 0.3, 1)
+        // [Space(20)][Header(Outline settings)]
+        // _OutLineWidth ("Outline width", float) = -0.04
+        // _OutLineColor ("Outline color", color) = (0.4, 0.3, 0.3, 1)
 
-        [Space(20)][Header(Rim light settings)]
-        _OffsetMul ("_RimWidth", Range(0, 0.1)) = 0.0055
-        _Threshold ("_Threshold", Range(0, 1)) = 0.02
-        _RimColor ("RimColor", color) = (0.8, 0.7, 0.7, 1)
-        _FresnelPower ("Fresnel power", Range(0, 10)) = 3
+        // [Space(20)][Header(Rim light settings)]
+        // _OffsetMul ("_RimWidth", Range(0, 0.1)) = 0.0055
+        // _Threshold ("_Threshold", Range(0, 1)) = 0.02
+        // _RimColor ("RimColor", color) = (0.8, 0.7, 0.7, 1)
+        // _FresnelPower ("Fresnel power", Range(0, 10)) = 3
         
-        [Space(20)][Header(AO map)]
-        _MaskMap ("Mask Map", 2D) = "white" { }//as urp default settings, g = AO, a = Metalic
-        _AOPower ("AO power", Range(0, 6)) = 1
+        // [Space(20)][Header(AO map)]
+        // _MaskMap ("Mask Map", 2D) = "white" { }//as urp default settings, g = AO, a = Metalic
+        // _AOPower ("AO power", Range(0, 6)) = 1
 
-        [Space(20)][Header(Specular)]
-        _SpecPower ("Specular Power", float) = 10
-        _SpecColor ("Specular Color", color) = (0.4, 0.3, 0.3, 1)
-        _SpecRange ("Specular Range", Range(0, 1)) = 0.075
-        _SpacSmoothness ("Specular Edge Smoothness", Range(0, 1)) = 0.58
-        _SpecStrength ("Specular Range", float) = 0.86
-        _SpecAOPower ("Specular AO power", float) = 0.5
-        _SpecMaskPower ("Specular Mask power", Range(0, 10)) = 1
+        // [Space(20)][Header(Specular)]
+        // _SpecPower ("Specular Power", float) = 10
+        // _SpecColor ("Specular Color", color) = (0.4, 0.3, 0.3, 1)
+        // _SpecRange ("Specular Range", Range(0, 1)) = 0.075
+        // _SpacSmoothness ("Specular Edge Smoothness", Range(0, 1)) = 0.58
+        // _SpecStrength ("Specular Range", float) = 0.86
+        // _SpecAOPower ("Specular AO power", float) = 0.5
+        // _SpecMaskPower ("Specular Mask power", Range(0, 10)) = 1
 
-        [Space(20)][Header(Better Stay in One)]
-        [Toggle(_ENABLEENVIROMENTLIGHT)] _ENABLEENVIROMENTLIGHT("Enable enviroment light", Float) = 0.0
-        _LightInfluence ("Light influence", Range(0.1, 1.5)) = 1
+        // [Space(20)][Header(Better Stay in One)]
+        // [Toggle(_ENABLEENVIROMENTLIGHT)] _ENABLEENVIROMENTLIGHT("Enable enviroment light", Float) = 0.0
+        // _LightInfluence ("Light influence", Range(0.1, 1.5)) = 1
 
-        [Space(20)][Header(Color adjastment)]
-        _HueRed ("Hue red", Range(-1, 1)) = 0
-        _HueBlue ("Hue blue", Range(-1, 1)) = 0
-        _HueGreen ("Hue green", Range(-1, 1)) = 0
+        // [Space(20)][Header(Color adjastment)]
+        // _HueRed ("Hue red", Range(-1, 1)) = 0
+        // _HueBlue ("Hue blue", Range(-1, 1)) = 0
+        // _HueGreen ("Hue green", Range(-1, 1)) = 0
 
         [Space(20)]
         _Cubemap ("cube map", Cube) = "_Skybox" {}
@@ -73,26 +76,27 @@ Shader "LwyShaders/GGX_pbr"
 
                 float4 _BaseMap_ST;
                 float4 _MainTex_ST;
-                half _SpecPower;
-                float4 _SpecColor;
-                float _SpecRange;
-                float _SpecStrength;
+                float4 _BaseColor;
+                // half _SpecPower;
+                // float4 _SpecColor;
+                // float _SpecRange;
+                // float _SpecStrength;
                 float _Darkness;
-                float _OutLineWidth;
-                float _RampColum;
-                float _OffsetMul;
-                float _Threshold;
-                float4 _RimColor;
-                float _FresnelPower;
-                float _AOPower;
-                float _SpacSmoothness;
-                float _SpecAOPower;
-                float _SpecMaskPower;
-                float _LightInfluence;
-                float _HueBlue;
-                float _HueRed;
-                float _HueGreen; 
-                float _TempValue;
+                // float _OutLineWidth;
+                // float _RampColum;
+                // float _OffsetMul;
+                // float _Threshold;
+                // float4 _RimColor;
+                // float _FresnelPower;
+                // float _AOPower;
+                // float _SpacSmoothness;
+                // float _SpecAOPower;
+                // float _SpecMaskPower;
+                // float _LightInfluence;
+                // float _HueBlue;
+                // float _HueRed;
+                // float _HueGreen; 
+                float _Metalic;
                 // float4 unity_SpecCube0_HDR;
                 // float4 _AOMap;
 
@@ -188,79 +192,22 @@ Shader "LwyShaders/GGX_pbr"
                 float3 LightDir = normalize(float3(MainLight.direction));
                 float4 LightColor = float4(MainLight.color, 1);
 
-                
 
-                
-                //AO map
-                float4 MaskMap = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv);
-
-                //Blinn_phong
+                // //Blinn_phong
                 float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
-                float3 HalfWay = normalize(viewDir + LightDir);
+                // float3 HalfWay = normalize(viewDir + LightDir);
                
-
-                //Lambert & ramp
-
-                float Lambert = dot(LightDir, input.normalWS)  ;
-                float halfLambert = (Lambert * _Darkness + _Darkness) * pow(MaskMap.g, _AOPower)  ;
-                float4 rampLambertColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, float2(halfLambert, _RampColum))  ;
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-
-                //ambient light
-                #if _ENABLEENVIROMENTLIGHT
-                    float4 ambient = float4(_GlossyEnvironmentColor.rgb, 1);
-                    float4 GI = (0, 0, 0, 0);
-
-                    LightColor *= halfLambert;
-                    ambient *= (1 - halfLambert);
-                #endif
-                
-
-                //rim light
-
-                float depth = input.positionNDC.z / input.positionNDC.w;
-
-                float2 screenPos = input.scrPos.xy / input.scrPos.w;
-                float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
-                float2 RimOffsetUV = RimScreenUV + normalVS * _OffsetMul;
-                
-                float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams); // 离相机越近越小
-                float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r; // _CameraDepthTexture.r = input.positionNDC.z / input.positionNDC.w
-                float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
-                float depthDiff = linearEyeOffsetDepth - linearEyeDepth;
-                float rimIntensity = step(_Threshold, depthDiff);
-
-                //frenel rim
-                float4 fresnelRim = pow(1 - saturate(dot(normalize(input.normalWS), viewDir)), _FresnelPower);
-                float4 fresnelDepthRim = rimIntensity * fresnelRim * _RimColor;
-
-                // if(((1 - smoothstep(0,0.3,Lambert) ) * ambient) = 0){}
-                // float4 color = (difusse * rampLambertColor + (blinnPhongNPR * _SpecStrength) + fresnelDepthRim) ;
-
-                // //hue
-                //     color.r = color.r + _HueRed;
-                //     color.g = color.g + _HueGreen;
-                //     color.b = color.b + _HueBlue;
-
-
-                // recive shadow
-                // // color *= (MainLight.shadowAttenuation + 0.5);
-                // #if _ENABLEENVIROMENTLIGHT
-                //     color *= ((LightColor + ambient) * _LightInfluence + _LightInfluence);
-                // #endif
-
-                
-                // return fresnelDepthRim;
 
                 //ggx
 
-                _TempValue = max(0.0001,_TempValue);
+                _Metalic = max(0.0001,_Metalic);
 
                 float3 H =normalize( viewDir + LightDir );
                 // float NoH = saturate(dot(input.normalWS, H));
-                // float d = (NoH * _TempValue - NoH) * NoH +1;
+                // float d = (NoH * _Metalic - NoH) * NoH +1;
 
-                float temp2 = _TempValue * _TempValue ;
+                float temp2 = _Metalic * _Metalic ;
                 float NoH = saturate(dot(H , input.normalWS ) );
                 float NoH2 = NoH * NoH;
                 float nom = temp2;
@@ -272,7 +219,7 @@ Shader "LwyShaders/GGX_pbr"
                 
                 float3 n = normalize(input.normalWS);
 
-                float G = GeometrySmith(n , viewDir, LightDir, _TempValue);
+                float G = GeometrySmith(n , viewDir, LightDir, _Metalic);
 
                 float NdotV = dot(n,viewDir);
                 float NdotL = dot(n,LightDir);
@@ -281,30 +228,24 @@ Shader "LwyShaders/GGX_pbr"
                 float brdfSpec = ggx*G/(4*NoH * NdotV);
 
                 float ks = ggx;
-                float kd = (1-ks) * (1- _TempValue);
+                float kd = (1-ks) * (1- _Metalic);
 
 
                 // float3 derectDiffColor = kd * difusse * LightColor * Lambert;
 
 
-            float3 reflectDirWS = reflect(-viewDir,input.normalWS);
-            // float4 Cubemap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, 10);
-            float4 Cubemap = SAMPLE_TEXTURECUBE_LOD(_Cubemap, sampler_Cubemap, reflectDirWS, 0.5 * 10);
+                float3 reflectDirWS = reflect(-viewDir,input.normalWS);
+                // float4 Cubemap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, 10);
+                float4 Cubemap = SAMPLE_TEXTURECUBE_LOD(_Cubemap, sampler_Cubemap, reflectDirWS, 0.5 * 10);
 
-                float dirDiffColor = kd  *  saturate(NdotL)  ;
+                float dirDiffColor = kd * _BaseColor *  saturate(NdotL)  ;
 
-                float4 final = float4(dirDiffColor * _GlossyEnvironmentColor + ks * LightColor * difusse ) ;
-
-            // float4 ifFlag = step(Cubemap,float4(0.5,0.5,0.5,0.5));
-            // float4 B = float4(1,0,0,0.5);
-            // float4 result = ifFlag * Cubemap * B * 2 + (1-ifFlag) * (1-(1-Cubemap)*(1-B)*2);
-            // float4 result  = Cubemap * (1-B.a) + B*(B.a);
-            // float4 Cubemap = IndirSpeCube();
+                float4 final = float4(dirDiffColor /* *  _GlossyEnvironmentColor */ + ks * LightColor * difusse ) ;
 
                 // return  difusse * (ggx * LightColor + dirDiffColor* _GlossyEnvironmentColor * LightColor) + Cubemap *0.1;
                 // return   dirDiffColor  + Cubemap  * _GlossyEnvironmentColor + ggx *difusse * LightColor;
                 // return dirDiffColor + _GlossyEnvironmentColor * Cubemap  + ggx *difusse * LightColor;
-                return (ggx * LightColor * difusse + dirDiffColor * difusse + Cubemap * _GlossyEnvironmentColor) ;
+                return (ggx * LightColor * difusse + dirDiffColor * difusse + Cubemap /* * _GlossyEnvironmentColor */) ;
             }
 
             ENDHLSL
