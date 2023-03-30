@@ -29,7 +29,7 @@ public class ParticalSys : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         computeShader.SetBuffer(kernelIndex,"particalBuffer", computeBuffer);
         computeShader.SetFloat("time",Time.time);

@@ -12,7 +12,7 @@ RWStructuredBuffer<particalData> particalBuffer;
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-RWTexture2D<float4> Result;
+// RWTexture2D<float4> Result;
 
 [numthreads(10,10,10)]
 void CSMain (uint3 gid : SV_GROUPID, uint index: SV_GROUPINDEX )

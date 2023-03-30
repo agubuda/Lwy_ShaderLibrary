@@ -51,6 +51,8 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
         float4 _Bloom_Texture_TexelSize;
         float4 _Dithering_Params;
 
+        float bloom_tempA;
+
         #define DistCenter              _Distortion_Params1.xy
         #define DistAxis                _Distortion_Params1.zw
         #define DistTheta               _Distortion_Params2.x
@@ -155,10 +157,12 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
                 half4 bloom = SampleTexture2DBicubic(TEXTURE2D_X_ARGS(_Bloom_Texture, sampler_LinearClamp), uvDistorted, _Bloom_Texture_TexelSize.zwxy, (1.0).xx, unity_StereoEyeIndex);
                 #else
                 half4 bloom = SAMPLE_TEXTURE2D_X(_Bloom_Texture, sampler_LinearClamp, uvDistorted);
+
                 #endif
 
                 #if UNITY_COLORSPACE_GAMMA
                 bloom.xyz *= bloom.xyz; // γ to linear
+                bloom_tempA = bloom.x;
                 #endif
 
                 UNITY_BRANCH
@@ -168,6 +172,8 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
                 }
 
                 bloom.xyz *= BloomIntensity;
+                bloom_tempA = bloom.x;
+
                 color += bloom.xyz * BloomTint;
 
                 #if defined(BLOOM_DIRT)
@@ -235,7 +241,7 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
             }
             #endif
 
-            return half4(color, SAMPLE_TEXTURE2D_X(_SourceTex, sampler_LinearClamp, uv).a);
+            return half4(color, SAMPLE_TEXTURE2D_X(_SourceTex, sampler_LinearClamp, uv).a + bloom_tempA);
         }
 
     ENDHLSL
