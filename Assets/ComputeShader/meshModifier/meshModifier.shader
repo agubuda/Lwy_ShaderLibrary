@@ -73,33 +73,42 @@ Shader "ComputeShader/meshModifier"
 
             CBUFFER_END
 
+            struct a2v
+            {
+                float4 positionOS:POSITION;
+                uint id:SV_VERTEXID;
+            };
+
             struct v2f
             {
-                float4 vertex : POSITION;
+                float4 vertexWS : SV_POSITION;
                 float4 color : COLOR0;
             };
 
 
-            StructuredBuffer<float3> pos;
+            StructuredBuffer<float3> _Pos ;
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
 
-            v2f vert(uint id : SV_VERTEXID)
+            v2f vert(a2v input)
             {
                 v2f o;
+                float3 data = _Pos[input.id];
+                // input.positionOS.xyz += (data);
 
-                o.vertex = TransformWorldToHClip(float4(pos[id], 0));
-                o.color = float4(1,0,0,1);
+                o.vertexWS = TransformObjectToHClip( data);
+                o.color = half4((data),1);
 
                 return o;
             };
 
 
 
-            float4 frag(v2f inside) : SV_TARGET
+            float4 frag(v2f input) : SV_TARGET
             {
-                return inside.color;
+                // float2 positionVS = TransformWorldToView(input.vertexWS);
+                return input.color;
             };
 
 

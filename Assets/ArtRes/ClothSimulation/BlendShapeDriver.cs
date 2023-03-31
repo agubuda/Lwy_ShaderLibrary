@@ -7,8 +7,8 @@ public class BlendShapeDriver : MonoBehaviour
     int blendeShapeCount;
     SkinnedMeshRenderer skinnedMeshRenderer;
     Mesh skinnedMesh;
-    float blendOne = 0f;
-    float blendTwo = 0f;
+    // float blendOne = 0f;
+    // float blendTwo = 0f;
     public bool singleLoop = false;
     public float blendSpeed1 = 10f;
     public float blendSpeed2 = 10f;

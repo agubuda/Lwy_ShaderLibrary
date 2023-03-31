@@ -10,20 +10,18 @@ uint vertCount;
 // with cs.SetTexture
 // RWTexture2D<float4> Result;
 // RWStructuredBuffer<float3> Result;
-RWStructuredBuffer<float3> pos;
+RWStructuredBuffer<float3> pos ;
 
-[numthreads(1024,1,1)]
-void CSMain (uint3 id : SV_GROUPID)
+[numthreads(64 ,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    if(id.x>=vertCount){
+    if(id.x>vertCount){return;}
+    // int index = id.x;
 
-    }
-    else{
-    int vertIndex = id.x;
     // TODO: insert actual code here!
 
-    pos[id.x] = float3(pos[id.x]);
-    }
+    pos[id.x] = float3(pos[id.x]) * abs(sin(time));
+}
 
     // Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
-}
+// }

@@ -1,57 +1,85 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class meshModifier : MonoBehaviour
 {
     // Start is called before the first frame update
     public ComputeShader computeShader;
-    int kernelIndex;
+    private int kernelIndex;
     public Material material;
-    ComputeBuffer computeBuffer;
+    private ComputeBuffer computeBuffer = null;
 
-    Vector3[] verticesPosition;
+    private Vector3[] verticesPosition;
 
-    int vertCount;
-    void Start()
+    private int vertCount;
+    private Vector3[] aaa;
+
+    private int threadGroup;
+    void OnEnable()
     {   
+        kernelIndex = computeShader.FindKernel("CSMain");
+
         //matrix
         Matrix4x4 localToWorld = transform.localToWorldMatrix;
 
         //compute buffer initialize
-        var meshFilter = GetComponent<MeshFilter>();
-        vertCount = meshFilter.mesh.vertexCount;
+        var meshFilter = GetComponent<MeshFilter>().sharedMesh;
+        vertCount = meshFilter.vertexCount;
 
         Debug.Log(vertCount);
-        computeBuffer = new ComputeBuffer(vertCount,3 * 4 );
-        Graphics.SetRandomWriteTarget(1,computeBuffer,true);
+        computeBuffer = new ComputeBuffer(vertCount,3 * sizeof(float),ComputeBufferType.Append);
+        // Graphics.SetRandomWriteTarget(1,computeBuffer,true);
+        // Debug.Log(computeBuffer);
 
-        verticesPosition = meshFilter.mesh.vertices;
-        for(int i = 0; i<vertCount; i++)
-        {
-            verticesPosition[i] = localToWorld.MultiplyPoint3x4(verticesPosition[i]);
-        }
 
-        computeBuffer.SetData(verticesPosition);
-        kernelIndex = computeShader.FindKernel("CSMain");
+        verticesPosition = meshFilter.vertices;
+        // for(int i = 0; i<vertCount; i++)
+        // {
+        //     verticesPosition[i] = localToWorld.MultiplyPoint3x4(verticesPosition[i]);
+        // }
+        // aaa = new Vector3[verticesPosition.Length];
 
-        foreach(var pos in verticesPosition){
-            Debug.Log(pos);
-        }
+        threadGroup = Mathf.CeilToInt(vertCount/64);
+
+        // computeBuffer.SetData(verticesPosition);
+
+        computeShader.SetBuffer(kernelIndex,"pos", computeBuffer); 
+        computeShader.SetInt("vertCount",vertCount);
+        // computeShader.Dispatch(kernelIndex,vertCount,1,1);
+
+        // computeBuffer.GetData (aaa, 0, 0, vertCount);
+        // for(int i = 0; i < aaa.Length; i++)
+        // {
+        //     Debug.Log(aaa[i]);
+        // }
+
+        // Debug.Log(computeBuffer.GetData<Vector3>() + "dick");
     }
 
     // Update is called once per frame
-    void Update()
+    void LateUpdate()
     {
-        computeShader.SetBuffer(kernelIndex,"pos", computeBuffer); 
-        computeShader.SetFloat("time", Time.time); 
-        computeShader.SetInt("vertCount",vertCount);
-        computeShader.Dispatch(kernelIndex,vertCount,1,1);
-        material.SetBuffer("pos", computeBuffer);
+        computeBuffer.SetData(verticesPosition);
+        computeShader.SetFloat("time",  Time.time); 
+        computeShader.Dispatch(kernelIndex,threadGroup,1,1);
+
+        // computeBuffer.GetData (aaa, 0, 0, vertCount);
+        // for(int i = 0; i < aaa.Length; i++)
+        // {
+        //     Debug.Log(aaa[i]);
+        // }
+
+        // material.SetBuffer("_Pos", computeBuffer);
+        material.SetBuffer("_Pos", computeBuffer);
+
     }
 
-    void OnDestroy(){
-        // computeBuffer.re
+    void OnDisable(){
         computeBuffer.Dispose();
+
+        computeBuffer.Release();
+        // computeBuffer.re
     }
 }

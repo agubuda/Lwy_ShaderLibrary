@@ -162,7 +162,6 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
 
                 #if UNITY_COLORSPACE_GAMMA
                 bloom.xyz *= bloom.xyz; // γ to linear
-                bloom_tempA = bloom.x;
                 #endif
 
                 UNITY_BRANCH
@@ -172,9 +171,10 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
                 }
 
                 bloom.xyz *= BloomIntensity;
-                bloom_tempA = bloom.x;
+
 
                 color += bloom.xyz * BloomTint;
+                
 
                 #if defined(BLOOM_DIRT)
                 {
@@ -185,8 +185,11 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
                     half3 dirt = SAMPLE_TEXTURE2D(_LensDirt_Texture, sampler_LinearClamp, uvDistorted * LensDirtScale + LensDirtOffset).xyz;
                     dirt *= LensDirtIntensity;
                     color += dirt * bloom.xyz;
+                    
                 }
                 #endif
+                bloom_tempA = bloom.x*2;
+
             }
             #endif
 
