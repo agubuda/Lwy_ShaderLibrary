@@ -4,15 +4,16 @@
 // float3 pos;
 float time;
 uint vertCount;
+float _strength;
 
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 // RWTexture2D<float4> Result;
 // RWStructuredBuffer<float3> Result;
-RWStructuredBuffer<float3> pos ;
+RWStructuredBuffer<float3> _pos ;
 
-[numthreads(64 ,1,1)]
+[numthreads(128 ,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     if(id.x>vertCount){return;}
@@ -20,7 +21,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     // TODO: insert actual code here!
 
-    pos[id.x] = float3(pos[id.x]) * abs(sin(time));
+    _pos[id.x] = float3(_pos[id.x]) * (abs(cos(time))*_strength+_strength);
 }
 
     // Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);

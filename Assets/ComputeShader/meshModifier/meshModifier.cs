@@ -7,6 +7,7 @@ public class meshModifier : MonoBehaviour
 {
     // Start is called before the first frame update
     public ComputeShader computeShader;
+    public float _strength = 0.5f;
     private int kernelIndex;
     public Material material;
     private ComputeBuffer computeBuffer = null;
@@ -29,41 +30,31 @@ public class meshModifier : MonoBehaviour
         vertCount = meshFilter.vertexCount;
 
         Debug.Log(vertCount);
-        computeBuffer = new ComputeBuffer(vertCount,3 * sizeof(float),ComputeBufferType.Append);
-        // Graphics.SetRandomWriteTarget(1,computeBuffer,true);
+        computeBuffer = new ComputeBuffer(vertCount,3 * sizeof(float),ComputeBufferType.Default);
+        // Graphics.SetRandomWriteTarget(1,computeBuffer);
         // Debug.Log(computeBuffer);
-
 
         verticesPosition = meshFilter.vertices;
         // for(int i = 0; i<vertCount; i++)
         // {
         //     verticesPosition[i] = localToWorld.MultiplyPoint3x4(verticesPosition[i]);
         // }
-        // aaa = new Vector3[verticesPosition.Length];
+        aaa = new Vector3[verticesPosition.Length];
 
-        threadGroup = Mathf.CeilToInt(vertCount/64);
+        threadGroup = vertCount / 128 +1 /*Mathf.CeilToInt(vertCount/128+1)*/;
 
-        // computeBuffer.SetData(verticesPosition);
-
-        computeShader.SetBuffer(kernelIndex,"pos", computeBuffer); 
-        computeShader.SetInt("vertCount",vertCount);
-        // computeShader.Dispatch(kernelIndex,vertCount,1,1);
-
-        // computeBuffer.GetData (aaa, 0, 0, vertCount);
-        // for(int i = 0; i < aaa.Length; i++)
-        // {
-        //     Debug.Log(aaa[i]);
-        // }
-
-        // Debug.Log(computeBuffer.GetData<Vector3>() + "dick");
     }
 
-    // Update is called once per frame
-    void LateUpdate()
+    // Update is called once per frames
+    void Update()
     {
         computeBuffer.SetData(verticesPosition);
+
+        computeShader.SetBuffer(kernelIndex,"_pos", computeBuffer); 
+        computeShader.SetInt("vertCount",vertCount);
+        computeShader.SetFloat("_strength",_strength);
         computeShader.SetFloat("time",  Time.time); 
-        computeShader.Dispatch(kernelIndex,threadGroup,1,1);
+        computeShader.Dispatch(kernelIndex,threadGroup*10,1,1);
 
         // computeBuffer.GetData (aaa, 0, 0, vertCount);
         // for(int i = 0; i < aaa.Length; i++)
@@ -72,12 +63,12 @@ public class meshModifier : MonoBehaviour
         // }
 
         // material.SetBuffer("_Pos", computeBuffer);
+        Debug.Log(_strength);
         material.SetBuffer("_Pos", computeBuffer);
-
     }
 
     void OnDisable(){
-        computeBuffer.Dispose();
+        // computeBuffer.Dispose();
 
         computeBuffer.Release();
         // computeBuffer.re

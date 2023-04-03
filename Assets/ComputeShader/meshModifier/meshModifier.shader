@@ -81,7 +81,7 @@ Shader "ComputeShader/meshModifier"
 
             struct v2f
             {
-                float4 vertexWS : SV_POSITION;
+                float4 vertexCS : SV_POSITION;
                 float4 color : COLOR0;
             };
 
@@ -97,7 +97,7 @@ Shader "ComputeShader/meshModifier"
                 float3 data = _Pos[input.id];
                 // input.positionOS.xyz += (data);
 
-                o.vertexWS = TransformObjectToHClip( data);
+                o.vertexCS = TransformObjectToHClip(data);
                 o.color = half4((data),1);
 
                 return o;

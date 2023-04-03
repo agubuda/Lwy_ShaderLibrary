@@ -35,7 +35,7 @@ public class VertexPositionData : MonoBehaviour
         var renderer = GetComponent<Renderer>();
         if (!renderer) return;
 
-        _buffer = new ComputeBuffer(numVertices * 2, 12 * 3 + 4);
+        _buffer = new ComputeBuffer(numVertices, 12 * 3 + 4);
         Graphics.SetRandomWriteTarget(registerField, _buffer, true);
         Debug.Log(_buffer);
 
