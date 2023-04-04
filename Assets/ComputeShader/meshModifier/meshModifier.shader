@@ -41,7 +41,7 @@ Shader "ComputeShader/meshModifier"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_fog
-            #pragma target 5.0
+            #pragma target 4.5
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -72,6 +72,7 @@ Shader "ComputeShader/meshModifier"
                 float _Damper, _Spring, _Gravity, _MoveScale;
 
             CBUFFER_END
+            
 
             struct a2v
             {
@@ -94,11 +95,12 @@ Shader "ComputeShader/meshModifier"
             v2f vert(a2v input)
             {
                 v2f o;
-                float3 data = _Pos[input.id];
+                // float3 data = _Pos[input.id];
                 // input.positionOS.xyz += (data);
 
-                o.vertexCS = TransformObjectToHClip(data);
-                o.color = half4((data),1);
+                // o.vertexCS = TransformWorldToHClip(_Pos[input.id]);
+                o.vertexCS = mul(UNITY_MATRIX_VP,float4(_Pos[input.id],1));
+                o.color = half4((_Pos[input.id]),1);
 
                 return o;
             };

@@ -1,28 +1,56 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
 // float3 pos;
-float time;
+float _deltaTime;
 uint vertCount;
 float _strength;
 
+float4 prevPosWS;
+float4 positionWS;
+float3 velocityWS;
+float4x4 _LocalToWorld;
+
+float _MoveScale;
+float _Spring;
+float _Damper;
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 // RWTexture2D<float4> Result;
 // RWStructuredBuffer<float3> Result;
-RWStructuredBuffer<float3> _pos ;
+RWStructuredBuffer<float3> _pos;
 
-[numthreads(128 ,1,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+[numthreads(128, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    if(id.x>vertCount){return;}
+    if (id.x > vertCount)
+    {
+        return;
+    }
     // int index = id.x;
 
     // TODO: insert actual code here!
 
-    _pos[id.x] = float3(_pos[id.x]) * (abs(cos(time))*_strength+_strength);
+    positionWS = mul(_LocalToWorld, float4(_pos[id.x], 1.0));
+    prevPosWS = mul(_LocalToWorld, float4(_pos[id.x + vertCount], 1.0));
+    
+    _pos[id.x + vertCount + vertCount] = (positionWS - prevPosWS).xyz;
+    float3 forceWS = _Spring * _pos[id.x + vertCount + vertCount] - velocityWS * _Damper;
+
+    float dt = 1.0 / 60;
+    velocityWS += forceWS * dt;
+    prevPosWS.xyz += velocityWS * dt;
+    _pos[id.x + vertCount + vertCount]  = (prevPosWS - positionWS) * _MoveScale;
+
+    float move = length(positionWS);
+    _pos[id.x + vertCount + vertCount]  = min(move, 1.0) / max(move, 0.01) * _pos[id.x + vertCount + vertCount];
+
+    // _pos[id.x + vertCount + vertCount] is the dpos before;
+    
+    _pos[id.x] = positionWS.xyz + _pos[id.x + vertCount + vertCount];
 }
 
-    // Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+// Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
 // }
