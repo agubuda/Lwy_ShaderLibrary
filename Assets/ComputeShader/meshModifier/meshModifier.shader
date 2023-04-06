@@ -40,10 +40,6 @@ Shader "LwyShaders/NPRSkin_Softbody"
         [Toggle(_ENABLEENVIROMENTLIGHT)] _ENABLEENVIROMENTLIGHT("Enable enviroment light", Float) = 0.0
         _LightInfluence ("Light influence", Range(0.1, 1.5)) = 1
 
-        [Space(20)][Header(Color adjastment)]
-        _HueRed ("Hue red", Range(-1, 1)) = 0
-        _HueBlue ("Hue blue", Range(-1, 1)) = 0
-        _HueGreen ("Hue green", Range(-1, 1)) = 0
     }
 
     SubShader
@@ -51,42 +47,10 @@ Shader "LwyShaders/NPRSkin_Softbody"
 
         Tags { "Queue" = "Geometry" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        Pass
-        {
-            Name "DepthOnly"
-            Tags { "LightMode" = "DepthOnly" }
-
-            ZWrite On
-            ColorMask 0
-
-            HLSLPROGRAM
-            #pragma exclude_renderers gles gles3 glcore
-            #pragma target 4.5
-
-            #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
-
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-
-
-            // -------------------------------------
-            // Material Keywords
-            // #pragma shader_feature_local_fragment _ALPHATEST_ON
-
-            //--------------------------------------
-            // GPU Instancing
-            // #pragma multi_compile_instancing
-            // #pragma multi_compile _ DOTS_INSTANCING_ON
-
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
-            ENDHLSL
-        }
-
         pass
         {
             Name "NPR skin"
-            Tags { "LightMode" = "SRPDefaultUnlit" }
+            Tags { "LightMode" = "SRPDefaultUnlit" "RenderType" = "AlphaTest"}
             ZWrite On
 
 
@@ -97,6 +61,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
 
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 4.5
 
             #pragma multi_compile_fog
 
@@ -126,9 +91,6 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 float _SpecAOPower;
                 float _SpecMaskPower;
                 float _LightInfluence;
-                float _HueBlue;
-                float _HueRed;
-                float _HueGreen;
                 // float4 _NormalMap;
                 float4 _NormalMap_ST;
                 // float4 _AOMap;
@@ -254,10 +216,9 @@ Shader "LwyShaders/NPRSkin_Softbody"
                     float4 ambient = float4(_GlossyEnvironmentColor.rgb, 1);
                     float4 GI = (0, 0, 0, 0);
 
-                    LightColor *= halfLambert;
-                    ambient *= (1 - halfLambert);
+                    LightColor *= rampLambertColor;
+                    ambient *= (1 - rampLambertColor);
                 #endif
-                // GI = ((LightColor+GI) * _LightInfluence + _LightInfluence);
                 
 
                 //rim light
@@ -268,7 +229,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
                 float2 RimOffsetUV = RimScreenUV + normalVS * _OffsetMul;
                 
-                float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams); // ÀëÏà»úÔ½½üÔ½Ð¡
+                float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams); // ï¿½ï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½Ô½Ð¡
                 float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r; // _CameraDepthTexture.r = input.positionNDC.z / input.positionNDC.w
                 float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
                 float depthDiff = linearEyeOffsetDepth - linearEyeDepth;
@@ -279,16 +240,8 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 float4 fresnelDepthRim = rimIntensity * fresnelRim * _RimColor;
 
                 // if(((1 - smoothstep(0,0.3,Lambert) ) * ambient) = 0){}
-                float4 color = (difusse * rampLambertColor + (blinnPhongNPR * _SpecStrength) + fresnelDepthRim) ;
+                float4 color = (difusse * rampLambertColor + (blinnPhongNPR * _SpecStrength) + fresnelDepthRim) * LightColor /* MainLight.shadowAttenuation*/;
 
-                //hue
-                    color.r = color.r + _HueRed;
-                    color.g = color.g + _HueGreen;
-                    color.b = color.b + _HueBlue;
-
-
-                // recive shadow
-                // color *= (MainLight.shadowAttenuation + 0.5);
                 #if _ENABLEENVIROMENTLIGHT
                     color *= ((LightColor + ambient) * _LightInfluence + _LightInfluence);
                 #endif
@@ -308,23 +261,16 @@ Shader "LwyShaders/NPRSkin_Softbody"
             Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "SRPDefaultUnlit" }
             Cull Front
 
-            
             HLSLPROGRAM
 
-            
-
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             #pragma vertex vert
             #pragma fragment frag
 
             CBUFFER_START(UnityPerMaterial)
-
-                
                 float _OutLineWidth;
                 float4 _OutLineColor;
-
             CBUFFER_END
 
 
@@ -357,14 +303,9 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 // input.positionOS.xyz += input.tangent * 0.01 *_OutLineWidth;
                 // o.positionCS = TransformObjectToHClip(input.positionOS.xyz + input.normal * _OutLineWidth *0.1);
                 o.positionCS = TransformWorldToHClip(_Pos[input.ID]);
-
                 o.positionCS.xy += input.normal.xy * _OutLineWidth * 0.1 * o.positionCS.w * input.vertColor.r;
                 // o.vertColor = input.vertColor;
-
-                
                 // o.uv = input.uv;
-                
-
                 return o;
             }
             
@@ -414,5 +355,38 @@ Shader "LwyShaders/NPRSkin_Softbody"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
+        
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode" = "DepthOnly" }
+
+            ZWrite On
+            ColorMask 0
+
+            HLSLPROGRAM
+            #pragma exclude_renderers gles gles3 glcore
+            #pragma target 4.5
+
+            #pragma vertex DepthOnlyVertex
+            #pragma fragment DepthOnlyFragment
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+
+
+            // -------------------------------------
+            // Material Keywords
+            // #pragma shader_feature_local_fragment _ALPHATEST_ON
+
+            //--------------------------------------
+            // GPU Instancing
+            // #pragma multi_compile_instancing
+            // #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+            ENDHLSL
+        }
+
     }
 }

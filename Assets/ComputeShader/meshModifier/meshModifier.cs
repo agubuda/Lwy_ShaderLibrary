@@ -22,7 +22,10 @@ public class meshModifier : MonoBehaviour
     //private Vector3[] aaa;
 
     private int threadGroup;
-    private Mesh meshFilter;
+    private MeshFilter meshFilter;
+    private SkinnedMeshRenderer skinnedMeshRenderer;
+    private Mesh mesh;
+    bool isAnimated;
 
     //matrix
     private Matrix4x4 localToWorld;
@@ -32,9 +35,27 @@ public class meshModifier : MonoBehaviour
         kernelIndex = computeShader.FindKernel("CSMain");
 
         //compute buffer initialize
-        meshFilter = GetComponent<MeshFilter>().mesh;
-        vertCount = meshFilter.vertexCount;
-        Color[] vertColor = meshFilter.colors;
+        meshFilter = GetComponent<MeshFilter>();
+        if (meshFilter)
+        {
+            vertCount = meshFilter.sharedMesh.vertexCount;
+            mesh = meshFilter.sharedMesh;
+            Color[] vertColor = meshFilter.sharedMesh.colors;
+            isAnimated = false;
+        }
+
+        skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
+        if (skinnedMeshRenderer)
+        {
+            //skinnedMeshRenderer.BakeMesh(mesh);
+            vertCount = skinnedMeshRenderer.sharedMesh.vertexCount;
+            isAnimated = true;
+
+        }
+
+        var renderer = GetComponent<Renderer>();
+        if (!renderer) return;
+
 
         //Debug.Log(vertCount);
         computeBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float),ComputeBufferType.Default);
@@ -58,7 +79,17 @@ public class meshModifier : MonoBehaviour
     // Update is called once per frames
     void LateUpdate()
     {
-        verticesPosition = meshFilter.vertices;
+        if (skinnedMeshRenderer)
+        {
+            mesh = new Mesh();
+            skinnedMeshRenderer.BakeMesh(mesh);
+            verticesPosition = mesh.vertices;
+        }
+        if(meshFilter)
+        {
+            verticesPosition = mesh.vertices;
+        }
+
         computeBuffer.SetData(verticesPosition,0,0,vertCount);
         computeShader.SetBuffer(kernelIndex, "_pos", computeBuffer);
 
@@ -88,7 +119,7 @@ public class meshModifier : MonoBehaviour
 
     void OnDisable()
     {
-        computeBuffer.Dispose();
-        data.Dispose();
+        computeBuffer.Release();
+        data.Release();
     }
 }
