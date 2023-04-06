@@ -2,30 +2,31 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using Unity.Mathematics;
 
 public class meshModifier : MonoBehaviour
 {
     // Start is called before the first frame update
     public ComputeShader computeShader;
     public float _MoveScale = 1.0f;
-    public float _Spring = 5.0f;
-    public float _Damper = 1.0f;
-    public float m_strength = 0.5f;
+    public float _Spring = 1000.0f;
+    public float _Damper = 10.0f;
     private int kernelIndex;
     public Material material;
     private ComputeBuffer computeBuffer = null;
+    private ComputeBuffer data = null;
 
     private Vector3[] verticesPosition;
 
     private int vertCount = 0;
-    private Vector3[] aaa;
+    //private Vector3[] aaa;
 
     private int threadGroup;
     private Mesh meshFilter;
 
     //matrix
     private Matrix4x4 localToWorld;
-    private Matrix4x4 worldToLocal;
+
     void OnEnable()
     {   
         kernelIndex = computeShader.FindKernel("CSMain");
@@ -33,9 +34,12 @@ public class meshModifier : MonoBehaviour
         //compute buffer initialize
         meshFilter = GetComponent<MeshFilter>().mesh;
         vertCount = meshFilter.vertexCount;
+        Color[] vertColor = meshFilter.colors;
 
-        Debug.Log(vertCount);
-        computeBuffer = new ComputeBuffer(vertCount * 4, 3 * sizeof(float),ComputeBufferType.Default);
+        //Debug.Log(vertCount);
+        computeBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float),ComputeBufferType.Default);
+        data = new ComputeBuffer(vertCount, 3 * 3 * sizeof(float),ComputeBufferType.Default);
+
         // Graphics.SetRandomWriteTarget(1,computeBuffer);
         // Debug.Log(computeBuffer);
 
@@ -45,48 +49,46 @@ public class meshModifier : MonoBehaviour
         //     verticesPosition[i] = localToWorld.MultiplyPoint3x4(verticesPosition[i]);
         // }
 
-        // //debug array
-        // aaa = new Vector3[verticesPosition.Length];
+        ////debug array
+        //aaa = new Vector3[verticesPosition.Length];
 
         threadGroup = Mathf.CeilToInt(vertCount/128.0f);
-
     }
 
     // Update is called once per frames
-    void FixedUpdate()
+    void LateUpdate()
     {
         verticesPosition = meshFilter.vertices;
         computeBuffer.SetData(verticesPosition,0,0,vertCount);
+        computeShader.SetBuffer(kernelIndex, "_pos", computeBuffer);
 
         //matrix
         localToWorld = transform.localToWorldMatrix;
-        // worldToLocal = transform.worldToLocalMatrix;
         computeShader.SetMatrix("_LocalToWorld", localToWorld);
-        // computeShader.SetMatrix("_WorldToLocal", worldToLocal);
+        computeShader.SetInt("vertCount", vertCount);
+        computeShader.SetFloat("_MoveScale", _MoveScale);
+        computeShader.SetFloat("_Spring", _Spring);
+        computeShader.SetFloat("_Damper", _Damper);
 
-        computeShader.SetBuffer(kernelIndex,"_pos", computeBuffer); 
-        computeShader.SetInt("vertCount",vertCount);
-        computeShader.SetFloat("_MoveScale",_MoveScale);
-        computeShader.SetFloat("_Spring",_Spring);
-        computeShader.SetFloat("_Damper",_Damper);
-        computeShader.SetFloat("_deltaTime",  Time.deltaTime);
+        computeShader.SetBuffer(kernelIndex, "data", data);
+
         computeShader.Dispatch(kernelIndex,threadGroup,1,1);
 
-        // // debug part
-        // computeBuffer.GetData (aaa, 0, 0, vertCount);
-        // for(int i = 0; i < aaa.Length; i++)
-        // {
-        //     Debug.Log(aaa[i]);
-        // }
+        //// debug part
+
+        //computeBuffer.GetData(aaa, 0, 0, vertCount);
+        //for (int i = 0; i < aaa.Length; i++)
+        //{
+        //    Debug.Log(aaa[i]);
+        //}
 
         material.SetBuffer("_Pos", computeBuffer);
-        //set prev vert position
-        computeBuffer.SetData(verticesPosition,0,vertCount,vertCount);
+        //material.SetConstantBuffer("_Pos", computeBuffer, 0, vertCount * 12);
     }
 
-    void OnDisable(){
-        // computeBuffer.Dispose();
-        computeBuffer.Release();
-        // computeBuffer.re
+    void OnDisable()
+    {
+        computeBuffer.Dispose();
+        data.Dispose();
     }
 }
