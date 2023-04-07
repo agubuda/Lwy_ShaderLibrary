@@ -138,6 +138,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 v2f o;
 
                 o.positionCS = TransformWorldToHClip(_Pos[input.ID]);
+                //o.positionCS = float4(_Pos[input.ID] , 0.0);
                 o.positionWS = _Pos[input.ID];
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS.xyz, true);
                 o.tangentWS = TransformObjectToWorldDir(input.tangentOS);

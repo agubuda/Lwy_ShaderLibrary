@@ -1,11 +1,21 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+#pragma kernel meshModifier
+#pragma kernel skinnedMeshModifier
 
 struct cacheData
 {
-    float3 prevPosWS;
-    float3 velocityWS;
-    float3 dPoseWS;
+	float3 prevPosWS;
+	float3 velocityWS;
+	float3 dPoseWS;
+};
+
+struct skinnedMeshBuffer
+{
+	float3 position;
+	float3 normal;
+	//float3 color;
+	float2 uv1;
+	float2 uv2;
 };
 
 
@@ -20,38 +30,72 @@ float _Damper;
 // with cs.SetTexture
 // RWTexture2D<float4> Result;
 // RWStructuredBuffer<float3> Result;
+
 RWStructuredBuffer<float3> _pos;
 RWStructuredBuffer<cacheData> data;
+RWStructuredBuffer<skinnedMeshBuffer> _skinnedPos;
+
 
 
 [numthreads(128, 1, 1)]
-void CSMain(uint3 id : SV_DispatchThreadID)
+void skinnedMeshModifier(uint3 id : SV_DispatchThreadID)
 {
-    if (id.x > vertCount)
-    {
-        return;
-    }
-    // int index = id.x;
+	if (id.x > vertCount)
+	{
+		return;
+	}
+	// int index = id.x;
 
-    // TODO: insert actual code here!
-        
-    _pos[id.x] = mul(_LocalToWorld, float4(_pos[id.x], 1.0)).xyz;
-    float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
-    float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;
+	// TODO: insert actual code here!
+	//_pos[id.x] = _skinnedPos[id.x].position;
+		
+	_pos[id.x] = mul(_LocalToWorld, float4(_skinnedPos[id.x].position, 1.0)).xyz;
+	float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
+	float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;
 
-    float dt = 1.0 / 60;
-    data[id.x].velocityWS += forceWS * dt;
-    data[id.x].prevPosWS.xyz += data[id.x].velocityWS * dt;
-    data[id.x].dPoseWS  = (data[id.x].prevPosWS - _pos[id.x]) * _MoveScale;
+	float dt = 1.0 / 60;
+	data[id.x].velocityWS += forceWS * dt;
+	data[id.x].prevPosWS.xyz += data[id.x].velocityWS * dt;
+	data[id.x].dPoseWS  = (data[id.x].prevPosWS - _pos[id.x]) * _MoveScale;
 
-    float move = length(data[id.x].dPoseWS);
-    data[id.x].dPoseWS  = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
-    
-    //targetPositionWS += dPoseWS;
-    _pos[id.x] += data[id.x].dPoseWS;
+	float move = length(data[id.x].dPoseWS);
+	data[id.x].dPoseWS  = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
+	
+	//targetPositionWS += dPoseWS;
+	_pos[id.x] += data[id.x].dPoseWS;
 
-    //cache data[id.x] from last frame.
-    data[id.x] = data[id.x];
+	//cache data[id.x] from last frame.
+	data[id.x] = data[id.x];
+}
+
+[numthreads(128, 1, 1)]
+void meshModifier(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x > vertCount)
+	{
+		return;
+	}
+	// int index = id.x;
+
+	// TODO: insert actual code here!
+		
+	_pos[id.x] = mul(_LocalToWorld, float4(_pos[id.x], 1.0)).xyz;
+	float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
+	float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;
+
+	float dt = 1.0 / 60;
+	data[id.x].velocityWS += forceWS * dt;
+	data[id.x].prevPosWS.xyz += data[id.x].velocityWS * dt;
+	data[id.x].dPoseWS  = (data[id.x].prevPosWS - _pos[id.x]) * _MoveScale;
+
+	float move = length(data[id.x].dPoseWS);
+	data[id.x].dPoseWS  = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
+	
+	//targetPositionWS += dPoseWS;
+	_pos[id.x] += data[id.x].dPoseWS;
+
+	//cache data[id.x] from last frame.
+	data[id.x] = data[id.x];
 }
 
 // Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);

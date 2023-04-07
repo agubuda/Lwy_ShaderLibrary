@@ -478,7 +478,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f29eb7fd9883ca447b40ef8f845cccc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  computeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
+  meshComputeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
+  skinnedMeshComputeShader: {fileID: 7200000, guid: d6a3ae33fcc6e2741865816fa835aca2, type: 3}
   _MoveScale: 1
   _Spring: 100
   _Damper: 5
@@ -756,7 +757,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f29eb7fd9883ca447b40ef8f845cccc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  computeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
+  meshComputeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
+  skinnedMeshComputeShader: {fileID: 7200000, guid: d6a3ae33fcc6e2741865816fa835aca2, type: 3}
   _MoveScale: 1
   _Spring: 100
   _Damper: 5
@@ -858,7 +860,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f29eb7fd9883ca447b40ef8f845cccc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  computeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
+  meshComputeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
+  skinnedMeshComputeShader: {fileID: 7200000, guid: d6a3ae33fcc6e2741865816fa835aca2, type: 3}
   _MoveScale: 1
   _Spring: 100
   _Damper: 5
@@ -973,7 +976,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f29eb7fd9883ca447b40ef8f845cccc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  computeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
+  meshComputeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
+  skinnedMeshComputeShader: {fileID: 7200000, guid: d6a3ae33fcc6e2741865816fa835aca2, type: 3}
   _MoveScale: 1
   _Spring: 100
   _Damper: 5

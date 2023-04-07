@@ -7,14 +7,16 @@ using Unity.Mathematics;
 public class meshModifier : MonoBehaviour
 {
     // Start is called before the first frame update
-    public ComputeShader computeShader;
+    public ComputeShader meshComputeShader;
+    //public ComputeShader skinnedMeshComputeShader;
     public float _MoveScale = 1.0f;
-    public float _Spring = 1000.0f;
-    public float _Damper = 10.0f;
+    public float _Spring = 100.0f;
+    public float _Damper = 5.0f;
     private int kernelIndex;
     public Material material;
     private ComputeBuffer computeBuffer = null;
     private ComputeBuffer data = null;
+    //private GraphicsBuffer skinnedMeshBuffer = null;
 
     private Vector3[] verticesPosition;
 
@@ -25,46 +27,51 @@ public class meshModifier : MonoBehaviour
     private MeshFilter meshFilter;
     private SkinnedMeshRenderer skinnedMeshRenderer;
     private Mesh mesh;
-    bool isAnimated;
+    //bool isAnimated;
 
     //matrix
     private Matrix4x4 localToWorld;
 
     void OnEnable()
     {   
-        kernelIndex = computeShader.FindKernel("CSMain");
 
         //compute buffer initialize
         meshFilter = GetComponent<MeshFilter>();
         if (meshFilter)
         {
+            kernelIndex = meshComputeShader.FindKernel("meshModifier");
+
             vertCount = meshFilter.sharedMesh.vertexCount;
             mesh = meshFilter.sharedMesh;
-            Color[] vertColor = meshFilter.sharedMesh.colors;
-            isAnimated = false;
+            //computeBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float), ComputeBufferType.Default);
         }
 
         skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
         if (skinnedMeshRenderer)
         {
+            kernelIndex = meshComputeShader.FindKernel("skinnedMeshModifier");
+
             //skinnedMeshRenderer.BakeMesh(mesh);
             vertCount = skinnedMeshRenderer.sharedMesh.vertexCount;
-            isAnimated = true;
+            verticesPosition = skinnedMeshRenderer.sharedMesh.vertices;
 
+            //Debug.Log(skinnedMeshRenderer.GetVertexBuffer().ToString());
+
+            //skinnedMeshBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Vertex, vertCount, 2 * 3 * 4 + 2 * 2 * 4);
+            //skinnedMeshComputeShader.SetBuffer(kernelIndex, "_skinnedPos", skinnedMeshRenderer.GetVertexBuffer());
+
+            //Debug.Log(skinnedMeshBuffer.count);
         }
 
         var renderer = GetComponent<Renderer>();
         if (!renderer) return;
 
-
-        //Debug.Log(vertCount);
-        computeBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float),ComputeBufferType.Default);
+        Debug.Log(vertCount);
+        computeBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float), ComputeBufferType.Default);
         data = new ComputeBuffer(vertCount, 3 * 3 * sizeof(float),ComputeBufferType.Default);
 
-        // Graphics.SetRandomWriteTarget(1,computeBuffer);
         // Debug.Log(computeBuffer);
 
-        // verticesPosition = meshFilter.vertices;
         // for(int i = 0; i<vertCount; i++)
         // {
         //     verticesPosition[i] = localToWorld.MultiplyPoint3x4(verticesPosition[i]);
@@ -79,31 +86,41 @@ public class meshModifier : MonoBehaviour
     // Update is called once per frames
     void LateUpdate()
     {
+        //localToWorld = transform.
+        localToWorld = transform.localToWorldMatrix;
+        meshComputeShader.SetMatrix("_LocalToWorld", localToWorld);
+
+        meshComputeShader.SetInt("vertCount", vertCount);
+        meshComputeShader.SetFloat("_MoveScale", _MoveScale);
+        meshComputeShader.SetFloat("_Spring", _Spring);
+        meshComputeShader.SetFloat("_Damper", _Damper);
+
         if (skinnedMeshRenderer)
         {
             mesh = new Mesh();
-            skinnedMeshRenderer.BakeMesh(mesh);
-            verticesPosition = mesh.vertices;
+            //skinnedMeshRenderer.BakeMesh(mesh);
+            //verticesPosition = mesh.vertices;
+            //computeBuffer.SetData(verticesPosition,0,0,vertCount);
+            meshComputeShader.SetBuffer(kernelIndex, "_skinnedPos", skinnedMeshRenderer.GetVertexBuffer());
+            meshComputeShader.SetBuffer(kernelIndex, "_pos", computeBuffer);
+
+
+            //computeBuffer.SetData(verticesPosition);
+            //meshComputeShader.SetBuffer(kernelIndex, "_pos", computeBufer);
+            skinnedMeshRenderer.GetVertexBuffer().Dispose();
+
+
         }
-        if(meshFilter)
+
+        if (meshFilter)
         {
             verticesPosition = mesh.vertices;
+            computeBuffer.SetData(verticesPosition, 0, 0, vertCount);
+            meshComputeShader.SetBuffer(kernelIndex, "_pos", computeBuffer);
         }
 
-        computeBuffer.SetData(verticesPosition,0,0,vertCount);
-        computeShader.SetBuffer(kernelIndex, "_pos", computeBuffer);
-
-        //matrix
-        localToWorld = transform.localToWorldMatrix;
-        computeShader.SetMatrix("_LocalToWorld", localToWorld);
-        computeShader.SetInt("vertCount", vertCount);
-        computeShader.SetFloat("_MoveScale", _MoveScale);
-        computeShader.SetFloat("_Spring", _Spring);
-        computeShader.SetFloat("_Damper", _Damper);
-
-        computeShader.SetBuffer(kernelIndex, "data", data);
-
-        computeShader.Dispatch(kernelIndex,threadGroup,1,1);
+        meshComputeShader.SetBuffer(kernelIndex, "data", data);
+        meshComputeShader.Dispatch(kernelIndex, threadGroup, 1, 1);
 
         //// debug part
 
@@ -114,12 +131,19 @@ public class meshModifier : MonoBehaviour
         //}
 
         material.SetBuffer("_Pos", computeBuffer);
+
         //material.SetConstantBuffer("_Pos", computeBuffer, 0, vertCount * 12);
     }
 
     void OnDisable()
     {
+
         computeBuffer.Release();
         data.Release();
+
+        if(skinnedMeshRenderer)
+        {
+            skinnedMeshRenderer.GetVertexBuffer().Dispose();
+        }
     }
 }
