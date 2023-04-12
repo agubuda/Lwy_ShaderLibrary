@@ -18,7 +18,9 @@ struct skinnedMeshBuffer
 	float2 uv2;
 };
 
+float4 _rootbonePosition;
 
+float4x4 _rootboneRotation;
 float4x4 _LocalToWorld;
 
 uint vertCount;
@@ -48,7 +50,12 @@ void skinnedMeshModifier(uint3 id : SV_DispatchThreadID)
 
 	// TODO: insert actual code here!
 	//_pos[id.x] = _skinnedPos[id.x].position;
-		
+	_skinnedPos[id.x].position = float3(_skinnedPos[id.x].position.x - _rootbonePosition.x, 
+										_skinnedPos[id.x].position.y + _rootbonePosition.z,
+										_skinnedPos[id.x].position.z - _rootbonePosition.y);
+
+	// _skinnedPos[id.x].position = mul(_rootboneRotation, float4(_skinnedPos[id.x].position, 1.0));
+	
 	_pos[id.x] = mul(_LocalToWorld, float4(_skinnedPos[id.x].position, 1.0)).xyz;
 	float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
 	float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;

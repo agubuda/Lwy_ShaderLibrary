@@ -29,21 +29,21 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SoftBodyMusk:
-        m_Texture: {fileID: 2800000, guid: 59b899c8df538de45aff4472ed99ba55, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _Cutoff: 0.5
-    - _Damper: 1.19
+    - _Damper: 30
     - _Darkness: 0.864
     - _FrenelPower: 1
     - _Glossness: 8
-    - _MoveScale: 0.3
+    - _MoveScale: 0.01
     - _NormalScale: 1
     - _Smooth: 100
     - _SpecPower: 1
-    - _Spring: 30
+    - _Spring: 90
     - _registerField: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
