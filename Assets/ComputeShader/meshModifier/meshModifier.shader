@@ -129,9 +129,11 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 float4 shadowCoord : TEXCOORD8;
                 float3 tangentWS : TEXCOORD9;
                 float3 bitangentWS : TEXCOORD10;
+                float4 vertColor: TEXCOORD2;
             };
 
             StructuredBuffer<float3> _Pos;
+            StructuredBuffer<float4> _VertexColor;
 
             v2f vert(a2v input)
             {
@@ -162,7 +164,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
                 
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                
+                o.vertColor = _VertexColor[input.ID];
 
                 return o;
             }
@@ -250,7 +252,8 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 
                 // return fresnelDepthRim;
 
-                return color;
+                //return color;
+                return input.vertColor;
             }
 
             ENDHLSL

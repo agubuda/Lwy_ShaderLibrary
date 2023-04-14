@@ -12,8 +12,7 @@ struct cacheData
 struct skinnedMeshBuffer
 {
 	float3 position;
-	float3 normal;
-	//float3 color;
+	float3 tangent;
 	float2 uv1;
 	float2 uv2;
 };
@@ -29,10 +28,8 @@ float _Spring;
 float _Damper;
 
 // Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
-// RWTexture2D<float4> Result;
-// RWStructuredBuffer<float3> Result;
 
+RWStructuredBuffer<float4> _VertexColor;
 RWStructuredBuffer<float3> _pos;
 RWStructuredBuffer<cacheData> data;
 RWStructuredBuffer<skinnedMeshBuffer> _skinnedPos;
@@ -46,10 +43,7 @@ void skinnedMeshModifier(uint3 id : SV_DispatchThreadID)
 	{
 		return;
 	}
-	// int index = id.x;
 
-	// TODO: insert actual code here!
-	//_pos[id.x] = _skinnedPos[id.x].position;
 	_skinnedPos[id.x].position = float3(_skinnedPos[id.x].position.x - _rootbonePosition.x, 
 										_skinnedPos[id.x].position.y + _rootbonePosition.z,
 										_skinnedPos[id.x].position.z - _rootbonePosition.y);
@@ -57,6 +51,12 @@ void skinnedMeshModifier(uint3 id : SV_DispatchThreadID)
 	// _skinnedPos[id.x].position = mul(_rootboneRotation, float4(_skinnedPos[id.x].position, 1.0));
 	
 	_pos[id.x] = mul(_LocalToWorld, float4(_skinnedPos[id.x].position, 1.0)).xyz;
+
+	if (_VertexColor[id.x].r < 1e-3) 
+    { 
+        return;
+    }
+
 	float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
 	float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;
 
@@ -69,7 +69,7 @@ void skinnedMeshModifier(uint3 id : SV_DispatchThreadID)
 	data[id.x].dPoseWS  = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
 	
 	//targetPositionWS += dPoseWS;
-	_pos[id.x] += data[id.x].dPoseWS;
+	_pos[id.x] += (data[id.x].dPoseWS * (_VertexColor[id.x].r));
 
 	//cache data[id.x] from last frame.
 	data[id.x] = data[id.x];
@@ -99,7 +99,7 @@ void meshModifier(uint3 id : SV_DispatchThreadID)
 	data[id.x].dPoseWS  = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
 	
 	//targetPositionWS += dPoseWS;
-	_pos[id.x] += data[id.x].dPoseWS;
+	_pos[id.x] += (data[id.x].dPoseWS * _VertexColor[id.x].r);
 
 	//cache data[id.x] from last frame.
 	data[id.x] = data[id.x];
