@@ -71,6 +71,7 @@ float DistanceAttenuation(float distanceSqr, half2 distanceAttenuation)
     // We use a shared distance attenuation for additional directional and puctual lights
     // for directional lights attenuation will be 1
     float lightAtten = rcp(distanceSqr);
+    // float lightAtten = rsqrt(clamp(distanceSqr,1,100000));
     float2 distanceAttenuationFloat = float2(distanceAttenuation);
 
 #if SHADER_HINT_NICE_QUALITY
@@ -104,7 +105,8 @@ half AngleAttenuation(half3 spotDirection, half3 lightDirection, half2 spotAtten
     // If we precompute the terms in a MAD instruction
     half SdotL = dot(spotDirection, lightDirection);
     half atten = saturate(SdotL * spotAttenuation.x + spotAttenuation.y);
-    return atten * atten;
+    // return atten * atten;
+    return (spotAttenuation.x < 1.0)? atten * atten *100: atten * atten ;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -202,6 +204,17 @@ Light GetAdditionalPerObjectLight(int perObjectLightIndex, float3 positionWS)
     half3 lightDirection = half3(lightVector * rsqrt(distanceSqr));
     // full-float precision required on some platforms
     float attenuation = half(DistanceAttenuation(distanceSqr, distanceAndSpotAttenuation.xy) * AngleAttenuation(spotDirection.xyz, lightDirection, distanceAndSpotAttenuation.zw));
+    
+    // half tempAngelAttenuation = AngleAttenuation(spotDirection.xyz, lightDirection, distanceAndSpotAttenuation.zw);
+    // float attenuation = half((tempAngelAttenuation = 1.0)? DistanceAttenuation(distanceSqr, distanceAndSpotAttenuation.xy) * tempAngelAttenuation : 
+    //                                                   DistanceAttenuation(distanceSqr, distanceAndSpotAttenuation.xy) * tempAngelAttenuation );
+
+    // if(tempAngelAttenuation < 1){
+    //     float attenuation = DistanceAttenuation(distanceSqr, distanceAndSpotAttenuation.xy) * 1 * tempAngelAttenuation;
+    // }
+    // else{
+    //     float attenuation = DistanceAttenuation(distanceSqr, distanceAndSpotAttenuation.xy) * tempAngelAttenuation * 100;
+    // }
 
     Light light;
     light.direction = lightDirection;
