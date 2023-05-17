@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7015809848581966993
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 5
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SeaWater6
+  m_Shader: {fileID: -6465566751694194690, guid: 56ba3ec38dd4ca54eb34f04cb06455c0, type: 3}
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - Texture2D_C378FD21:
+        m_Texture: {fileID: 2800000, guid: 5fbe74ff24136e248b7daf83f69e50b1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_DF390932:
+        m_Texture: {fileID: 2800000, guid: 0a7505990f89bc84694272be701d4ff5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Dirty1Tex:
+        m_Texture: {fileID: 2800000, guid: d82e2963e50624c43bb102ca2a98b9c7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Dirty2Tex:
+        m_Texture: {fileID: 2800000, guid: 9bbb44bdfec170941b309fff7f17be03, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DirtyNoise:
+        m_Texture: {fileID: 2800000, guid: 56e3fde8504fca84b950f529f8927750, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FoamMaskTex:
+        m_Texture: {fileID: 2800000, guid: d82e2963e50624c43bb102ca2a98b9c7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _UV_Normal_A:
+        m_Texture: {fileID: 2800000, guid: b76d460a6c68a2e42b56366d0a6e94d6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _UV_Normal_B:
+        m_Texture: {fileID: 2800000, guid: 0d022c49635637e46b11027df3ffd04d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CoastWidth: 0.07
+    - _Coast_Speed: 0.02
+    - _Coast_Tiling: 50
+    - _Coast_Width: 0.3
+    - _Depth: 3
+    - _Dirty1Power: 1.13
+    - _Dirty1Step: 0.034
+    - _Dirty1StepWidth: 0.092
+    - _Dirty1Tilig: 0.56
+    - _Dirty2MaskPower: 0.46
+    - _Dirty2Power: 2.36
+    - _Dirty2Step: 0.422
+    - _Dirty2StepWidth: 0.139
+    - _Dirty2Tilig: 1.3
+    - _DirtyAlpha: 0.78
+    - _DirtyLerp: 1
+    - _DirtySpeed: 0.035
+    - _DirtySpeedAdd: 0.011
+    - _FoamMaskScale: 0.74
+    - _FoamMaskScale2: 0.56
+    - _FoamMaskSpeed: 0.0188
+    - _FoamMaskSpeed2: 0.0449
+    - _FoamNoise: 0.0246
+    - _FoamPower: 10
+    - _FoamTiling: 3.42
+    - _Night: 0
+    - _NoiseSize: 27.3
+    - _NoiseSpeed: 0.095
+    - _NoiseStrange: 0.44
+    - _Real: 1
+    - _UVNormalLerp: 0.08
+    - _UVScale_A: 5
+    - _UVScale_B: 5
+    - _Wave_Power: 0.01
+    - _Wave_Scale: 19
+    - _Wave_Speed: 0.07
+    - _uv_speed_A: -0.046
+    - _uv_speed_B: 0.006
+    m_Colors:
+    - _BaseColor: {r: 0.010902463, g: 0.18785627, b: 0.3301887, a: 0.9019608}
+    - _Coast_Color: {r: 0.43516377, g: 0.66573775, b: 0.7264151, a: 1}
+    - _DepthColor: {r: 0.034264863, g: 0.14415106, b: 0.20754707, a: 0.7176471}
+    - _DirtyColor: {r: 0.30647027, g: 0.53740746, b: 0.6698113, a: 1}
+    - _ShallowColor: {r: 0.0093449615, g: 0.25369114, b: 0.3962264, a: 0.70980394}
+  m_BuildTextureStacks: []
