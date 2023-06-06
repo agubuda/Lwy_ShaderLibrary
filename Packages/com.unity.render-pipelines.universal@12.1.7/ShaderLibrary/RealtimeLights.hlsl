@@ -105,8 +105,8 @@ half AngleAttenuation(half3 spotDirection, half3 lightDirection, half2 spotAtten
     // If we precompute the terms in a MAD instruction
     half SdotL = dot(spotDirection, lightDirection);
     half atten = saturate(SdotL * spotAttenuation.x + spotAttenuation.y);
-    // return atten * atten;
-    return (spotAttenuation.x < 1.0)? atten * atten *100: atten * atten ;
+    return atten * atten;
+    // return (spotAttenuation.x < 1.0)? atten * atten *100: atten * atten ;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
