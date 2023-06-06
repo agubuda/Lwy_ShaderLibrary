@@ -8,7 +8,7 @@ Shader "LwyShaders/BlinnPhongNDF"
         _BaseColor ("BaseColor", color) = (1.0, 1.0, 1.0, 1.0)
         _SpecularPower ("Specular power", Range(1, 10)) = 8
         _Metalic ("Metalic", Range(0, 1)) = 1
-        _Roughness ("_Roughness", Range(0, 1)) = 0
+        _Roughness ("_Roughness", Range(0.0001, 1)) = 0
         
         _NormalMap ("Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", float) = 1
@@ -110,12 +110,11 @@ Shader "LwyShaders/BlinnPhongNDF"
                 return ggx1 * ggx2;
             }
 
-            float BlinnPhong(half3 lightDir, half3 viewDir, half3 worldNormal)
+            float BlinnPhong(half3 h, half3 worldNormal)
             {
-                half3 h = normalize(lightDir) + normalize(viewDir);
-                float BlinnPhong = pow(max(dot(h, worldNormal), 0.0), _Roughness);
+                float BlinnPhong = max(dot(h, worldNormal), 0.0001);
                 // BlinnPhong = clamp(0,1,BlinnPhong);
-                BlinnPhong = BlinnPhong * ((_Roughness + 1) / (2 * 3.1415926535));
+                BlinnPhong = ((_Roughness + 1) / (2 * 3.1415926535)) * pow(BlinnPhong, _Roughness * 8);
                 
                 return BlinnPhong;
             }
@@ -131,15 +130,12 @@ Shader "LwyShaders/BlinnPhongNDF"
             float Lambert(half3 lightDir, half3 worldNormal)
             {
                 float lambert = max(dot(normalize(lightDir), normalize(worldNormal)), 0.0001);
-                // lambert *=  rcp(PI);
                 return lambert;
             }
 
-            float3 Fresnel(half3 lightDir, half3 viewDir, half3 worldNormal, half3 f0)
+            float3 Fresnel(half3 h,  half3 viewdir, half3 f0)
             {
-                // float _roughness = 1 - _Roughness;
-                half3 h = normalize(lightDir + viewDir);
-                float3 fresnel = f0 + (1.0 - f0) * pow((1.0 - dot(h, normalize(worldNormal))), 5.0);
+                float3 fresnel = f0 + (1.0 - f0) * pow((1.0 - dot(h , normalize(viewdir))), 5.0);
 
                 return fresnel;
             }
@@ -147,7 +143,7 @@ Shader "LwyShaders/BlinnPhongNDF"
             float FV(half3 lightDir, half3 viewDir, half3 worldNormal)
             {
                 half3 h = normalize(lightDir + viewDir);
-                float fv = pow(dot(h, viewDir), -3) * rcp(4);
+                float fv = pow(dot(normalize(lightDir), h), -3) / 4;
 
                 return fv;
             }
@@ -217,18 +213,17 @@ Shader "LwyShaders/BlinnPhongNDF"
                 float4 Cubemap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, MIP);
 
                 //puntuation lights
-                float enviValue = 1.0;
                 uint pixelLightCount = GetAdditionalLightsCount();
                 for (uint lightIndex = 0; lightIndex < pixelLightCount; ++lightIndex)
                 {
-                    Light AddtionalLight = GetAdditionalLight(lightIndex, input.positionWS);
-
                     float4 lightPositionWS = _AdditionalLightsPosition[lightIndex];
                     half distanceAttenuation = _AdditionalLightsAttenuation[lightIndex];
+                    half3 lightColor = _AdditionalLightsColor[lightIndex].rgb;
 
                     //culculate attenuation
                     float3 lightVector = lightPositionWS.xyz - input.positionWS * lightPositionWS.w;
-                    float distanceSqr = max(dot(lightVector, lightVector), 1.0);
+                    // float3 lightVector = lightPositionWS;
+                    float distanceSqr = max(dot(lightVector, lightVector), 0.2);
 
                     float lightAtten = rcp(distanceSqr);
 
@@ -236,44 +231,50 @@ Shader "LwyShaders/BlinnPhongNDF"
                     half smoothFactor = saturate(half(1.0) - factor * factor);
                     smoothFactor *= smoothFactor;
 
-                    AddtionalLight.direction = half3(lightVector * rsqrt(distanceSqr));
+                    float3 lightDirection = half3(lightVector * rsqrt(distanceSqr));
 
-                    //FV
-                    float fv = FV(AddtionalLight.direction, viewDir, input.normalWS);
+                    float3 H = normalize(lightDirection + viewDir);
 
-                    //D
-                    float lambert = Lambert(AddtionalLight.direction,input.normalWS);
-                    lambert *= lightAtten * smoothFactor;
-                    float3 kd = diffuse * lambert  / PI * AddtionalLight.color;
-
-                    //ks
-                    float ks = BlinnPhong(AddtionalLight.direction, viewDir, input.normalWS);
-                    ks = ks * (lightAtten * smoothFactor);
-
+                    //indirect
+                    half3 ambient_contrib = SampleSH(input.positionWS);
+                    // ambient_contrib *= rcp(PI);
+                    // half3 ambient = 0.03 * diffuse;
+                    
                     float kIndirectLight = pow(_Roughness * _Roughness + 1 , 2) * rcp(8.0);
                     float kInIBL = pow(_Roughness * _Roughness, 2) * rcp(8.0);
 
-                    float GLeft = dot(input.normalWS , AddtionalLight.direction) / 
-                              lerp(dot(input.normalWS , AddtionalLight.direction), 1, kIndirectLight);
-                    float GRight = dot(input.normalWS , viewDir) / 
-                              lerp(dot(input.normalWS , AddtionalLight.direction), 1, kIndirectLight);
-                    float G = GLeft * GRight;
-                    // blinn -= lambert;
-
-                    half3 S = ks * AddtionalLight.color ;
+                    // //FV
+                    // float fv = FV(lightDirection, viewDir, input.normalWS);
 
                     //F
                     half3 f0 = half3(0.04, 0.04, 0.04);
-                    f0 = lerp(f0, kd, _Metalic);
-                    float3 fresnel = Fresnel(AddtionalLight.direction, viewDir, input.normalWS, f0);
+                          f0 = lerp(f0, albedo, _Metalic);
+                    float3 F = Fresnel(input.normalWS, viewDir, f0);
 
-                    half3 ambient_contrib = SampleSH(input.normalWS);
-                    // half3 ambient = 0.03 * diffuse;
 
-                    // color += (ks * G * fresnel + kd );
-                    color += ambient_contrib;
+                    //D
+                    float3 kd = Lambert(lightDirection,input.normalWS);
+                          kd *= lightAtten * smoothFactor;
+                        //   kd = (1 - F) * (1 - _Metalic);
+                    float3 D = diffuse * kd  * lightColor  / PI /* + ambient_contrib */;
+
+                    //S
+                    float ks = BlinnPhong(H, input.normalWS);
+                          ks = ks  * (lightAtten * smoothFactor);
+                    half3 S = ks * lightColor ;
+
+
+                    //G
+                    float nv = max(saturate(dot(input.normalWS , viewDir)) , 0.00001);
+                    float nl = max(saturate(dot(input.normalWS , lightDirection)) , 0.00001);
+
+                    float GLeft = nl / lerp(nl, 1, kIndirectLight);
+                    float GRight = nv / lerp(nv, 1, kIndirectLight);
+                    float G = GLeft * GRight;
+
+                    // color += (S * G * fresnel + kd );
+                    color += ( D +  S * F * G);
                 }
-
                 return half4((color.rgb), albedo.a) ;
             }
 
