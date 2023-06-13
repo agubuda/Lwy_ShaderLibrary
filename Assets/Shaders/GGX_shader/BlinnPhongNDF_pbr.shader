@@ -23,7 +23,7 @@ Shader "LwyShaders/BlinnPhongNDF"
         pass
         {
             Tags { "LightMode" = "SRPDefaultUnlit" }
-            Name "BlinnPhong testing"
+            Name "GGX testing"
 
             ZWrite On
             Cull back
@@ -33,6 +33,9 @@ Shader "LwyShaders/BlinnPhongNDF"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GlobalIllumination.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
+            // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RealtimeLights.hlsl"
 
             #pragma target 4.5
 
@@ -63,6 +66,8 @@ Shader "LwyShaders/BlinnPhongNDF"
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
             // TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
             TEXTURECUBE(_cubeMap);SAMPLER(sampler_cubeMap);
+            // TEXTURECUBE(unity_SpecCube0_HDR);
+            // TEXTURECUBE(unity_SpecCube1);
 
             
             // TEXTURECUBE(unity_SpecCube0);
@@ -160,18 +165,12 @@ Shader "LwyShaders/BlinnPhongNDF"
             }
             float3 FresnelRoughness(half3 n, half3 viewdir, half3 f0 , float roughness)
             {
-                float3 fresnel = f0 + (max(float3(1.0,1.0,1.0) - roughness , f0)) * pow((1.0 - dot(n, viewdir)), 5.0);
+                float3 fresnel = f0 + (max(float3(1.0,1.0,1.0) - roughness , f0)) 
+                                 * pow((1.0 - dot(n, viewdir)), 5.0);
 
                 return fresnel;
             }
 
-            float FV(half3 lightDir, half3 viewDir, half3 worldNormal)
-            {
-                half3 h = normalize(lightDir + viewDir);
-                float fv = pow(dot(normalize(lightDir), h), -3) / 4;
-
-                return fv;
-            }
 
             v2f vert(a2v input)
             {
@@ -213,6 +212,7 @@ Shader "LwyShaders/BlinnPhongNDF"
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
 
+
                 // //initialize main light
                 // Light MainLight = GetMainLight(input.shadowCoord);
                 // float3 LightDir = normalize(half3(MainLight.direction));
@@ -230,15 +230,33 @@ Shader "LwyShaders/BlinnPhongNDF"
                     input.bitangentWS, input.tangentWS, input.normalWS
                 };
                 bump.z = pow(1 - pow(bump.x, 2) - pow(bump.y, 2), 0.5);
-                input.normalWS = mul(bump, TBN);
+                input.normalWS = normalize(mul(bump, TBN));
 
                 // float3 derectDiffColor = kd * diffuse * LightColor * Lambert;
 
                 //GI cubemap and mip cul
                 half MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
                 float3 reflectDirWS = reflect(-viewDir, input.normalWS);
-                half3 cubeMap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, MIP);
+                half4 cubeMap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, MIP);
+                
+                //you have to decodeHDR, otherwise it will not work at all.
+                    #if defined(UNITY_USE_NATIVE_HDR)
+                        half3 cubeMapHDR = cubeMap.rgb;
+                    #else
+                        half3 cubeMapHDR = DecodeHDREnvironment(cubeMap, unity_SpecCube0_HDR);
+                    #endif
+                //indirect
+                float3 ambient_contrib = max(0, SampleSH(input.normalOS.xyz)) ;
 
+                    //Ambient Fresnel
+                    half3 f0 = half3(0.02, 0.02, 0.02);
+                    f0 = lerp(f0, albedo, _Metallic);
+
+                float3 AmbientKs = FresnelRoughness(input.normalWS, viewDir, f0, _Roughness);
+                float3 AmbientKd = float3(1.0,1.0,1.0) - AmbientKs;
+                ambient_contrib =  ambient_contrib * diffuse *AmbientKs;
+
+                // ambient_contrib *= ambient_contrib * AmbientF;
                 //puntuation lights
                 uint pixelLightCount = GetAdditionalLightsCount();
                 for (uint lightIndex = 0; lightIndex < pixelLightCount; ++lightIndex)
@@ -246,12 +264,17 @@ Shader "LwyShaders/BlinnPhongNDF"
                     float4 lightPositionWS = _AdditionalLightsPosition[lightIndex];
                     half distanceAttenuation = _AdditionalLightsAttenuation[lightIndex];
                     half3 lightColor = _AdditionalLightsColor[lightIndex].rgb;
+                #ifdef _LIGHT_LAYERS
+                    uint lightLayerMask = _AdditionalLightsLayerMasks[lightIndex];
+                #else
+                    uint lightLayerMask = DEFAULT_LIGHT_LAYERS;
+                #endif
 
                     //culculate attenuation
                     float3 lightVector = lightPositionWS.xyz - input.positionWS * lightPositionWS.w;
                     // float3 lightVector = lightPositionWS;
                     // float distanceSqr = max(dot(lightVector, lightVector), 0.1);
-                    float distanceSqr = max(dot(lightVector, lightVector), 0.5);
+                    float distanceSqr = max(dot(lightVector, lightVector), 0.4);
 
                     float lightAtten = rcp(distanceSqr);
 
@@ -281,17 +304,11 @@ Shader "LwyShaders/BlinnPhongNDF"
                     half3 S = ks * lightColor ;
 
                     //F
-                    half3 f0 = half3(0.04, 0.04, 0.04);
-                    f0 = lerp(f0, albedo, _Metallic);
+                    // half3 f0 = half3(0.04, 0.04, 0.04);
+                    // f0 = lerp(f0, albedo, _Metallic);
                     float3 F = Fresnel(input.normalWS, viewDir, f0);
 
-                    //indirect
-                    float3 ambient_contrib = max(0, SampleSH(input.positionWS)) ;
-                    float3 AmbientF = FresnelRoughness(input.normalWS, viewDir, f0, _Roughness);
-                    float3 AmbientD = float3(1.0,1.0,1.0) - AmbientF;
-                    ambient_contrib *= AmbientD;
 
-                    diffuse *= ambient_contrib;
 
                     //D
                     float lambert = Lambert(lightDirection, input.normalWS) * lightAtten * smoothFactor;
@@ -304,8 +321,8 @@ Shader "LwyShaders/BlinnPhongNDF"
                     // half3 ambient = 0.03 * diffuse;
 
                     // color += (S * G * fresnel + kd );
-                    // color += (D + ambient_contrib + S * F * G) * lambert;
-                    color +=  ambient_contrib;
+                    color += (D + ambient_contrib + S * F * G) * lambert * lightLayerMask;
+                    // color +=  ambient_contrib + D * lambert + S;
                 }
                 return half4((color), albedo.a) ;
             }
