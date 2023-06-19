@@ -4,18 +4,18 @@ Shader "LwyShaders/BlinnPhongNDF"
 {
     Properties
     {
-        _BaseMap ("Texture", 2D) = "white" { }
+        _BaseMap ("Albedo Map", 2D) = "white" { }
         _BaseColor ("BaseColor", color) = (1.0, 1.0, 1.0, 1.0)
-        _SpecularPower ("Specular power", Range(1, 10)) = 8
-        _Roughness ("_Roughness", Range(0.01, 1)) = 0
+        [Space(20)]
+
+        _Roughness ("Roughness", Range(0.01, 1)) = 0
         _Metallic ("Metallic", Range(0, 1)) = 1
+        [Toggle(_ENABLE_MASK_MAP)] _ENABLE_MASK_MAP ("Enable Mask Map", float) = 0.0
         _MaskMap ("Mask map", 2D) = "white" { }
-        
-        _NormalMap ("Normal map", 2D) = "bump" { }
-        _NormalScale ("Normal scale", float) = 1
 
         [Space(20)]
-        _cubeMap ("cube map", Cube) = "_Skybox" { }
+        _NormalMap ("Normal map", 2D) = "bump" { }
+        _NormalScale ("Normal scale", float) = 1
     }
     SubShader
     {
@@ -39,11 +39,11 @@ Shader "LwyShaders/BlinnPhongNDF"
             #pragma fragment frag
 
             #pragma multi_compile_fog
-
             #pragma multi_compile  _MAIN_LIGHT_SHADOWS
             #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile  _SHADOWS_SOFT
-            // #pragma shader_feature _ENABLEENVIROMENTLIGHT
+
+            #pragma shader_feature _ENABLE_MASK_MAP
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
@@ -52,13 +52,12 @@ Shader "LwyShaders/BlinnPhongNDF"
                 float4 _MaskMap_ST;
                 float4 _BaseColor;
                 float _Metallic, _Roughness;
-                float _SpecularPower;
+                // float _SpecularPower;
                 float _NormalScale;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
-            TEXTURECUBE(_cubeMap);SAMPLER(sampler_cubeMap);
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
             // TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
             // TEXTURECUBE(unity_SpecCube0_HDR);
@@ -138,7 +137,7 @@ Shader "LwyShaders/BlinnPhongNDF"
             float Phong(half3 lightDir, half3 viewDir, half3 worldNormal)
             {
                 half3 reflectL = reflect(normalize(lightDir), normalize(worldNormal));
-                float phong = pow(saturate(dot(normalize(viewDir), -reflectL)), _SpecularPower);
+                float phong = pow(saturate(dot(normalize(viewDir), -reflectL)), 8);
                 phong *= (_Metallic + 8) * rcp(25.132741228);
                 return phong;
             }
@@ -157,10 +156,10 @@ Shader "LwyShaders/BlinnPhongNDF"
                 return fresnel;
             }
 
-            float3 FresnelLerp(half3 n, half3 viewdir, half3 f0, half3 f90)
+            float FresnelLerp(half3 n, half3 viewdir)
             {
-                float3 fresnel = pow(1 - dot(n, viewdir), 5);
-                return lerp(f0, f90, fresnel);
+                float fresnelLerp = pow(1 - dot(n, viewdir), 4);
+                return fresnelLerp;
             }
 
             float3 FresnelRoughness(half3 n, half3 viewdir, half3 f0, float roughness)
@@ -204,6 +203,7 @@ Shader "LwyShaders/BlinnPhongNDF"
 
             float4 frag(v2f input) : SV_TARGET
             {
+                float rcpPI = rcp(PI);
                 _Metallic = max(0.04, _Metallic);
 
                 half surfaceReduction = 1.0 / (_Roughness * _Roughness + 1.0);
@@ -215,7 +215,6 @@ Shader "LwyShaders/BlinnPhongNDF"
 
                 float lambert = 0.0;
 
-
                 // //initialize main light
                 // Light MainLight = GetMainLight(input.shadowCoord);
                 // float3 LightDir = normalize(half3(MainLight.direction));
@@ -223,17 +222,20 @@ Shader "LwyShaders/BlinnPhongNDF"
 
                 //albedo
                 half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-                _Metallic = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv).r * _Metallic;
-                _Roughness = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv).a * _Roughness;
-                clip(albedo.a - 0.001);
-
                 half3 diffuse = _BaseColor * albedo;
+
+                //enable mask map
+                #if defined(_ENABLE_MASK_MAP)
+                    _Metallic = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv).r ;
+                    _Roughness = (1.0 - SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv).a) * _Roughness;
+                #endif
+
+                clip(albedo.a - 0.001);
 
                 //normal map
                 float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv2);
                 float3 bump = UnpackNormalScale(normalMap, _NormalScale);
-                input.normalWS = TransformTangentToWorld(bump,real3x3(input.tangentWS, input.bitangentWS, input.normalWS ));
-
+                input.normalWS = TransformTangentToWorld(bump, real3x3(input.tangentWS, input.bitangentWS, input.normalWS));
 
                 //GI cubemap and mip cul
                 half MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
@@ -250,13 +252,12 @@ Shader "LwyShaders/BlinnPhongNDF"
                 float3 ambient_contrib = max(0, SampleSH(input.normalOS.xyz)) ;
 
                 //Ambient Fresnel
-                half3 f0 = half3(0.02, 0.02, 0.02);
-                f0 = lerp(f0, albedo, _Metallic);
+                half3 f0 = half3(0.04, 0.04, 0.04);
+                f0 = lerp(f0, diffuse, _Metallic);
 
                 float3 AmbientKs = FresnelRoughness(input.normalWS, viewDir, f0, _Roughness);
                 float3 AmbientKd = float3(1.0, 1.0, 1.0) - AmbientKs;
                 ambient_contrib = ambient_contrib * diffuse * AmbientKd;
-
 
                 //punctuation lights
                 uint pixelLightCount = GetAdditionalLightsCount();
@@ -270,7 +271,7 @@ Shader "LwyShaders/BlinnPhongNDF"
                     float3 lightVector = lightPositionWS.xyz - input.positionWS * lightPositionWS.w;
                     // float3 lightVector = lightPositionWS;
                     // float distanceSqr = max(dot(lightVector, lightVector), 0.1);
-                    float distanceSqr = max(dot(lightVector, lightVector), 0.2);
+                    float distanceSqr = max(dot(lightVector, lightVector), HALF_MIN);
 
                     float lightAtten = rcp(distanceSqr);
 
@@ -286,9 +287,6 @@ Shader "LwyShaders/BlinnPhongNDF"
                     float kIndirectLight = pow(_Roughness * _Roughness + 1, 2) * rcp(8.0);
                     float kInIBL = pow(_Roughness * _Roughness, 2) * rcp(8.0);
 
-                    // //FV
-                    // float fv = FV(lightDirection, viewDir, input.normalWS);
-
                     //G
                     float G = GeometrySmith(input.normalWS, viewDir, lightDirection, _Roughness);
 
@@ -300,27 +298,29 @@ Shader "LwyShaders/BlinnPhongNDF"
                     half3 S = ks * lightColor ;
 
                     //F
-                    half3 f0 = half3(0.04, 0.04, 0.04);
-                    f0 = lerp(f0, diffuse, _Metallic);
                     float3 F = Fresnel(input.normalWS, viewDir, f0);
-
-
 
                     //D
                     lambert = Lambert(lightDirection, input.normalWS) * lightAtten * smoothFactor;
                     float3 kd = float3(1.0, 1.0, 1.0) - F;
                     kd *= (1.0 - _Metallic);
                     // ambient_contrib *=kd;
-                    float3 D = diffuse * kd * lightColor;
+                    float3 D = diffuse * kd * lightColor ;
 
                     // color += (S * G * fresnel + kd );
 
                     // D += ambient_contrib;
-                    color += (D * lambert * rcp(PI)  + S * F * G);
+                    color += (D * lambert * rcpPI + S * F * G);
                 }
-                half3 fEnvi = FresnelLerp(input.normalWS, viewDir, half3(0, 0, 0), cubeMapHDR) /* rcp(PI)*/;
+                // f0 = lerp(f0, diffuse, _Metallic);
+                half fresnelTerm = FresnelLerp(input.normalWS, viewDir) /* rcp(PI)*/;
+                cubeMapHDR *= lerp(_BaseColor, 1.0, fresnelTerm);
+                half3 indirectSpecular = cubeMapHDR * rcpPI;
 
-                color += ambient_contrib + fEnvi ;
+                half3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
+
+                color += envColor;
+
                 return half4((color), albedo.a) ;
             }
 
@@ -351,7 +351,7 @@ Shader "LwyShaders/BlinnPhongNDF"
                 float4 _BaseColor;
                 float _Darkness;
                 float _Metallic;
-                float _SpecularPower;
+                // float _SpecularPower;
 
             CBUFFER_END
 
