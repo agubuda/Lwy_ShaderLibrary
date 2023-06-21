@@ -4,8 +4,8 @@ Shader "LwyShaders/TinyPBR"
 {
     Properties
     {
-        _BaseMap ("Albedo", 2D) = "white" { }
-        _BaseColor ("BaseColor", color) = (1.0, 1.0, 1.0, 1.0)
+        [MainTexture] _BaseMap ("Albedo", 2D) = "white" { }
+        [MainColor] _BaseColor ("BaseColor", color) = (1.0, 1.0, 1.0, 1.0)
         [Space(20)]
 
         _Roughness ("Roughness", Range(0.01, 1)) = 0
@@ -53,7 +53,7 @@ Shader "LwyShaders/TinyPBR"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
-                float4 _MainTex_ST;
+                // float4 _MainTex_ST;
                 float4 _NormalMap_ST;
                 float4 _MaskMap_ST;
                 float4 _BaseColor;
@@ -66,11 +66,6 @@ Shader "LwyShaders/TinyPBR"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
-            // TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
-            // TEXTURECUBE(unity_SpecCube0_HDR);
-            // TEXTURECUBE(unity_SpecCube1);
-            // TEXTURECUBE(unity_SpecCube0);
-            // SAMPLER(samplerunity_SpecCube0);
             
             struct a2v
             {
@@ -87,14 +82,14 @@ Shader "LwyShaders/TinyPBR"
             {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
-                float3 bitangentWS : TEXCOORD4;
-                float2 uv : TEXCOORD1;
-                float3 tangentWS : TEXCOORD2;
-                float3 normalWS : TEXCOORD3;
+                float3 bitangentWS : TEXCOORD1;
+                float2 uv : TEXCOORD2;
+                float3 tangentWS : TEXCOORD3;
+                float3 normalWS : TEXCOORD4;
                 float3 normalOS : TEXCOORD5;
                 // float4 scrPos : TEXCOORD6;
-                float4 shadowCoord : TEXCOORD7;
-                float2 uv2 : TEXCOORD8;
+                float4 shadowCoord : TEXCOORD6;
+                // float2 uv2 : TEXCOORD8;
             };
 
             float D_GGX_TR(half3 N, half3 H, float roughness)
@@ -140,14 +135,6 @@ Shader "LwyShaders/TinyPBR"
                 
                 return BlinnPhong;
             }
-
-            // float Phong(half3 lightDir, half3 viewDir, half3 normalWS)
-            // {
-            //     half3 reflectL = reflect(normalize(lightDir), normalize(normalWS));
-            //     float phong = pow(saturate(dot(normalize(viewDir), -reflectL)), 8);
-            //     phong *= (_Metallic + 8) * rcp(25.132741228);
-            //     return phong;
-            // }
 
             float Lambert(half3 lightDir, half3 normalWS)
             {
@@ -218,7 +205,9 @@ Shader "LwyShaders/TinyPBR"
                 o.normalOS = normalize(input.normalOS);
                 
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                o.uv2 = TRANSFORM_TEX(input.texcoord, _NormalMap);
+                o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
+                o.uv = TRANSFORM_TEX(input.texcoord, _MaskMap);
+                // o.uv2 = TRANSFORM_TEX(input.texcoord, _NormalMap);
                 // o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
                 
                 return o;
@@ -232,18 +221,14 @@ Shader "LwyShaders/TinyPBR"
                 half surfaceReduction = 1.0 / (_Roughness * _Roughness + 1.0);
 
                 half3 color = half3(0, 0, 0);
+                half3 f0 = half3(0.04, 0.04, 0.04);
+                float lambert = 0.0;
+
                 float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
 
-                float lambert = 0.0;
-
-                // //initialize main light
-                // Light MainLight = GetMainLight(input.shadowCoord);
-                // float3 LightDir = normalize(half3(MainLight.direction));
-                // float4 LightColor = float4(MainLight.color, 1);
-
-                //albedo
+                 //albedo
                 half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 half3 diffuse = _BaseColor * albedo;
 
@@ -256,9 +241,37 @@ Shader "LwyShaders/TinyPBR"
                 clip(albedo.a - 0.001);
 
                 //normal map
-                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv2);
+                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
                 float3 bump = UnpackNormalScale(normalMap, _NormalScale);
                 input.normalWS = TransformTangentToWorld(bump, real3x3(input.tangentWS, input.bitangentWS, input.normalWS));
+
+                //initialize main light
+                Light MainLight = GetMainLight(input.shadowCoord);
+                float3 mainLightDir = normalize(half3(MainLight.direction));
+                float4 mainLightColor = float4(MainLight.color, 1);
+
+                    float3 H = normalize(mainLightDir + viewDir);
+                    
+                    //G
+                    float G = GeometrySmith(input.normalWS, viewDir, mainLightDir, _Roughness);
+
+                    //D_GGX_TR
+                    float ks = D_GGX_TR(input.normalWS, H, _Roughness);
+                    half3 S = ks * mainLightColor ;
+
+                    //F
+                    float3 F = Fresnel(input.normalWS, viewDir, f0);
+
+                    //D
+                    lambert = Lambert(mainLightDir, input.normalWS);
+                    float3 kd = float3(1.0, 1.0, 1.0) - F;
+                    kd *= (1.0 - _Metallic);
+                    // ambient_contrib *=kd;
+                    float3 D = diffuse * kd * mainLightColor ;
+
+                    // input.shadowCoord  = TransformWorldToShadowCoord(input.positionWS);
+                
+                    color += (D * lambert *  _DNormalization + S * F * G) * MainLight.shadowAttenuation;
 
                 //GI cubemap and mip cul
                 half MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
@@ -280,7 +293,6 @@ Shader "LwyShaders/TinyPBR"
                 float3 ambient_contrib = max(0, SampleSH(input.normalOS.xyz)) ;
 
                 //Ambient Fresnel
-                half3 f0 = half3(0.04, 0.04, 0.04);
                 f0 = lerp(f0, diffuse, _Metallic);
 
                 float3 AmbientKs = FresnelRoughness(input.normalWS, viewDir, f0, _Roughness);
@@ -309,11 +321,7 @@ Shader "LwyShaders/TinyPBR"
 
                     float3 lightDirection = half3(lightVector * rsqrt(distanceSqr));
 
-                    float3 H = normalize(lightDirection + viewDir);
-
-                    //env
-                    float kIndirectLight = pow(_Roughness * _Roughness + 1, 2) * rcp(8.0);
-                    float kInIBL = pow(_Roughness * _Roughness, 2) * rcp(8.0);
+                    H = normalize(lightDirection + viewDir);
 
                     //G
                     float G = GeometrySmith(input.normalWS, viewDir, lightDirection, _Roughness);
@@ -358,10 +366,11 @@ Shader "LwyShaders/TinyPBR"
         Pass
         {
             Name "DepthOnly"
-            Tags { "LightMode" = "DepthOnly" }
+            Tags{"LightMode" = "DepthOnly"}
 
             ZWrite On
             ColorMask 0
+            Cull[_Cull]
 
             HLSLPROGRAM
             #pragma exclude_renderers gles gles3 glcore
@@ -370,32 +379,59 @@ Shader "LwyShaders/TinyPBR"
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-
-            CBUFFER_START(UnityPerMaterial)
-
-                float4 _BaseMap_ST;
-                float4 _MainTex_ST;
-                float4 _BaseColor;
-                float _Darkness;
-                float _Metallic;
-                // float _SpecularPower;
-
-            CBUFFER_END
-
             // -------------------------------------
             // Material Keywords
-            // #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _GLOSSINESS_FROM_BASE_ALPHA
 
             //--------------------------------------
             // GPU Instancing
-            // #pragma multi_compile_instancing
-            // #pragma multi_compile _ DOTS_INSTANCING_ON
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            // #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
             ENDHLSL
         }
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags{"LightMode" = "ShadowCaster"}
+
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull[_Cull]
+
+            HLSLPROGRAM
+            #pragma only_renderers gles gles3 glcore d3d11
+            #pragma target 2.0
+
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _GLOSSINESS_FROM_BASE_ALPHA
+
+            // -------------------------------------
+            // Universal Pipeline keywords
+
+            // This is used during shadow map generation to differentiate between directional and punctual light shadows, as they use different formulas to apply Normal Bias
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
+
+            #pragma vertex ShadowPassVertex
+            #pragma fragment ShadowPassFragment
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            ENDHLSL
+        }
+        UsePass "Universal Render Pipeline/Lit/DepthOnly"
+
     }
-    FallBack "Diffuse"
+    FallBack "SimpleLit"
 }
