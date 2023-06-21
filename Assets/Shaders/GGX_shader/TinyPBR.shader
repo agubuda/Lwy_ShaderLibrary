@@ -1,10 +1,10 @@
 //processing, not finished.
 
-Shader "LwyShaders/BlinnPhongNDF"
+Shader "LwyShaders/TinyPBR"
 {
     Properties
     {
-        _BaseMap ("Albedo Map", 2D) = "white" { }
+        _BaseMap ("Albedo", 2D) = "white" { }
         _BaseColor ("BaseColor", color) = (1.0, 1.0, 1.0, 1.0)
         [Space(20)]
 
@@ -14,8 +14,11 @@ Shader "LwyShaders/BlinnPhongNDF"
         _MaskMap ("Mask map", 2D) = "white" { }
 
         [Space(20)]
-        _NormalMap ("Normal map", 2D) = "bump" { }
+        [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", float) = 1
+
+        [Space(20)]
+        _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
     }
     SubShader
     {
@@ -23,7 +26,7 @@ Shader "LwyShaders/BlinnPhongNDF"
         pass
         {
             Tags { "LightMode" = "SRPDefaultUnlit" }
-            Name "GGX testing"
+            Name "TinyPBR"
 
             ZWrite On
             Cull back
@@ -43,6 +46,9 @@ Shader "LwyShaders/BlinnPhongNDF"
             #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile  _SHADOWS_SOFT
 
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+
             #pragma shader_feature _ENABLE_MASK_MAP
 
             CBUFFER_START(UnityPerMaterial)
@@ -54,6 +60,7 @@ Shader "LwyShaders/BlinnPhongNDF"
                 float _Metallic, _Roughness;
                 // float _SpecularPower;
                 float _NormalScale;
+                float _DNormalization;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -123,10 +130,10 @@ Shader "LwyShaders/BlinnPhongNDF"
             }
 
 
-            float BlinnPhong(half3 h, half3 worldNormal, half n)
+            float BlinnPhong(half3 H, half3 normalWS, half N)
             {
-                float BlinnPhong = pow(max(dot(h, worldNormal), 0.0001), 5);
-                BlinnPhong = pow(BlinnPhong, n) * ((n + 1) / (2 * 3.1415926535));
+                float BlinnPhong = pow(max(dot(H, normalWS), 0.0001), 5);
+                BlinnPhong = pow(BlinnPhong, N) * ((N + 1) / (2 * 3.1415926535));
                 // BlinnPhong = (( _Roughness + 2) * ( _Roughness +4)) /
                 //               (8 * 3.1415926535 * (pow(2,-_Roughness / 2) + _Roughness))
                 //               * BlinnPhong;
@@ -134,40 +141,56 @@ Shader "LwyShaders/BlinnPhongNDF"
                 return BlinnPhong;
             }
 
-            float Phong(half3 lightDir, half3 viewDir, half3 worldNormal)
-            {
-                half3 reflectL = reflect(normalize(lightDir), normalize(worldNormal));
-                float phong = pow(saturate(dot(normalize(viewDir), -reflectL)), 8);
-                phong *= (_Metallic + 8) * rcp(25.132741228);
-                return phong;
-            }
+            // float Phong(half3 lightDir, half3 viewDir, half3 normalWS)
+            // {
+            //     half3 reflectL = reflect(normalize(lightDir), normalize(normalWS));
+            //     float phong = pow(saturate(dot(normalize(viewDir), -reflectL)), 8);
+            //     phong *= (_Metallic + 8) * rcp(25.132741228);
+            //     return phong;
+            // }
 
-            float Lambert(half3 lightDir, half3 worldNormal)
+            float Lambert(half3 lightDir, half3 normalWS)
             {
-                float lambert = max(dot(normalize(lightDir), normalize(worldNormal)), 0.0001);
+                float lambert = max(dot(normalize(lightDir), normalize(normalWS)), 0.0001);
                 
                 return lambert;
             }
 
-            float3 Fresnel(half3 n, half3 viewdir, half3 f0)
+            float3 Fresnel(half3 N, half3 viewDirection, half3 f0)
             {
-                float3 fresnel = f0 + (1.0 - f0) * pow((1.0 - dot(n, viewdir)), 5.0);
+                float3 fresnel = f0 + (1.0 - f0) * pow((1.0 - dot(N, viewDirection)), 5.0);
 
                 return fresnel;
             }
 
-            float FresnelLerp(half3 n, half3 viewdir)
+            float FresnelLerp(half3 N, half3 viewDirection)
             {
-                float fresnelLerp = pow(1 - dot(n, viewdir), 4);
+                float fresnelLerp = pow(1 - dot(N, viewDirection), 4);
                 return fresnelLerp;
             }
 
-            float3 FresnelRoughness(half3 n, half3 viewdir, half3 f0, float roughness)
+            float3 FresnelRoughness(half3 N, half3 viewDirection, half3 f0, float roughness)
             {
                 float3 fresnel = f0 + (max(float3(1.0, 1.0, 1.0) - roughness, f0))
-                * pow((1.0 - dot(n, viewdir)), 5.0);
+                * pow((1.0 - dot(N, viewDirection)), 5.0);
 
                 return fresnel;
+            }
+
+            half3 BoxProjection(float3 reflectionWS, float3 positionWS,
+                                float4 cubemapPositionWS, float3 boxMin, float3 boxMax)
+            {
+                if(cubemapPositionWS.w >0.0f){
+                    boxMin -= positionWS;
+                    boxMax -= positionWS;
+                    float x = (reflectionWS.x > 0 ? boxMax.x:boxMin.x) / reflectionWS.x;
+                    float y = (reflectionWS.y > 0 ? boxMax.x:boxMin.y) / reflectionWS.y;
+                    float z = (reflectionWS.z > 0 ? boxMax.x:boxMin.z) / reflectionWS.z;
+                    float scalar = min(min(x,y),z);
+
+                    return reflectionWS * scalar + (positionWS - cubemapPositionWS);
+                }
+                return reflectionWS;
             }
 
 
@@ -240,8 +263,13 @@ Shader "LwyShaders/BlinnPhongNDF"
                 //GI cubemap and mip cul
                 half MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
                 float3 reflectDirWS = reflect(-viewDir, input.normalWS);
+
+                #if defined(_REFLECTION_PROBE_BOX_PROJECTION)
+                reflectDirWS = BoxProjection(reflectDirWS,input.positionWS,unity_SpecCube0_ProbePosition,unity_SpecCube0_BoxMin,unity_SpecCube0_BoxMax);
+                // reflectDirWS = float3(1,1,1);
+                #endif
+
                 half4 cubeMap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, MIP);
-                
                 //you have to decodeHDR, otherwise it will not work at all.
                 #if defined(UNITY_USE_NATIVE_HDR)
                     half3 cubeMapHDR = cubeMap.rgb;
@@ -310,7 +338,7 @@ Shader "LwyShaders/BlinnPhongNDF"
                     // color += (S * G * fresnel + kd );
 
                     // D += ambient_contrib;
-                    color += (D * lambert * rcpPI + S * F * G);
+                    color += (D * lambert * /*rcpPI*/ _DNormalization + S * F * G);
                 }
                 // f0 = lerp(f0, diffuse, _Metallic);
                 half fresnelTerm = FresnelLerp(input.normalWS, viewDir) /* rcp(PI)*/;
