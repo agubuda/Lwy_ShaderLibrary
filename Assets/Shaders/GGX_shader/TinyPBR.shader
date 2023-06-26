@@ -17,8 +17,8 @@ Shader "LwyShaders/TinyPBR"
         [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", float) = 1
 
-        [Space(20)]
-        _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
+        // [Space(20)]
+        // _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
     }
     SubShader
     {
@@ -106,7 +106,7 @@ Shader "LwyShaders/TinyPBR"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-            #pragma exclude_renderers gles gles3 glcore
+            // #pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
 
             #pragma vertex vert
@@ -120,28 +120,26 @@ Shader "LwyShaders/TinyPBR"
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
 
-            #define  _fog
+            // #define  _fog
             #define  _MAIN_LIGHT_SHADOWS
             #define  _MAIN_LIGHT_SHADOWS_CASCADE
             #define  _SHADOWS_SOFT
 
-            #define _REFLECTION_PROBE_BLENDING
+            // #define _REFLECTION_PROBE_BLENDING
             #define _REFLECTION_PROBE_BOX_PROJECTION
             #pragma multi_compile_fragment _ _LIGHT_LAYERS
-
-
             #pragma shader_feature _ENABLE_MASK_MAP
 
             CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                // float4 _MainTex_ST;
-                float4 _NormalMap_ST;
-                float4 _MaskMap_ST;
-                float4 _BaseColor;
-                float _Metallic, _Roughness;
-                // float _SpecularPower;
-                float _NormalScale;
-                float _DNormalization;
+                half4 _BaseMap_ST;
+                // half4 _MainTex_ST;
+                half4 _NormalMap_ST;
+                half4 _MaskMap_ST;
+                half4 _BaseColor;
+                half _Metallic, _Roughness;
+                // half _SpecularPower;
+                half _NormalScale;
+                // half _DNormalization;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
