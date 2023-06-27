@@ -1,62 +1,65 @@
 struct a2v
 {
-    half4 positionOS : POSITION;
-    half3 normalOS : NORMAL;
-    half2 texcoord : TEXCOORD0;
-    half4 tangent : TANGENT;
-    // half2 secondTexcoord : TEXCOORD1;
+    float4 positionOS   : POSITION;
+    float3 normalOS     : NORMAL;
+    float4 tangentOS    : TANGENT;
+    float2 texcoord     : TEXCOORD0;
+    // float2 staticLightmapUV   : TEXCOORD1;
+    // float2 dynamicLightmapUV  : TEXCOORD2;
+    // UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 struct v2f
 {
-    half4 positionCS : SV_POSITION;
-    half3 positionWS : TEXCOORD0;
-    half3 bitangentWS : TEXCOORD1;
-    half2 uv : TEXCOORD2;
-    half3 tangentWS : TEXCOORD3;
-    half3 normalWS : TEXCOORD4;
-    half3 normalOS : TEXCOORD5;
-    // half4 scrPos : TEXCOORD6;
-    half4 shadowCoord : TEXCOORD6;
-    // half2 uv2 : TEXCOORD8;
+    float3 positionWS : TEXCOORD0;
+    float3 bitangentWS : TEXCOORD1;
+    float2 uv : TEXCOORD2;
+    float3 tangentWS : TEXCOORD3;
+    float3 normalWS : TEXCOORD4;
+    float4 shadowCoord : TEXCOORD5;
+    float4 positionCS : SV_POSITION;
+    // float3 normalOS : TEXCOORD5;
+    // float4 scrPos : TEXCOORD6;
+    // float4 positionCS : SV_POSITION;
+    // float2 uv2 : TEXCOORD8;
 };
 
-half D_GGX_TR(half3 N, half3 H, half roughness)
+float D_GGX_TR(float3 N, float3 H, float roughness)
 {
-    half a2 = roughness * roughness;
-    half NdotH = max(dot(H, N), 0.0001);
-    half NdotH2 = NdotH * NdotH;
+    float a2 = roughness * roughness;
+    float NdotH = max(dot(H, N), 0.0001);
+    float NdotH2 = NdotH * NdotH;
 
-    half nom = a2;
-    half denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
     return nom / denom;
 }
 
-half GeometrySchlickGGX(half NdotV, half k)
+float GeometrySchlickGGX(float NdotV, float k)
 {
-    half nom = NdotV;
-    half denom = NdotV * (1.0 - k) + k;
+    float nom = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
 
     return nom / denom;
 }
 
-half GeometrySmith(half3 N, half3 V, half3 L, half roughness)
+float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
 {
-    half k = pow(_Roughness + 1, 2) * rcp(8);
+    float k = pow(_Roughness + 1, 2) * rcp(8);
 
-    half NdotV = max(dot(N, V), 0.0);
-    half NdotL = max(dot(N, L), 0.0);
-    half ggx1 = GeometrySchlickGGX(NdotV, k);
-    half ggx2 = GeometrySchlickGGX(NdotL, k);
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx1 = GeometrySchlickGGX(NdotV, k);
+    float ggx2 = GeometrySchlickGGX(NdotL, k);
 
     return ggx1 * ggx2;
 }
 
 
-half BlinnPhong(half3 H, half3 normalWS, half N)
+float BlinnPhong(float3 H, float3 normalWS, float N)
 {
-    half BlinnPhong = pow(max(dot(H, normalWS), 0.0001), 5);
+    float BlinnPhong = pow(max(dot(H, normalWS), 0.0001), 5);
     BlinnPhong = pow(BlinnPhong, N) * ((N + 1) / (2 * 3.1415926535));
     // BlinnPhong = (( _Roughness + 2) * ( _Roughness +4)) /
     //               (8 * 3.1415926535 * (pow(2,-_Roughness / 2) + _Roughness))
@@ -65,45 +68,45 @@ half BlinnPhong(half3 H, half3 normalWS, half N)
     return BlinnPhong;
 }
 
-half Lambert(half3 lightDir, half3 normalWS)
+float Lambert(float3 lightDir, float3 normalWS)
 {
-    half lambert = max(dot(normalize(lightDir), normalize(normalWS)), 0.0001);
+    float lambert = max(dot(normalize(lightDir), normalize(normalWS)), 0.0001);
     
     return lambert;
 }
 
-half3 Fresnel(half3 N, half3 viewDirection, half3 f0)
+float3 Fresnel(float3 N, float3 viewDirection, float3 f0)
 {
-    half3 fresnel = f0 + (1.0 - f0) * pow((1.0 - dot(N, viewDirection)), 5.0);
+    float3 fresnel = f0 + (1.0 - f0) * pow((1.0 - max(dot(N, viewDirection),0.001)), 5.0);
 
     return fresnel;
 }
 
-half FresnelLerp(half3 N, half3 viewDirection)
+float FresnelLerp(float3 N, float3 viewDirection)
 {
-    half fresnelLerp = pow(1 - dot(N, viewDirection), 4);
+    float fresnelLerp = pow(1 - max(dot(N, viewDirection),0.001), 5);
     return fresnelLerp;
 }
 
-half3 FresnelRoughness(half3 N, half3 viewDirection, half3 f0, half roughness)
+float3 FresnelRoughness(float3 N, float3 viewDirection, float3 f0, float roughness)
 {
-    half3 fresnel = f0 + (max(half3(1.0, 1.0, 1.0) - roughness, f0))
+    float3 fresnel = f0 + (max(float3(1.0, 1.0, 1.0) - roughness, f0))
     * pow((1.0 - dot(N, viewDirection)), 5.0);
 
     return fresnel;
 }
 
-half3 BoxProjection(half3 reflectionWS, half3 positionWS,
-half4 cubemapPositionWS, half3 boxMin, half3 boxMax)
+float3 BoxProjection(float3 reflectionWS, float3 positionWS,
+                    float4 cubemapPositionWS, float3 boxMin, float3 boxMax)
 {
     if (cubemapPositionWS.w > 0.0f)
     {
         boxMin -= positionWS;
         boxMax -= positionWS;
-        half x = (reflectionWS.x > 0 ? boxMax.x : boxMin.x) / reflectionWS.x;
-        half y = (reflectionWS.y > 0 ? boxMax.x : boxMin.y) / reflectionWS.y;
-        half z = (reflectionWS.z > 0 ? boxMax.x : boxMin.z) / reflectionWS.z;
-        half scalar = min(min(x, y), z);
+        float x = (reflectionWS.x > 0 ? boxMax.x : boxMin.x) / reflectionWS.x;
+        float y = (reflectionWS.y > 0 ? boxMax.x : boxMin.y) / reflectionWS.y;
+        float z = (reflectionWS.z > 0 ? boxMax.x : boxMin.z) / reflectionWS.z;
+        float scalar = min(min(x, y), z);
 
         return reflectionWS * scalar + (positionWS - cubemapPositionWS);
     }
@@ -116,15 +119,17 @@ v2f vert(a2v input)
     v2f o;
     o.positionCS = TransformObjectToHClip(input.positionOS);
     o.positionWS = TransformObjectToWorld(input.positionOS.xyz);
-    o.normalWS = TransformObjectToWorldNormal(input.normalOS.xyz, true);
-    o.tangentWS = TransformObjectToWorldDir(input.tangent.xyz);
-    o.bitangentWS = normalize(cross(o.normalWS.xyz, o.tangentWS.xyz) * input.tangent.w);
+    o.normalWS = TransformObjectToWorldNormal(input.normalOS);
+    o.tangentWS = float3(TransformObjectToWorldDir(input.tangentOS.xyz));
+
+    real sign = real(input.tangentOS.w) * GetOddNegativeScale();
+    o.bitangentWS = cross(o.normalWS.xyz, o.tangentWS.xyz) * sign;
     // o.positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
     // normalVS = TransformWorldToViewDir(normalWS, true);
 
     // //NDC
-    // half4 ndc = input.positionOS * 0.5f;
-    // o.positionNDC.xy = half2(ndc.x, ndc.y * _ProjectionParams.x) + ndc.w;
+    // float4 ndc = input.positionOS * 0.5f;
+    // o.positionNDC.xy = float2(ndc.x, ndc.y * _ProjectionParams.x) + ndc.w;
     // o.positionNDC.zw = TransformObjectToHClip(input.positionOS).zw;
 
     // //scr pos
@@ -132,55 +137,59 @@ v2f vert(a2v input)
 
     //receive shadow
     o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
-    o.normalOS = normalize(input.normalOS);
+    // o.normalOS = normalize(input.normalOS);
     
     o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-    o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
-    o.uv = TRANSFORM_TEX(input.texcoord, _MaskMap);
+    // o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
+    // o.uv = TRANSFORM_TEX(input.texcoord, _MaskMap);
     // o.uv2 = TRANSFORM_TEX(input.texcoord, _NormalMap);
     // o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
     
     return o;
 }
 
-half4 frag(v2f input) : SV_TARGET
+float4 frag(v2f input) : SV_TARGET
 {
     uint meshRenderingLayers = GetMeshRenderingLightLayer();
-    // half rcpPI = rcp(PI);
+    // float rcpPI = rcp(PI);
     _Metallic = max(0.04, _Metallic);
 
-    half surfaceReduction = 1.0 / (_Roughness * _Roughness + 1.0);
+    float3 color = float3(0, 0, 0);
+    float3 f0 = float3(0.04, 0.04, 0.04);
+    float lambert = 0.0;
+    float G = 0.0;
+    float3 D = float3(0,0,0);
+    float3 S = float3(0,0,0);
+    float3 F = float3(0,0,0);
 
-    half3 color = half3(0, 0, 0);
-    half3 f0 = half3(0.04, 0.04, 0.04);
-    half lambert = 0.0;
-
-    half3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
-    half3 positionVS = TransformWorldToView(input.positionWS);
-    half3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
+    float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
+    float3 positionVS = TransformWorldToView(input.positionWS);
+    float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
 
     //albedo
-    half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-    half3 diffuse = _BaseColor * albedo;
+    float4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
+    float3 diffuse = _BaseColor * albedo;
 
     //enable mask map
     #if defined(_ENABLE_MASK_MAP)
         _Metallic = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv).r ;
-        _Roughness = (1.0 - SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv).a) * _Roughness;
+        _Roughness = (1.0 - SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv).a * _Roughness) ;
     #endif
 
+    float surfaceReduction = 1.0 / (_Roughness * _Roughness + 1.0);
 
     //normal map
-    half4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
-    half3 bump = UnpackNormalScale(normalMap, _NormalScale);
-    input.normalWS = TransformTangentToWorld(bump, real3x3(input.tangentWS, input.bitangentWS, input.normalWS));
+    float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
+    float3 bump = UnpackNormalScale(normalMap, _NormalScale);
+    input.normalWS = SafeNormalize(input.normalWS);
+    input.normalWS = TransformTangentToWorld(bump, half3x3(input.tangentWS.xyz, input.bitangentWS.xyz, input.normalWS.xyz));
 
     //initialize main light
     Light MainLight = GetMainLight(input.shadowCoord);
-    half3 mainLightDir = normalize(half3(MainLight.direction));
-    half4 mainLightColor = half4(MainLight.color, 1);
+    float3 mainLightDir = normalize(float3(MainLight.direction));
+    float4 mainLightColor = float4(MainLight.color, 1);
 
-    half3 H = normalize(mainLightDir + viewDir);
+    float3 H = normalize(mainLightDir + viewDir);
 
         #ifdef _LIGHT_LAYERS
             uint lightLayerMask = asuint(MainLight.layerMask);
@@ -193,51 +202,51 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
 {
     ///main light pbr part
     //G
-    half G = GeometrySmith(input.normalWS, viewDir, mainLightDir, _Roughness);
+    G = GeometrySmith(input.normalWS, viewDir, mainLightDir, _Roughness);
 
     //D_GGX_TR
-    half ks = D_GGX_TR(input.normalWS, H, _Roughness);
-    half3 S = ks * mainLightColor ;
+    float ks = D_GGX_TR(input.normalWS, H, _Roughness);
+    S = ks * mainLightColor ;
 
     //F
-    half3 F = Fresnel(input.normalWS, viewDir, f0);
+    F = Fresnel(input.normalWS, viewDir, f0);
 
     //D
     lambert = Lambert(mainLightDir, input.normalWS);
-    half3 kd = half3(1.0, 1.0, 1.0) - F;
+    float3 kd = float3(1.0, 1.0, 1.0) - F;
     kd *= (1.0 - _Metallic);
     // ambient_contrib *=kd;
-    half3 D = diffuse * kd * mainLightColor ;
+    D = diffuse * kd * mainLightColor ;
 
     // input.shadowCoord  = TransformWorldToShadowCoord(input.positionWS);
     
-    color += (D * lambert /* _DNormalization*/ + S * F * G) * MainLight.shadowAttenuation;
+    color += (D * lambert * _DNormalization + S * F * G) * MainLight.shadowAttenuation;
 }
     //GI cubemap and mip cul
-    half MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
-    half3 reflectDirWS = reflect(-viewDir, input.normalWS);
+    float MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
+    float3 reflectDirWS = reflect(-viewDir, input.normalWS);
 
     #if defined(_REFLECTION_PROBE_BOX_PROJECTION)
         reflectDirWS = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
-        // reflectDirWS = half3(1,1,1);
+        // reflectDirWS = float3(1,1,1);
     #endif
 
-    half4 cubeMap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, MIP);
+    float4 cubeMap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, MIP);
     //you have to decodeHDR, otherwise it will not work at all.
     #if defined(UNITY_USE_NATIVE_HDR)
-        half3 cubeMapHDR = cubeMap.rgb;
+        float3 cubeMapHDR = cubeMap.rgb;
     #else
-        half3 cubeMapHDR = DecodeHDREnvironment(cubeMap, unity_SpecCube0_HDR);
+        float3 cubeMapHDR = DecodeHDREnvironment(cubeMap, unity_SpecCube0_HDR);
     #endif
     //indirect
-    half3 ambient_contrib = max(0, SampleSH(input.normalOS.xyz)) ;
+    float3 ambient_contrib = max(0, SampleSH(input.normalWS.xyz)) * diffuse * _DNormalization;
 
     //Ambient Fresnel
     f0 = lerp(f0, diffuse, _Metallic);
 
-    half3 AmbientKs = FresnelRoughness(input.normalWS, viewDir, f0, _Roughness);
-    half3 AmbientKd = half3(1.0, 1.0, 1.0) - AmbientKs;
-    ambient_contrib = ambient_contrib * diffuse * AmbientKd;
+    float3 AmbientKs = FresnelRoughness(input.normalWS, viewDir, f0, _Roughness);
+    float3 AmbientKd = float3(1.0, 1.0, 1.0) - AmbientKs;
+    ambient_contrib = ambient_contrib  * AmbientKd ;
 
     //punctuation lights
     uint pixelLightCount = GetAdditionalLightsCount();
@@ -251,60 +260,58 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
 
         if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
         {
-            half4 lightPositionWS = _AdditionalLightsPosition[lightIndex];
-            half distanceAttenuation = _AdditionalLightsAttenuation[lightIndex];
-            half3 lightColor = _AdditionalLightsColor[lightIndex].rgb;
+            float4 lightPositionWS = _AdditionalLightsPosition[lightIndex];
+            float distanceAttenuation = _AdditionalLightsAttenuation[lightIndex];
+            float3 lightColor = _AdditionalLightsColor[lightIndex].rgb;
 
             //calculate attenuation
-            half3 lightVector = lightPositionWS.xyz - input.positionWS * lightPositionWS.w;
-            // half3 lightVector = lightPositionWS;
-            // half distanceSqr = max(dot(lightVector, lightVector), 0.1);
-            half distanceSqr = max(dot(lightVector, lightVector), 0.5);
+            float3 lightVector = lightPositionWS.xyz - input.positionWS * lightPositionWS.w;
+            // float3 lightVector = lightPositionWS;
+            // float distanceSqr = max(dot(lightVector, lightVector), 0.1);
+            float distanceSqr = max(dot(lightVector, lightVector), 0.5);
 
-            half lightAtten = rcp(distanceSqr);
+            float lightAtten = rcp(distanceSqr);
 
-            half factor = half(distanceSqr * distanceAttenuation);
-            half smoothFactor = saturate(half(1.0) - factor * factor);
+            float factor = float(distanceSqr * distanceAttenuation);
+            float smoothFactor = saturate(float(1.0) - factor * factor);
             smoothFactor *= smoothFactor;
 
-            half3 lightDirection = half3(lightVector * rsqrt(distanceSqr));
+            float3 lightDirection = float3(lightVector * rsqrt(distanceSqr));
 
             H = normalize(lightDirection + viewDir);
 
             //G
-            half G = GeometrySmith(input.normalWS, viewDir, lightDirection, _Roughness);
+            G = GeometrySmith(input.normalWS, viewDir, lightDirection, _Roughness);
 
             //S
-            // half ks = BlinnPhong(H, input.normalWS, _Roughness);
+            // float ks = BlinnPhong(H, input.normalWS, _Roughness);
             //D_GGX_TR
-            half ks = D_GGX_TR(input.normalWS, H, _Roughness);
+            float ks = D_GGX_TR(input.normalWS, H, _Roughness);
             ks = ks * (lightAtten * smoothFactor);
-            half3 S = ks * lightColor ;
+            S = ks * lightColor ;
 
             //F
-            half3 F = Fresnel(input.normalWS, viewDir, f0);
+            F = Fresnel(input.normalWS, viewDir, f0);
 
             //D
             lambert = Lambert(lightDirection, input.normalWS) * lightAtten * smoothFactor;
-            half3 kd = half3(1.0, 1.0, 1.0) - F;
+            float3 kd = float3(1.0, 1.0, 1.0) - F;
             kd *= (1.0 - _Metallic);
             // ambient_contrib *=kd;
-            half3 D = diffuse * kd * lightColor ;
+            D = diffuse * kd * lightColor ;
 
-            // color += (S * G * fresnel + kd );
-
-            // D += ambient_contrib;
-            color += (D * lambert * /*rcpPI*/ /*_DNormalization*/ + S * F * G);
+            color += (D * lambert * _DNormalization + S * F * G);
         }
-    }
+    } 
     // f0 = lerp(f0, diffuse, _Metallic);
-    half fresnelTerm = FresnelLerp(input.normalWS, viewDir) /* rcp(PI)*/;
-    cubeMapHDR *= lerp(_BaseColor, 1.0, fresnelTerm);
-    half3 indirectSpecular = cubeMapHDR * 0.318309891613572;
+    float fresnelTerm = FresnelLerp(input.normalWS, viewDir) /* rcp(PI)*/;
+    cubeMapHDR = lerp( diffuse * cubeMapHDR, cubeMapHDR, fresnelTerm);
+    float3 indirectSpecular = cubeMapHDR * 0.318309891613572;
 
-    half3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
+    float3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
 
     color += envColor;
 
-    return half4((color), albedo.a) ;
+    // return float4((color), albedo.a) ;
+    return float4((color ), albedo.a);
 }

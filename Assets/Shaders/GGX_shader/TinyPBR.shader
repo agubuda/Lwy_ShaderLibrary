@@ -17,8 +17,8 @@ Shader "LwyShaders/TinyPBR"
         [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", float) = 1
 
-        // [Space(20)]
-        // _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
+        [Space(20)]
+        _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
     }
     SubShader
     {
@@ -131,15 +131,15 @@ Shader "LwyShaders/TinyPBR"
             #pragma shader_feature _ENABLE_MASK_MAP
 
             CBUFFER_START(UnityPerMaterial)
-                half4 _BaseMap_ST;
-                // half4 _MainTex_ST;
-                half4 _NormalMap_ST;
-                half4 _MaskMap_ST;
-                half4 _BaseColor;
-                half _Metallic, _Roughness;
-                // half _SpecularPower;
-                half _NormalScale;
-                // half _DNormalization;
+                float4 _BaseMap_ST;
+                // float4 _MainTex_ST;
+                float4 _NormalMap_ST;
+                float4 _MaskMap_ST;
+                float4 _BaseColor;
+                float _Metallic, _Roughness;
+                // float _SpecularPower;
+                float _NormalScale;
+                float _DNormalization;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
