@@ -125,7 +125,7 @@ Shader "LwyShaders/TinyPBR"
             #define  _MAIN_LIGHT_SHADOWS_CASCADE
             #define  _SHADOWS_SOFT
 
-            // #define _REFLECTION_PROBE_BLENDING
+            #define _REFLECTION_PROBE_BLENDING
             #define _REFLECTION_PROBE_BOX_PROJECTION
             #pragma multi_compile_fragment _ _LIGHT_LAYERS
             #pragma shader_feature _ENABLE_MASK_MAP
