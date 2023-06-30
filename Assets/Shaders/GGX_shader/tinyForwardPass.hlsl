@@ -56,7 +56,6 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
     return ggx1 * ggx2;
 }
 
-
 float BlinnPhong(float3 H, float3 normalWS, float N)
 {
     float BlinnPhong = pow(max(dot(H, normalWS), 0.0001), 5);
@@ -117,7 +116,6 @@ float3 BoxProjection(float3 reflectionWS, float3 positionWS,
     return reflectionWS;
 }
 
-
 v2f vert(a2v input)
 {
     v2f o;
@@ -144,10 +142,6 @@ v2f vert(a2v input)
     // o.normalOS = normalize(input.normalOS);
     
     o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-    // o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
-    // o.uv = TRANSFORM_TEX(input.texcoord, _MaskMap);
-    // o.uv2 = TRANSFORM_TEX(input.texcoord, _NormalMap);
-    // o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
     
     return o;
 }
@@ -204,7 +198,7 @@ float4 frag(v2f input) : SV_TARGET
 
 if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
 {
-    ///main light pbr part
+    ////main light brdf part
     //G
     G = GeometrySmith(input.normalWS, viewDirectionWS, mainLightDir, _Roughness);
 
@@ -226,23 +220,83 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
     
     color += (D * lambert * _DNormalization + S * F * G) * MainLight.shadowAttenuation;
 }
-    //GI cubemap and mip cul
+    
+    ///GI cube map and mip cul
     float MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
     float3 reflectDirWS = reflect(-viewDirectionWS, input.normalWS);
 
-    #if defined(_REFLECTION_PROBE_BOX_PROJECTION)
-        reflectDirWS = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
-        // reflectDirWS = float3(1,1,1);
-    #endif
-
-    float4 cubeMap = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS, MIP);
+        #if defined(_REFLECTION_PROBE_BOX_PROJECTION)
+            float3 reflectDirWS00 = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
+            float3 reflectDirWS01 = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube1_ProbePosition, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
+            // reflectDirWS = float3(1,1,1);
+        #endif
+    
+    
+    
+    ///cube map 01
+    float4 cubeMap00 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS00, MIP);
     //you have to decodeHDR, otherwise it will not work at all.
-    #if defined(UNITY_USE_NATIVE_HDR)
-        float3 cubeMapHDR = cubeMap.rgb;
-    #else
-        float3 cubeMapHDR = DecodeHDREnvironment(cubeMap, unity_SpecCube0_HDR);
-    #endif
-    //indirect
+        #if defined(UNITY_USE_NATIVE_HDR)
+            float3 cubeMapHDR = cubeMap.rgb;
+        #else
+            float3 cubeMapHDR00 = DecodeHDREnvironment(cubeMap00, unity_SpecCube0_HDR);
+        #endif
+    
+    ///cube map 02
+    float4 cubeMap01 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube1, samplerunity_SpecCube1, reflectDirWS01, MIP);
+    //you have to decodeHDR, otherwise it will not work at all.
+        #if defined(UNITY_USE_NATIVE_HDR)
+                float3 cubeMapHDR = cubeMap.rgb;
+        #else
+        float3 cubeMapHDR01 = DecodeHDREnvironment(cubeMap01, unity_SpecCube1_HDR);
+        #endif
+    
+            //cube map importance part.
+            half probe0Volume = CalculateProbeVolumeSqrMagnitude(unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
+            half probe1Volume = CalculateProbeVolumeSqrMagnitude(unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
+
+            half volumeDiff = probe0Volume - probe1Volume;
+    
+            float importanceSign = unity_SpecCube1_BoxMin.w;
+    
+            // A probe is dominant if its importance is higher
+            // Or have equal importance but smaller volume
+            bool probe0Dominant = importanceSign > 0.0f || (importanceSign == 0.0f && volumeDiff < -0.0001h);
+            bool probe1Dominant = importanceSign < 0.0f || (importanceSign == 0.0f && volumeDiff > 0.0001h);
+
+            float desiredWeightProbe0 = CalculateProbeWeight(input.positionWS, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
+            float desiredWeightProbe1 = CalculateProbeWeight(input.positionWS, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
+
+            // Subject the probes weight if the other probe is dominant
+            float weightProbe0 = probe1Dominant ? min(desiredWeightProbe0, 1.0f - desiredWeightProbe1) : desiredWeightProbe0;
+            float weightProbe1 = probe0Dominant ? min(desiredWeightProbe1, 1.0f - desiredWeightProbe0) : desiredWeightProbe1;
+
+        float totalWeight = weightProbe0 + weightProbe1;
+    
+        weightProbe0 /= max(totalWeight, 1.0f);
+        weightProbe1 /= max(totalWeight, 1.0f);
+    
+    half3 cubeMapHDR = half3(0.0h, 0.0h, 0.0h);
+    
+    if(weightProbe0 > 0.01f)
+    {
+        cubeMapHDR += cubeMapHDR00 * weightProbe0;
+    }
+    
+    if (weightProbe1 > 0.01f)
+    {
+        cubeMapHDR += cubeMapHDR01 * weightProbe1;
+    }
+    
+    if(totalWeight < 0.99f)
+    {
+        cubeMapHDR += DecodeHDREnvironment(cubeMap00, _GlossyEnvironmentCubeMap_HDR);
+
+    }
+    
+    ///end cube map
+    
+    ///indirect
     float3 ambient_contrib = max(0, SampleSH(input.normalWS.xyz)) * diffuse * _DNormalization;
 
     //Ambient Fresnel
@@ -252,7 +306,7 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
     float3 AmbientKd = float3(1.0, 1.0, 1.0) - AmbientKs;
     ambient_contrib = ambient_contrib  * AmbientKd ;
 
-    //punctuation lights
+    ///punctuation lights
     uint pixelLightCount = GetAdditionalLightsCount();
     for (uint lightIndex = 0; lightIndex < pixelLightCount; ++lightIndex)
     {
