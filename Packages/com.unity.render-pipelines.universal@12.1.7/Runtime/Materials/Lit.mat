@@ -40,7 +40,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: e32e61fcac18e444ab91727d43d856d2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -72,7 +72,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: e32e61fcac18e444ab91727d43d856d2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskMap:
@@ -159,7 +159,7 @@ Material:
     - _Glossness: 8
     - _GlossyReflections: 1
     - _MatCapIntensity: 1
-    - _Metallic: 1
+    - _Metallic: 0
     - _Min: 1
     - _Mode: 0
     - _MoveScale: 0.1
@@ -174,7 +174,7 @@ Material:
     - _ReflectionSource: 0
     - _Shininess: 1
     - _Smooth: 0.8
-    - _Smoothness: 0.919
+    - _Smoothness: 0
     - _SmoothnessSource: 0
     - _SmoothnessTextureChannel: 0
     - _SpecPower: 1

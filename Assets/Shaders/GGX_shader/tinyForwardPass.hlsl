@@ -66,7 +66,7 @@ float BlinnPhong(float3 H, float3 normalWS, float N)
 
 float Lambert(float3 lightDir, float3 normalWS)
 {
-    float lambert = max(dot(normalize(lightDir), normalize(normalWS)), 0.0001);
+    float lambert = max(dot(normalize(lightDir), normalize(normalWS)), 0.001);
     
     return lambert;
 }
@@ -197,9 +197,10 @@ float4 frag(v2f input) : SV_TARGET
     
 
     //initialize main light
-    Light MainLight = GetMainLight(input.shadowCoord);
+    Light MainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
     float3 mainLightDir = normalize(float3(MainLight.direction));
-    float4 mainLightColor = float4(MainLight.color, 1);
+    float3 mainLightColor = MainLight.color;
+    // float3 mainLightColor = half3(100,0,0);
 
     float3 H = normalize(mainLightDir + viewDirectionWS);
 
@@ -224,14 +225,12 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
     F = Fresnel(input.normalWS, viewDirectionWS, f0);
 
     //D
-    lambert = Lambert(mainLightDir, input.normalWS);
+    lambert = Lambert(mainLightDir, input.normalWS) ;
     float3 kd = float3(1.0, 1.0, 1.0) - F;
     kd *= (1.0 - _Metallic);
     // ambient_contrib *=kd;
     D = diffuse * kd * mainLightColor ;
 
-    // input.shadowCoord  = TransformWorldToShadowCoord(input.positionWS);
-    
     color += (D * lambert * _DNormalization + S * F * G) * MainLight.shadowAttenuation;
 }
     
@@ -244,8 +243,6 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
             float3 reflectDirWS01 = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube1_ProbePosition, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
             // reflectDirWS = float3(1,1,1);
         #endif
-    
-    
     
     // ///cube map 01
     // float4 cubeMap00 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS00, MIP);
@@ -309,9 +306,9 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
     // }
 
     float3 cubeMapHDR = CalculateIrradianceFromReflectionProbes(reflectDirWS, input.positionWS, _Roughness);
+    ///end cube map
     
-    // ///end cube map
-    
+
     ///indirect
     float3 ambient_contrib = max(0, SampleSH(input.normalWS.xyz)) * diffuse * _DNormalization;
 
@@ -380,7 +377,7 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
     // f0 = lerp(f0, diffuse, _Metallic);
     float fresnelTerm = FresnelLerp(input.normalWS, viewDirectionWS) /* rcp(PI)*/;
     cubeMapHDR = lerp( diffuse * cubeMapHDR, cubeMapHDR, fresnelTerm);
-    float3 indirectSpecular = cubeMapHDR /* 0.318309891613572*/;
+    float3 indirectSpecular = cubeMapHDR /* _DNormalization*/;
 
     float3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
     
@@ -394,5 +391,5 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
 
     //return _BaseColor ;
     return half4(color, diffuse.a);
-    //return half4(input.normalWS, 1);
+    // return MainLight.shadowAttenuation;
 }

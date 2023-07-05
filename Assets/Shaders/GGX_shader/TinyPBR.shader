@@ -116,18 +116,13 @@ Shader "LwyShaders/TinyPBR"
             #pragma vertex vert
             #pragma fragment frag
 
-            // #pragma multi_compile _fog
-            // #pragma multi_compile  _MAIN_LIGHT_SHADOWS
-            // #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
-            // #pragma multi_compile  _SHADOWS_SOFT
+            #pragma multi_compile _fog
+            #pragma multi_compile  _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile  _SHADOWS_SOFT
 
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
-
-            // #define  _fog
-            #define  _MAIN_LIGHT_SHADOWS
-            #define  _MAIN_LIGHT_SHADOWS_CASCADE
-            #define  _SHADOWS_SOFT
 
             #define _REFLECTION_PROBE_BLENDING
             #define _REFLECTION_PROBE_BOX_PROJECTION
