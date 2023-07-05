@@ -1,5 +1,6 @@
 //processing, not finished.
-Shader "LwyShaders/TinyPBR"
+
+Shader "LwyShaders/TinyPBR_Transparent"
 {
     Properties
     {
@@ -26,7 +27,7 @@ Shader "LwyShaders/TinyPBR"
     }
     SubShader
     {
-        Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
+        Tags { "Queue" = "Transparent"  "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
         Pass
         {
@@ -99,11 +100,13 @@ Shader "LwyShaders/TinyPBR"
         pass
         {
             Tags { "LightMode" = "SRPDefaultUnlit" }
-            Name "TinyPBR"
+            Name "TinyPBR_Transparent"
 
-            ZWrite On
-            ZTest LEqual
+            ZWrite off
+            ZTest on
             Cull back
+
+            Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
 

@@ -12,13 +12,13 @@ struct a2v
 struct v2f
 {
     float3 positionWS : TEXCOORD0;
-    float3 bitangentWS : TEXCOORD1;
+    //float3 bitangentWS : TEXCOORD1;
     float2 uv : TEXCOORD2;
-    float3 tangentWS : TEXCOORD3;
+    float4 tangentWS : TEXCOORD3;
     float3 normalWS : TEXCOORD4;
     float4 shadowCoord : TEXCOORD5;
     float4 positionCS : SV_POSITION;
-    // float3 normalOS : TEXCOORD5;
+    float3 normalOS : TEXCOORD6;
     // float4 scrPos : TEXCOORD6;
     // float4 positionCS : SV_POSITION;
     // float2 uv2 : TEXCOORD8;
@@ -60,9 +60,6 @@ float BlinnPhong(float3 H, float3 normalWS, float N)
 {
     float BlinnPhong = pow(max(dot(H, normalWS), 0.0001), 5);
     BlinnPhong = pow(BlinnPhong, N) * ((N + 1) / (2 * 3.1415926535));
-    // BlinnPhong = (( _Roughness + 2) * ( _Roughness +4)) /
-    //               (8 * 3.1415926535 * (pow(2,-_Roughness / 2) + _Roughness))
-    //               * BlinnPhong;
     
     return BlinnPhong;
 }
@@ -98,34 +95,41 @@ float3 FresnelRoughness(float3 N, float3 viewDirection, float3 f0, float roughne
 float3 BoxProjection(float3 reflectionWS, float3 positionWS,
                     float4 cubemapPositionWS, float3 boxMin, float3 boxMax)
 {
-    UNITY_BRANCH
+    //UNITY_BRANCH
     if (cubemapPositionWS.w > 0.0f)
     {
         float3 boxMinMax = (reflectionWS > 0.0f) ? boxMax.xyz : boxMin.xyz; 
-        half3 rbMinMax = half3(boxMinMax - positionWS) / reflectionWS;
+        float3 rbMinMax = float3(boxMinMax - positionWS) / reflectionWS;
         //boxMin -= positionWS;
         //boxMax -= positionWS;
         //float x = (reflectionWS.x > 0 ? boxMax.x : boxMin.x) / reflectionWS.x;
         //float y = (reflectionWS.y > 0 ? boxMax.x : boxMin.y) / reflectionWS.y;
         //float z = (reflectionWS.z > 0 ? boxMax.x : boxMin.z) / reflectionWS.z;
-        half fa = min(min(rbMinMax.x, rbMinMax.y), rbMinMax.z);
-        half3 worldPos = half3(positionWS - cubemapPositionWS.xyz);
+        float fa = min(min(rbMinMax.x, rbMinMax.y), rbMinMax.z);
+        float3 worldPos = float3(positionWS - cubemapPositionWS.xyz);
 
         return worldPos +reflectionWS * fa;
     }
     return reflectionWS;
 }
 
+//half4 GetEmissionColor(half4 emissionColor, half4 emissionMap, float4 sampler_BaseMap, float2 uv)
+//{
+//    emissionMap = SAMPLE_TEXTURE2D(emissionMap, sampler_BaseMap, uv);
+//    return emissionMap *= emissionColor;
+//}
+
 v2f vert(a2v input)
 {
     v2f o;
     o.positionCS = TransformObjectToHClip(input.positionOS);
     o.positionWS = TransformObjectToWorld(input.positionOS.xyz);
-    o.normalWS = TransformObjectToWorldNormal(input.normalOS);
-    o.tangentWS = float3(TransformObjectToWorldDir(input.tangentOS.xyz));
+    o.normalWS = TransformObjectToWorldNormal(input.normalOS, true);
+    o.tangentWS = float4(TransformObjectToWorldDir(input.tangentOS, true), input.tangentOS.w);
 
-    real sign = real(input.tangentOS.w) * GetOddNegativeScale();
-    o.bitangentWS = cross(o.normalWS.xyz, o.tangentWS.xyz) * sign;
+    //real sign = real(input.tangentOS.w) * GetOddNegativeScale();
+    //o.bitangentWS = cross(o.normalWS.xyz, o.tangentWS.xyz) * sign;
+    
     // o.positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
     // normalVS = TransformWorldToViewDir(normalWS, true);
 
@@ -139,7 +143,7 @@ v2f vert(a2v input)
 
     //receive shadow
     o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
-    // o.normalOS = normalize(input.normalOS);
+    o.normalOS = input.normalOS;
     
     o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
     
@@ -149,6 +153,8 @@ v2f vert(a2v input)
 float4 frag(v2f input) : SV_TARGET
 {
     uint meshRenderingLayers = GetMeshRenderingLightLayer();
+    
+    
     // float rcpPI = rcp(PI);
     _Metallic = max(0.04, _Metallic);
 
@@ -159,14 +165,27 @@ float4 frag(v2f input) : SV_TARGET
     float3 D = float3(0,0,0);
     float3 S = float3(0,0,0);
     float3 F = float3(0,0,0);
+    
+    //normal map
+    float sgn = input.tangentWS.w;
+    half3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
+    
+    float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
+    float3 bump = UnpackNormalScale(normalMap, _NormalScale);
+    input.normalWS = TransformObjectToWorldNormal(input.normalOS, true);
+    half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
+    input.normalWS = TransformTangentToWorld(bump, float3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz));
+    input.normalWS = NormalizeNormalPerPixel(input.normalWS);
 
-    float3 viewDirectionWS = SafeNormalize(_WorldSpaceCameraPos.xyz - input.positionWS);
+    half3 viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+
     float3 positionVS = TransformWorldToView(input.positionWS);
-    float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
+    //float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
 
+    
     //albedo
     float4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-    float3 diffuse = _BaseColor * albedo;
+    float4 diffuse = _BaseColor * albedo;
 
     //enable mask map
     #if defined(_ENABLE_MASK_MAP)
@@ -175,12 +194,7 @@ float4 frag(v2f input) : SV_TARGET
     #endif
 
     float surfaceReduction = 1.0 / (_Roughness * _Roughness + 1.0);
-
-    //normal map
-    float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
-    float3 bump = UnpackNormalScale(normalMap, _NormalScale);
-    input.normalWS = SafeNormalize(input.normalWS);
-    input.normalWS = TransformTangentToWorld(bump, half3x3(input.tangentWS.xyz, input.bitangentWS.xyz, input.normalWS.xyz));
+    
 
     //initialize main light
     Light MainLight = GetMainLight(input.shadowCoord);
@@ -222,7 +236,7 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
 }
     
     ///GI cube map and mip cul
-    float MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
+    // float MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
     float3 reflectDirWS = reflect(-viewDirectionWS, input.normalWS);
 
         #if defined(_REFLECTION_PROBE_BOX_PROJECTION)
@@ -233,68 +247,70 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
     
     
     
-    ///cube map 01
-    float4 cubeMap00 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS00, MIP);
-    //you have to decodeHDR, otherwise it will not work at all.
-        #if defined(UNITY_USE_NATIVE_HDR)
-            float3 cubeMapHDR = cubeMap.rgb;
-        #else
-            float3 cubeMapHDR00 = DecodeHDREnvironment(cubeMap00, unity_SpecCube0_HDR);
-        #endif
+    // ///cube map 01
+    // float4 cubeMap00 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS00, MIP);
+    // //you have to decodeHDR, otherwise it will not work at all.
+    //     #if defined(UNITY_USE_NATIVE_HDR)
+    //         float3 cubeMapHDR = cubeMap.rgb;
+    //     #else
+    //         float3 cubeMapHDR00 = DecodeHDREnvironment(cubeMap00, unity_SpecCube0_HDR);
+    //     #endif
     
-    ///cube map 02
-    float4 cubeMap01 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube1, samplerunity_SpecCube1, reflectDirWS01, MIP);
-    //you have to decodeHDR, otherwise it will not work at all.
-        #if defined(UNITY_USE_NATIVE_HDR)
-                float3 cubeMapHDR = cubeMap.rgb;
-        #else
-        float3 cubeMapHDR01 = DecodeHDREnvironment(cubeMap01, unity_SpecCube1_HDR);
-        #endif
+    // ///cube map 02
+    // float4 cubeMap01 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube1, samplerunity_SpecCube1, reflectDirWS01, MIP);
+    // //you have to decodeHDR, otherwise it will not work at all.
+    //     #if defined(UNITY_USE_NATIVE_HDR)
+    //             float3 cubeMapHDR = cubeMap.rgb;
+    //     #else
+    //     float3 cubeMapHDR01 = DecodeHDREnvironment(cubeMap01, unity_SpecCube1_HDR);
+    //     #endif
     
-            //cube map importance part.
-            half probe0Volume = CalculateProbeVolumeSqrMagnitude(unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
-            half probe1Volume = CalculateProbeVolumeSqrMagnitude(unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
+    //         //cube map importance part.
+    //         half probe0Volume = CalculateProbeVolumeSqrMagnitude(unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
+    //         half probe1Volume = CalculateProbeVolumeSqrMagnitude(unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
 
-            half volumeDiff = probe0Volume - probe1Volume;
+    //         half volumeDiff = probe0Volume - probe1Volume;
     
-            float importanceSign = unity_SpecCube1_BoxMin.w;
+    //         float importanceSign = unity_SpecCube1_BoxMin.w;
     
-            // A probe is dominant if its importance is higher
-            // Or have equal importance but smaller volume
-            bool probe0Dominant = importanceSign > 0.0f || (importanceSign == 0.0f && volumeDiff < -0.0001h);
-            bool probe1Dominant = importanceSign < 0.0f || (importanceSign == 0.0f && volumeDiff > 0.0001h);
+    //         // A probe is dominant if its importance is higher
+    //         // Or have equal importance but smaller volume
+    //         bool probe0Dominant = importanceSign > 0.0f || (importanceSign == 0.0f && volumeDiff < -0.0001h);
+    //         bool probe1Dominant = importanceSign < 0.0f || (importanceSign == 0.0f && volumeDiff > 0.0001h);
 
-            float desiredWeightProbe0 = CalculateProbeWeight(input.positionWS, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
-            float desiredWeightProbe1 = CalculateProbeWeight(input.positionWS, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
+    //         float desiredWeightProbe0 = CalculateProbeWeight(input.positionWS, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
+    //         float desiredWeightProbe1 = CalculateProbeWeight(input.positionWS, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
 
-            // Subject the probes weight if the other probe is dominant
-            float weightProbe0 = probe1Dominant ? min(desiredWeightProbe0, 1.0f - desiredWeightProbe1) : desiredWeightProbe0;
-            float weightProbe1 = probe0Dominant ? min(desiredWeightProbe1, 1.0f - desiredWeightProbe0) : desiredWeightProbe1;
+    //         // Subject the probes weight if the other probe is dominant
+    //         float weightProbe0 = probe1Dominant ? min(desiredWeightProbe0, 1.0f - desiredWeightProbe1) : desiredWeightProbe0;
+    //         float weightProbe1 = probe0Dominant ? min(desiredWeightProbe1, 1.0f - desiredWeightProbe0) : desiredWeightProbe1;
 
-        float totalWeight = weightProbe0 + weightProbe1;
+    //     float totalWeight = weightProbe0 + weightProbe1;
     
-        weightProbe0 /= max(totalWeight, 1.0f);
-        weightProbe1 /= max(totalWeight, 1.0f);
+    //     weightProbe0 /= max(totalWeight, 1.0f);
+    //     weightProbe1 /= max(totalWeight, 1.0f);
     
-    half3 cubeMapHDR = half3(0.0h, 0.0h, 0.0h);
+    // half3 cubeMapHDR = half3(0.0h, 0.0h, 0.0h);
     
-    if(weightProbe0 > 0.01f)
-    {
-        cubeMapHDR += cubeMapHDR00 * weightProbe0;
-    }
+    // if(weightProbe0 > 0.01f)
+    // {
+    //     cubeMapHDR += cubeMapHDR00 * weightProbe0;
+    // }
     
-    if (weightProbe1 > 0.01f)
-    {
-        cubeMapHDR += cubeMapHDR01 * weightProbe1;
-    }
+    // if (weightProbe1 > 0.01f)
+    // {
+    //     cubeMapHDR += cubeMapHDR01 * weightProbe1;
+    // }
     
-    if(totalWeight < 0.99f)
-    {
-        cubeMapHDR += DecodeHDREnvironment(cubeMap00, _GlossyEnvironmentCubeMap_HDR);
+    // if(totalWeight < 0.99f)
+    // {
+    //     cubeMapHDR += DecodeHDREnvironment(cubeMap00, _GlossyEnvironmentCubeMap_HDR);
 
-    }
+    // }
+
+    float3 cubeMapHDR = CalculateIrradianceFromReflectionProbes(reflectDirWS, input.positionWS, _Roughness);
     
-    ///end cube map
+    // ///end cube map
     
     ///indirect
     float3 ambient_contrib = max(0, SampleSH(input.normalWS.xyz)) * diffuse * _DNormalization;
@@ -364,12 +380,19 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
     // f0 = lerp(f0, diffuse, _Metallic);
     float fresnelTerm = FresnelLerp(input.normalWS, viewDirectionWS) /* rcp(PI)*/;
     cubeMapHDR = lerp( diffuse * cubeMapHDR, cubeMapHDR, fresnelTerm);
-    float3 indirectSpecular = cubeMapHDR * 0.318309891613572;
+    float3 indirectSpecular = cubeMapHDR /* 0.318309891613572*/;
 
     float3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
+    
+    //half3 emissionColor = GetEmissionColor(_emissiontColor, _EmissionMap, input.uv);
+    
+    //emmision
+    float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, input.uv);
+    emissionMap.rgb *= _EmissionColor;
 
-    color += envColor;
+    color += envColor + emissionMap;
 
-    // return float4((color), albedo.a) ;
-    return float4((color ), albedo.a);
+    //return _BaseColor ;
+    return half4(color, diffuse.a);
+    //return half4(input.normalWS, 1);
 }
