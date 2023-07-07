@@ -34,7 +34,8 @@ Shader "LwyShaders/TinyPBR_Transparent"
             Name "DepthOnly"
             Tags{"LightMode" = "DepthOnly"}
 
-            ZWrite On
+            ZWrite Off
+            ZTest on
             ColorMask 0
             Cull[_Cull]
 

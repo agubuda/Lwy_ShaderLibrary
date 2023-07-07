@@ -1,12 +1,13 @@
 struct a2v
 {
-    float4 positionOS   : POSITION;
-    float3 normalOS     : NORMAL;
-    float4 tangentOS    : TANGENT;
-    float2 texcoord     : TEXCOORD0;
+    float4 positionOS : POSITION;
+    float3 normalOS : NORMAL;
+    float4 tangentOS : TANGENT;
+    float2 texcoord : TEXCOORD0;
     // float2 staticLightmapUV   : TEXCOORD1;
     // float2 dynamicLightmapUV  : TEXCOORD2;
     // UNITY_VERTEX_INPUT_INSTANCE_ID
+
 };
 
 struct v2f
@@ -22,6 +23,7 @@ struct v2f
     // float4 scrPos : TEXCOORD6;
     // float4 positionCS : SV_POSITION;
     // float2 uv2 : TEXCOORD8;
+
 };
 
 float D_GGX_TR(float3 N, float3 H, float roughness)
@@ -66,21 +68,21 @@ float BlinnPhong(float3 H, float3 normalWS, float N)
 
 float Lambert(float3 lightDir, float3 normalWS)
 {
-    float lambert = max(dot(normalize(lightDir), normalize(normalWS)), 0.001);
+    float lambert = max(dot(normalize(lightDir), normalize(normalWS)), 0.0001);
     
     return lambert;
 }
 
 float3 Fresnel(float3 N, float3 viewDirection, float3 f0)
 {
-    float3 fresnel = f0 + (1.0 - f0) * pow((1.0 - max(dot(N, viewDirection),0.001)), 5.0);
+    float3 fresnel = f0 + (1.0 - f0) * pow((1.0 - max(dot(N, viewDirection), 0.0001)), 5.0);
 
     return fresnel;
 }
 
 float FresnelLerp(float3 N, float3 viewDirection)
 {
-    float fresnelLerp = pow(1 - max(dot(N, viewDirection),0.001), 5);
+    float fresnelLerp = pow(1 - max(dot(N, viewDirection), 0.0001), 5);
     return fresnelLerp;
 }
 
@@ -93,12 +95,12 @@ float3 FresnelRoughness(float3 N, float3 viewDirection, float3 f0, float roughne
 }
 
 float3 BoxProjection(float3 reflectionWS, float3 positionWS,
-                    float4 cubemapPositionWS, float3 boxMin, float3 boxMax)
+float4 cubemapPositionWS, float3 boxMin, float3 boxMax)
 {
     //UNITY_BRANCH
     if (cubemapPositionWS.w > 0.0f)
     {
-        float3 boxMinMax = (reflectionWS > 0.0f) ? boxMax.xyz : boxMin.xyz; 
+        float3 boxMinMax = (reflectionWS > 0.0f) ? boxMax.xyz : boxMin.xyz;
         float3 rbMinMax = float3(boxMinMax - positionWS) / reflectionWS;
         //boxMin -= positionWS;
         //boxMax -= positionWS;
@@ -108,7 +110,7 @@ float3 BoxProjection(float3 reflectionWS, float3 positionWS,
         float fa = min(min(rbMinMax.x, rbMinMax.y), rbMinMax.z);
         float3 worldPos = float3(positionWS - cubemapPositionWS.xyz);
 
-        return worldPos +reflectionWS * fa;
+        return worldPos + reflectionWS * fa;
     }
     return reflectionWS;
 }
@@ -162,9 +164,9 @@ float4 frag(v2f input) : SV_TARGET
     float3 f0 = float3(0.04, 0.04, 0.04);
     float lambert = 0.0;
     float G = 0.0;
-    float3 D = float3(0,0,0);
-    float3 S = float3(0,0,0);
-    float3 F = float3(0,0,0);
+    float3 D = float3(0, 0, 0);
+    float3 S = float3(0, 0, 0);
+    float3 F = float3(0, 0, 0);
     
     //normal map
     float sgn = input.tangentWS.w;
@@ -204,45 +206,45 @@ float4 frag(v2f input) : SV_TARGET
 
     float3 H = normalize(mainLightDir + viewDirectionWS);
 
-        #ifdef _LIGHT_LAYERS
-            uint lightLayerMask = asuint(MainLight.layerMask);
-        #else
-            uint lightLayerMask = DEFAULT_LIGHT_LAYERS;
-        #endif
+    #ifdef _LIGHT_LAYERS
+        uint lightLayerMask = asuint(MainLight.layerMask);
+    #else
+        uint lightLayerMask = DEFAULT_LIGHT_LAYERS;
+    #endif
 
 
-if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
-{
-    ////main light brdf part
-    //G
-    G = GeometrySmith(input.normalWS, viewDirectionWS, mainLightDir, _Roughness);
+    if (IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
+    {
+        ////main light brdf part
+        //G
+        G = GeometrySmith(input.normalWS, viewDirectionWS, mainLightDir, _Roughness);
 
-    //D_GGX_TR
-    float ks = D_GGX_TR(input.normalWS, H, _Roughness);
-    S = ks * mainLightColor ;
+        //D_GGX_TR
+        float ks = D_GGX_TR(input.normalWS, H, _Roughness);
+        S = ks * mainLightColor ;
 
-    //F
-    F = Fresnel(input.normalWS, viewDirectionWS, f0);
+        //F
+        F = Fresnel(input.normalWS, viewDirectionWS, f0);
 
-    //D
-    lambert = Lambert(mainLightDir, input.normalWS) ;
-    float3 kd = float3(1.0, 1.0, 1.0) - F;
-    kd *= (1.0 - _Metallic);
-    // ambient_contrib *=kd;
-    D = diffuse * kd * mainLightColor ;
+        //D
+        lambert = Lambert(mainLightDir, input.normalWS) ;
+        float3 kd = float3(1.0, 1.0, 1.0) - F;
+        kd *= (1.0 - _Metallic);
+        // ambient_contrib *=kd;
+        D = diffuse * kd * mainLightColor ;
 
-    color += (D * lambert * _DNormalization + S * F * G) * MainLight.shadowAttenuation;
-}
+        color += (D * lambert * _DNormalization + S * F * G) * MainLight.shadowAttenuation;
+    }
     
     ///GI cube map and mip cul
     // float MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
     float3 reflectDirWS = reflect(-viewDirectionWS, input.normalWS);
 
-        #if defined(_REFLECTION_PROBE_BOX_PROJECTION)
-            float3 reflectDirWS00 = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
-            float3 reflectDirWS01 = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube1_ProbePosition, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
-            // reflectDirWS = float3(1,1,1);
-        #endif
+    #if defined(_REFLECTION_PROBE_BOX_PROJECTION)
+        float3 reflectDirWS00 = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
+        float3 reflectDirWS01 = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube1_ProbePosition, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
+        // reflectDirWS = float3(1,1,1);
+    #endif
     
     // ///cube map 01
     // float4 cubeMap00 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS00, MIP);
@@ -317,7 +319,7 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
 
     float3 AmbientKs = FresnelRoughness(input.normalWS, viewDirectionWS, f0, _Roughness);
     float3 AmbientKd = float3(1.0, 1.0, 1.0) - AmbientKs;
-    ambient_contrib = ambient_contrib  * AmbientKd ;
+    ambient_contrib = ambient_contrib * AmbientKd ;
 
     ///punctuation lights
     uint pixelLightCount = GetAdditionalLightsCount();
@@ -329,7 +331,7 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
             lightLayerMask = DEFAULT_LIGHT_LAYERS;
         #endif
 
-        if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
+        if (IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
         {
             float4 lightPositionWS = _AdditionalLightsPosition[lightIndex];
             float distanceAttenuation = _AdditionalLightsAttenuation[lightIndex];
@@ -373,10 +375,10 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
 
             color += (D * lambert * _DNormalization + S * F * G);
         }
-    } 
+    }
     // f0 = lerp(f0, diffuse, _Metallic);
-    float fresnelTerm = FresnelLerp(input.normalWS, viewDirectionWS) /* rcp(PI)*/;
-    cubeMapHDR = lerp( diffuse * cubeMapHDR, cubeMapHDR, fresnelTerm);
+    float fresnelTerm = FresnelLerp(input.normalWS, viewDirectionWS) * (1 - _Roughness) /* rcp(PI)*/;
+    cubeMapHDR = lerp(diffuse * cubeMapHDR, cubeMapHDR, fresnelTerm);
     float3 indirectSpecular = cubeMapHDR /* _DNormalization*/;
 
     float3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
@@ -389,7 +391,8 @@ if(IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
 
     color += envColor + emissionMap;
 
-    //return _BaseColor ;
+    // return fresnelTerm;
     return half4(color, diffuse.a);
     // return MainLight.shadowAttenuation;
+
 }
