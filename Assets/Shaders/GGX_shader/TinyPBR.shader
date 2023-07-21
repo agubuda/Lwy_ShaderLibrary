@@ -14,6 +14,7 @@ Shader "LwyShaders/TinyPBR"
 
         [Space(20)]
         [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
+        _DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", Range(-1,1)) = 1
 
         [Space(20)]
@@ -135,6 +136,7 @@ Shader "LwyShaders/TinyPBR"
                 float4 _BaseMap_ST;
                 // float4 _MainTex_ST;
                 float4 _NormalMap_ST;
+                float4 _DetailNormalMap_ST;
                 float4 _MaskMap_ST;
                 half4 _BaseColor;
                 half3 _EmissionColor;
@@ -148,6 +150,7 @@ Shader "LwyShaders/TinyPBR"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
+            TEXTURE2D(_DetailNormalMap); SAMPLER(sampler_DetailNormalMap);
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
             TEXTURE2D(_EmissionMap);SAMPLER(sample_EmissionMap);
             
@@ -180,6 +183,13 @@ Shader "LwyShaders/TinyPBR"
                 // float2 uv2 : TEXCOORD8;
 
             };
+
+            float4 RNMCulculate(float4 NormalBase, float4 NormalDetail){
+                NormalBase.xyz =NormalBase.xyz*float3( 2,  2, 2) + float3(-1, -1,  0);
+                NormalDetail.xyz = NormalDetail.xyz*float3(-2, -2, 2) + float3( 1,  1, -1);
+                float4 r = NormalBase*dot(NormalBase, NormalDetail)/NormalBase.z - NormalDetail;
+                return r*0.5 + 0.5;
+            }
 
             float D_GGX_TR(float3 N, float3 H, float roughness)
             {
@@ -270,9 +280,9 @@ Shader "LwyShaders/TinyPBR"
                 return reflectionWS;
             }
 
-            //half4 GetEmissionColor(half4 emissionColor, half4 emissionMap, float4 sampler_BaseMap, float2 uv)
+            //half4 GetEmissionColor(half4 emissionColor, half4 emissionMap, float4 sampler_BaseMap, float2 uv.zw)
             //{
-            //    emissionMap = SAMPLE_TEXTURE2D(emissionMap, sampler_BaseMap, uv);
+            //    emissionMap = SAMPLE_TEXTURE2D(emissionMap, sampler_BaseMap, uv.zw);
             //    return emissionMap *= emissionColor;
             //}
 
@@ -303,7 +313,7 @@ Shader "LwyShaders/TinyPBR"
                 o.normalOS = input.normalOS;
                 
                 o.uv.xy = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                o.uv.zw = TRANSFORM_TEX(input.texcoord, _NormalMap);
+                o.uv.zw = TRANSFORM_TEX(input.texcoord, _DetailNormalMap);
                 
                 return o;
             }
@@ -328,8 +338,12 @@ Shader "LwyShaders/TinyPBR"
                 float sgn = input.tangentWS.w;
                 half3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
                 
-                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv.zw);
-                float3 bump = UnpackNormalScale(normalMap, _NormalScale);
+                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv.xy);
+                float4 detailNormalMap = SAMPLE_TEXTURE2D(_DetailNormalMap, sampler_DetailNormalMap, input.uv.zw);
+
+                float4 mixedNormalMap = RNMCulculate(normalMap,detailNormalMap);
+
+                float3 bump = UnpackNormalScale(mixedNormalMap, _NormalScale);
                 input.normalWS = TransformObjectToWorldNormal(input.normalOS, true);
                 half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
                 input.normalWS = TransformTangentToWorld(bump, float3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz));
@@ -348,7 +362,7 @@ Shader "LwyShaders/TinyPBR"
                 //enable mask map
                 #if defined(_ENABLE_MASK_MAP)
                     _Roughness = 1.0;
-                    _Metallic = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv.xy).r ;
+                    _Metallic = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv.zw.xy).r ;
                     _Roughness = (1.0 - SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv.xy).a * _Roughness) ;
                 #endif
 
@@ -540,10 +554,10 @@ Shader "LwyShaders/TinyPBR"
 
                 float3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
                 
-                //half3 emissionColor = GetEmissionColor(_emissiontColor, _EmissionMap, input.uv);
+                //half3 emissionColor = GetEmissionColor(_emissiontColor, _EmissionMap, input.uv.zw);
                 
                 //emmision
-                float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, input.uv);
+                float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, input.uv.zw);
                 emissionMap.rgb *= _EmissionColor;
 
                 float tempShadow = 1.0 - (1.0 - MainLight.shadowAttenuation) * T;
