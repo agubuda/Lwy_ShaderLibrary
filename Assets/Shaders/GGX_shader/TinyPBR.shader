@@ -14,7 +14,7 @@ Shader "LwyShaders/TinyPBR"
 
         [Space(20)]
         [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
-        _DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
+        [Normal]_DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", Range(-1,1)) = 1
 
         [Space(20)]
@@ -155,39 +155,20 @@ Shader "LwyShaders/TinyPBR"
             TEXTURE2D(_EmissionMap);SAMPLER(sample_EmissionMap);
             
             // #include "Assets/Shaders/GGX_shader/tinyForwardPass.hlsl"
-            struct a2v
-            {
-                float4 positionOS : POSITION;
-                float3 normalOS : NORMAL;
-                float4 tangentOS : TANGENT;
-                float2 texcoord : TEXCOORD0;
-                // float2 staticLightmapUV   : TEXCOORD1;
-                // float2 dynamicLightmapUV  : TEXCOORD2;
-                // UNITY_VERTEX_INPUT_INSTANCE_ID
 
-            };
-
-            struct v2f
-            {
-                float3 positionWS : TEXCOORD0;
-                //float3 bitangentWS : TEXCOORD1;
-                float4 uv : TEXCOORD2;
-                // float2 uv2 : TEXCOORD7;
-                float4 tangentWS : TEXCOORD3;
-                float3 normalWS : TEXCOORD4;
-                float4 shadowCoord : TEXCOORD5;
-                float4 positionCS : SV_POSITION;
-                float3 normalOS : TEXCOORD6;
-                // float4 scrPos : TEXCOORD6;
-                // float4 positionCS : SV_POSITION;
-                // float2 uv2 : TEXCOORD8;
-
-            };
 
             float4 RNMCulculate(float4 NormalBase, float4 NormalDetail){
                 NormalBase.xyz =NormalBase.xyz*float3( 2,  2, 2) + float3(-1, -1,  0);
                 NormalDetail.xyz = NormalDetail.xyz*float3(-2, -2, 2) + float3( 1,  1, -1);
                 float4 r = NormalBase*dot(NormalBase, NormalDetail)/NormalBase.z - NormalDetail;
+                return r*0.5 + 0.5;
+            }
+
+            float3 UDNCulculate(float4 NormalBase, float4 NormalDetail)
+            {
+                NormalBase.xyz = NormalBase.xyz*2 - 1;
+                NormalDetail.xyz = NormalDetail.xyz*2 - 1;
+                float3 r  = normalize(float3(NormalBase.xy + NormalDetail.xy, NormalBase.z));
                 return r*0.5 + 0.5;
             }
 
@@ -286,6 +267,35 @@ Shader "LwyShaders/TinyPBR"
             //    return emissionMap *= emissionColor;
             //}
 
+            struct a2v
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+                float4 tangentOS : TANGENT;
+                float2 texcoord : TEXCOORD0;
+                // float2 staticLightmapUV   : TEXCOORD1;
+                // float2 dynamicLightmapUV  : TEXCOORD2;
+                // UNITY_VERTEX_INPUT_INSTANCE_ID
+
+            };
+
+            struct v2f
+            {
+                float3 positionWS : TEXCOORD0;
+                //float3 bitangentWS : TEXCOORD1;
+                float4 uv : TEXCOORD2;
+                // float2 uv2 : TEXCOORD7;
+                float4 tangentWS : TEXCOORD3;
+                float3 normalWS : TEXCOORD4;
+                float4 shadowCoord : TEXCOORD5;
+                float4 positionCS : SV_POSITION;
+                float3 normalOS : TEXCOORD6;
+                // float4 scrPos : TEXCOORD6;
+                // float4 positionCS : SV_POSITION;
+                // float2 uv2 : TEXCOORD8;
+
+            };
+
             v2f vert(a2v input)
             {
                 v2f o;
@@ -341,12 +351,14 @@ Shader "LwyShaders/TinyPBR"
                 float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv.xy);
                 float4 detailNormalMap = SAMPLE_TEXTURE2D(_DetailNormalMap, sampler_DetailNormalMap, input.uv.zw);
 
-                float4 mixedNormalMap = RNMCulculate(normalMap,detailNormalMap);
+                // float4 mixedNormalMap = float4(RNMCulculate(normalMap,detailNormalMap).xyz,normalMap.w);
+                // float4 mixedNormalMap = RNMCulculate(normalMap,detailNormalMap);
+                float4 mixedNormalMap = float4(UDNCulculate(normalMap,detailNormalMap),normalMap.w);
 
                 float3 bump = UnpackNormalScale(mixedNormalMap, _NormalScale);
                 input.normalWS = TransformObjectToWorldNormal(input.normalOS, true);
                 half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
-                input.normalWS = TransformTangentToWorld(bump, float3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz));
+                input.normalWS = TransformTangentToWorld(bump, tangentToWorld);
                 input.normalWS = NormalizeNormalPerPixel(input.normalWS);
 
                 half3 viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
@@ -557,7 +569,7 @@ Shader "LwyShaders/TinyPBR"
                 //half3 emissionColor = GetEmissionColor(_emissiontColor, _EmissionMap, input.uv.zw);
                 
                 //emmision
-                float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, input.uv.zw);
+                float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, input.uv.xy);
                 emissionMap.rgb *= _EmissionColor;
 
                 float tempShadow = 1.0 - (1.0 - MainLight.shadowAttenuation) * T;
