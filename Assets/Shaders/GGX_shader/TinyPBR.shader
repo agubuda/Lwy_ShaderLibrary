@@ -15,7 +15,7 @@ Shader "LwyShaders/TinyPBR"
         [Space(20)]
         [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
         [Normal]_DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
-        _NormalScale ("Normal scale", Range(-1,1)) = 1
+        _DetailNormalStrength ("Detail Normal Strength", Range(-1,1)) = 1
 
         [Space(20)]
         _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
@@ -24,7 +24,7 @@ Shader "LwyShaders/TinyPBR"
         _EmissionMap ("Emission Map", 2D) = "black" {}
         [HDR] _EmissionColor ("Emission Color", color) = (1.0, 1.0, 1.0, 1.0)
 
-        T  ("Temp", Range(0,1)) = 0.25
+        NormalBase  ("Temp", Range(0,1)) = 0.25
 
     }
     SubShader
@@ -140,12 +140,12 @@ Shader "LwyShaders/TinyPBR"
                 float4 _MaskMap_ST;
                 half4 _BaseColor;
                 half3 _EmissionColor;
-                float _Metallic, _Roughness;
-                // float _SpecularPower;
-                float _NormalScale;
-                float _DNormalization;
+                half _Metallic, _Roughness;
+                // half _SpecularPower;
+                half _DetailNormalStrength;
+                half _DNormalization;
 
-                float T;
+                half NormalBase;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -156,22 +156,24 @@ Shader "LwyShaders/TinyPBR"
             
             // #include "Assets/Shaders/GGX_shader/tinyForwardPass.hlsl"
 
-
-            float4 RNMCulculate(float4 NormalBase, float4 NormalDetail){
-                NormalBase.xyz =NormalBase.xyz*float3( 2,  2, 2) + float3(-1, -1,  0);
-                NormalDetail.xyz = NormalDetail.xyz*float3(-2, -2, 2) + float3( 1,  1, -1);
-                float4 r = NormalBase*dot(NormalBase, NormalDetail)/NormalBase.z - NormalDetail;
-                return r*0.5 + 0.5;
+            //has better result but higher Instrction costs(8)
+            float3 RNMCulculate(float3 NormalBase, float3 NormalDetail){
+                NormalBase = NormalBase.xyz + real3(0.0, 0.0, 1.0);
+                NormalDetail = NormalDetail.xyz * real3(-1.0, -1.0, 1.0);
+                float3 r = (NormalBase / NormalBase.z) * dot(NormalBase, NormalDetail) - NormalDetail;
+                return r;
             }
 
-            float3 UDNCulculate(float4 NormalBase, float4 NormalDetail)
+            //has lower Instruction costs(5) 
+            float3 UDNCulculate(float3 NormalBase, float3 NormalDetail)
             {
                 NormalBase.xyz = NormalBase.xyz*2 - 1;
                 NormalDetail.xyz = NormalDetail.xyz*2 - 1;
-                float3 r  = normalize(float3(NormalBase.xy + NormalDetail.xy, NormalBase.z));
+                float3 r  = float3(NormalBase.xy + NormalDetail.xy, NormalBase.z);
                 return r*0.5 + 0.5;
             }
 
+            //brdf stuff
             float D_GGX_TR(float3 N, float3 H, float roughness)
             {
                 float a2 = roughness * roughness;
@@ -348,17 +350,21 @@ Shader "LwyShaders/TinyPBR"
                 float sgn = input.tangentWS.w;
                 half3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
                 
-                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv.xy);
-                float4 detailNormalMap = SAMPLE_TEXTURE2D(_DetailNormalMap, sampler_DetailNormalMap, input.uv.zw);
+                // float4 normalMap = ;
+                // float4 detailNormalMap =;
+                float3 bump_base = UnpackNormal(SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv.xy));
+                float3 bump_detail = UnpackNormal( SAMPLE_TEXTURE2D(_DetailNormalMap, sampler_DetailNormalMap, input.uv.zw));
 
                 // float4 mixedNormalMap = float4(RNMCulculate(normalMap,detailNormalMap).xyz,normalMap.w);
                 // float4 mixedNormalMap = RNMCulculate(normalMap,detailNormalMap);
-                float4 mixedNormalMap = float4(UDNCulculate(normalMap,detailNormalMap),normalMap.w);
+                bump_base = normalize(bump_base);
+                bump_detail = normalize(bump_detail);
+                float3 mixedNormalMap = lerp(bump_base , RNMCulculate(bump_base,bump_detail), _DetailNormalStrength);
 
-                float3 bump = UnpackNormalScale(mixedNormalMap, _NormalScale);
+                // float3 bump = UnpackNormalScale(mixedNormalMap, _DetailNormalStrength);
                 input.normalWS = TransformObjectToWorldNormal(input.normalOS, true);
                 half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
-                input.normalWS = TransformTangentToWorld(bump, tangentToWorld);
+                input.normalWS = TransformTangentToWorld(mixedNormalMap, tangentToWorld);
                 input.normalWS = NormalizeNormalPerPixel(input.normalWS);
 
                 half3 viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
@@ -572,11 +578,11 @@ Shader "LwyShaders/TinyPBR"
                 float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, input.uv.xy);
                 emissionMap.rgb *= _EmissionColor;
 
-                float tempShadow = 1.0 - (1.0 - MainLight.shadowAttenuation) * T;
+                float tempShadow = 1.0 - (1.0 - MainLight.shadowAttenuation) * NormalBase;
 
                 envColor *= tempShadow;
 
-                color += (envColor + emissionMap) /* tempShadow */;
+                color += (envColor + emissionMap)  /* tempShadow */;
                 // color *= ;
 
                 // return fresnelTerm;

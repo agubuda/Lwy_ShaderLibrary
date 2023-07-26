@@ -22,11 +22,11 @@ Material:
     m_TexEnvs:
     - _BaseMap:
         m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 3, y: 3}
         m_Offset: {x: 0, y: 0}
     - _DetailNormalMap:
-        m_Texture: {fileID: 2800000, guid: a97cc3cc6cd450144b18768629f95e87, type: 3}
-        m_Scale: {x: 4, y: 4}
+        m_Texture: {fileID: 2800000, guid: c94a2eab733ed274e9e14e1af890aca4, type: 3}
+        m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
@@ -42,13 +42,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - NormalBase: 0.25
     - T: 0.25
     - _DNormalization: 0.3183099
     - _ENABLE_MASK_MAP: 0
-    - _Metallic: 0.095
+    - _Metallic: 0.09
     - _NormalScale: 1
-    - _Roughness: 0.236
+    - _Roughness: 0.15
     m_Colors:
-    - _BaseColor: {r: 0.254717, g: 0.13205448, b: 0.09732112, a: 1}
+    - _BaseColor: {r: 0.16037738, g: 0.16037738, b: 0.16037738, a: 1}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
