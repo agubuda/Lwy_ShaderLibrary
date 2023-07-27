@@ -42,13 +42,15 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - NormalBase: 0.25
     - T: 0.25
     - _DNormalization: 0.3183099
+    - _DetailNormalStrength: 1
     - _ENABLE_MASK_MAP: 0
     - _Metallic: 1
     - _NormalScale: 1
-    - _Roughness: 0.37
+    - _Roughness: 0.239
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.82382524, g: 0.86826646, b: 0.9339623, a: 1}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

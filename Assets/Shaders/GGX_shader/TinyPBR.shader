@@ -410,7 +410,7 @@ Shader "LwyShaders/TinyPBR"
 
                     //D_GGX_TR
                     float ks = D_GGX_TR(input.normalWS, H, _Roughness);
-                    S = ks * mainLightColor ;
+                    S = diffuse * ks * mainLightColor ;
 
                     //F
                     F = Fresnel(input.normalWS, viewDirectionWS, f0);
@@ -550,7 +550,7 @@ Shader "LwyShaders/TinyPBR"
                         //D_GGX_TR
                         float ks = D_GGX_TR(input.normalWS, H, _Roughness);
                         ks = ks * (lightAtten * smoothFactor);
-                        S = ks * lightColor ;
+                        S = diffuse *  ks * lightColor ;
 
                         //F
                         F = Fresnel(input.normalWS, viewDirectionWS, f0);
