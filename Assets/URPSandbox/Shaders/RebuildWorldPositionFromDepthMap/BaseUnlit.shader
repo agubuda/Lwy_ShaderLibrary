@@ -11,6 +11,10 @@ Shader "LwyShaders/BaseUnlit"
 
         Pass
         {
+            ZWrite On
+            ZTest LEqual
+            Cull back
+
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -73,7 +77,7 @@ Shader "LwyShaders/BaseUnlit"
                         return half4(0,0,0,1);
                 #endif
 
-                return half4(worldPos,1.0);
+                // return half4(worldPos,1.0);
                 return color;
             }
             ENDHLSL
