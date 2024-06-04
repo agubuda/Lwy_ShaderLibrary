@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class meshModifier : MonoBehaviour
+public class betterSoftBodySystem : MonoBehaviour
 {
     public float _Damper = 5.0f;
     //public ComputeShader skinnedMeshComputeShader;
