@@ -5,3 +5,7 @@
 如果丢失FBX或者贴图请联系作者。
 
 切换到Android，其他未处理图形api兼容性问题。
+
+<div align = "center">
+  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/temp/Recordings/image_001_0002.png">
+</div>
