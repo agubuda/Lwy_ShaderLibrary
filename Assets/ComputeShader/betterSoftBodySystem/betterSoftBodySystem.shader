@@ -252,7 +252,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 
                 // return fresnelDepthRim;
 
-                //return color;
+                return color;
                 return input.vertColor;
             }
 
