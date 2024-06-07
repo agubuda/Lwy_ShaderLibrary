@@ -16,8 +16,7 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 1
     motionNodeName: 
-    rigImportErrors: "Avatar creation failed:\n\tParent for 'root.x' differs from
-      one found in HumanDescription. 'baseBody_riged' was found instead of 'root'.\n"
+    rigImportErrors: 
     rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
@@ -68,6 +67,7 @@ ModelImporter:
     secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
     useFileScale: 1
+    strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 0
@@ -591,7 +591,7 @@ ModelImporter:
     - name: c_middle2.l
       parentName: c_middle1.l
       position: {x: 0.0000000012728009, y: 0.022850284, z: -0.000000024709552}
-      rotation: {x: -0.040631417, y: -0.0008896881, z: 0.0026981118, w: 0.9991701}
+      rotation: {x: -0.04063142, y: -0.00088968815, z: 0.002698112, w: 0.9991702}
       scale: {x: 1.0000001, y: 1.0000001, z: 1.0000004}
     - name: c_middle3.l
       parentName: c_middle2.l
@@ -636,7 +636,7 @@ ModelImporter:
     - name: c_thumb2.l
       parentName: c_thumb1.l
       position: {x: -0.0000000065116517, y: 0.02603068, z: 0.000000003921484}
-      rotation: {x: -0.028469166, y: 0.060016423, z: 0.025286144, w: 0.99747086}
+      rotation: {x: -0.028469168, y: 0.060016427, z: 0.025286146, w: 0.9974709}
       scale: {x: 1.0000004, y: 0.99999964, z: 0.99999946}
     - name: c_thumb3.l
       parentName: c_thumb2.l
@@ -696,7 +696,7 @@ ModelImporter:
     - name: c_middle2.r
       parentName: c_middle1.r
       position: {x: 0.0000000041791055, y: 0.022850206, z: -0.00000000962788}
-      rotation: {x: -0.040628597, y: 0.00088373123, z: -0.0026973956, w: 0.99917024}
+      rotation: {x: -0.0406286, y: 0.0008837313, z: -0.0026973959, w: 0.9991703}
       scale: {x: 0.9999994, y: 0.9999997, z: 1.0000008}
     - name: c_middle3.r
       parentName: c_middle2.r
@@ -711,7 +711,7 @@ ModelImporter:
     - name: c_pinky2.r
       parentName: c_pinky1.r
       position: {x: -0.000000006483756, y: 0.012601618, z: -0.000000011546321}
-      rotation: {x: -0.021754857, y: 0.014217571, z: -0.034162123, w: 0.99907833}
+      rotation: {x: -0.021754857, y: 0.014217572, z: -0.034162123, w: 0.9990784}
       scale: {x: 0.9999998, y: 1.0000001, z: 1.0000001}
     - name: c_pinky3.r
       parentName: c_pinky2.r
@@ -741,7 +741,7 @@ ModelImporter:
     - name: c_thumb2.r
       parentName: c_thumb1.r
       position: {x: -0.000000016976346, y: 0.026030796, z: 0.000000016119278}
-      rotation: {x: -0.028466867, y: -0.060014084, z: -0.025282938, w: 0.99747115}
+      rotation: {x: -0.02846687, y: -0.060014084, z: -0.02528294, w: 0.99747115}
       scale: {x: 0.99999917, y: 0.99999964, z: 0.99999976}
     - name: c_thumb3.r
       parentName: c_thumb2.r
