@@ -480,7 +480,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71423b66ad8fdf8438dfb1c2700bcee9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 10
+  speed: 100
   Obj: {fileID: 842223699}
 --- !u!1 &880809408
 GameObject:
@@ -1160,6 +1160,18 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed09b5e490698bc4d8b45c55ff8e30c5, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09b5e490698bc4d8b45c55ff8e30c5, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09b5e490698bc4d8b45c55ff8e30c5, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed09b5e490698bc4d8b45c55ff8e30c5, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.354
       objectReference: {fileID: 0}
@@ -1230,9 +1242,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f29eb7fd9883ca447b40ef8f845cccc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _Damper: 1.1
-  _MoveScale: 0.2
-  _Spring: 30
+  _Damper: 0.8
+  _MoveScale: 1.2
+  _Spring: 20
   material: {fileID: 2100000, guid: 9fcc3813fc1f1774cac0e16c20e20361, type: 2}
   meshComputeShader: {fileID: 7200000, guid: dc2ff4509425b484683a6aa658c05694, type: 3}
 --- !u!1 &1923248644

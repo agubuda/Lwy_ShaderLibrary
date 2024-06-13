@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SimpleMovementController : MonoBehaviour
 {
-    public float speed = 1f;
+    public float speed = 100f;
     public Transform Obj;
 
 
@@ -17,19 +17,27 @@ public class SimpleMovementController : MonoBehaviour
         //第二种方式控制移动
         if (Input.GetKey(KeyCode.W)) //前进
         {
-            transform.Translate(Vector3.forward * movespeed * Time.deltaTime);
+            transform.Translate(Vector3.forward * speed * Time.deltaTime);
         }
         if (Input.GetKey(KeyCode.S)) //后退
         {
-            transform.Translate(Vector3.back * movespeed * Time.deltaTime);
+            transform.Translate(Vector3.back * speed * Time.deltaTime);
         }
-        if (Input.GetKey(KeyCode.A))//向左旋转
+        if (Input.GetKey(KeyCode.A)) //前进
         {
-            transform.Rotate(0, -rotateSpeed * Time.deltaTime, 0);
+            transform.Translate(Vector3.left * speed * Time.deltaTime);
         }
-        if (Input.GetKey(KeyCode.D))//向右旋转
-　　{
-            transform.Rotate(0, rotateSpeed * Time.deltaTime, 0);
+        if (Input.GetKey(KeyCode.D)) //后退
+        {
+            transform.Translate(Vector3.right * speed * Time.deltaTime);
         }
+        // if (Input.GetKey(KeyCode.Q))//向左旋转
+        // {
+        //     transform.Rotate(0, -rotateSpeed * Time.deltaTime, 0);
+        // }
+        // if (Input.GetKey(KeyCode.E))//向右旋转
+        //{
+        //     transform.Rotate(0, rotateSpeed * Time.deltaTime, 0);
+        // }
     }
 }
