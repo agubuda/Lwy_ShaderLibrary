@@ -8,12 +8,25 @@ public class SimpleMovementController : MonoBehaviour
     public Transform Obj;
 
 
-    // Update is called once per frame
     private float rotateSpeed = 30f;
     private float movespeed = 5;
+    private bool up = false; 
 
+    public void MoveForward()
+    {
+        //transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        up = true;
+    }
+    public void StopMoveForward()
+    {
+        //transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        up = false;
+    }
     void FixedUpdate()
     {
+        if (up) {
+            transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        }
         //第二种方式控制移动
         if (Input.GetKey(KeyCode.W)) //前进
         {
@@ -25,19 +38,21 @@ public class SimpleMovementController : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.A)) //前进
         {
-            transform.Translate(Vector3.left * speed * Time.deltaTime);
+            transform.Rotate(0, -rotateSpeed * Time.deltaTime, 0);
+            //transform.Translate(Vector3.left * speed * Time.deltaTime);
         }
         if (Input.GetKey(KeyCode.D)) //后退
         {
+            transform.Rotate(0, rotateSpeed * Time.deltaTime, 0);
+            //transform.Translate(Vector3.right * speed * Time.deltaTime);
+        }
+        if (Input.GetKey(KeyCode.Q))//左平移
+        {
+            transform.Translate(Vector3.left * speed * Time.deltaTime);
+        }
+        if (Input.GetKey(KeyCode.E))//右平移
+        {
             transform.Translate(Vector3.right * speed * Time.deltaTime);
         }
-        // if (Input.GetKey(KeyCode.Q))//向左旋转
-        // {
-        //     transform.Rotate(0, -rotateSpeed * Time.deltaTime, 0);
-        // }
-        // if (Input.GetKey(KeyCode.E))//向右旋转
-        //{
-        //     transform.Rotate(0, rotateSpeed * Time.deltaTime, 0);
-        // }
     }
 }
