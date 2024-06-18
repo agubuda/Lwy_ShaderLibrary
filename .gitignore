@@ -2,6 +2,8 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
 #
+/.vscode/
+
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -9,15 +11,16 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Mm]emoryCaptures/
-/[Rr]ecordings/
+# /[Rr]ecordings/
 /Assets/ArtRes/AssetBundle/
-/Assets/ArtRes/Model/
-/Assets/OPS/
+/Assets/Plugins/
+/Assets/TextMesh Pro/
 /Assets/ShaderlabVSCode/
 /Assets/Nebula Pack/
 /Assets/Fantasy Skybox FREE/
 # /Assets/OccaSoftware/
 /Assets/Samples/
+/UserSettings/
 /Packages/com.unity.render-pipelines.core@12.1.7/Documentation~/
 # /Packages/com.unity.render-pipelines.universal@12.1.7/Documentation/
 /Packages/com.unity.render-pipelines.universal@12.1.7/Documentation~/
@@ -77,3 +80,5 @@ crashlytics-build.properties
 
 Assets/ArtRes/Skybox/ersisd-Antwerp_Night_4k.hdr
 UserSettings/EditorUserSettings.asset
+
+.UpgradeLog.htm
