@@ -1,4 +1,9 @@
 # Personal Shader Library
+Here are some of my own practices from previous projects.
+Feel free to use them if you want to learn some basics.
+Buy me a cup of coffee if you use it commercially.
+Switch to Android. There may be unhandled compatibility issues under other graphics api.
+
 自己的shader沙盘，仅供交流无质保，商用请我吃饭。
 
 主要在shader目录下，一般每个shader都有对应的scene。
