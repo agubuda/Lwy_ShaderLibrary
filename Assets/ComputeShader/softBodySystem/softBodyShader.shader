@@ -11,7 +11,7 @@ Shader "ComputeShader/softBodyShader"
         // _Gravity ("_Gravity", float) = 1.0
         [Space(20)]
         _MainTex ("Texture", 2D) = "white" { }
-        _NormalMap ("Normal Map", 2D) = "white" { }
+        _NormalMap ("Normal Map", 2D) = "Normal" { }
         // _RampMap ("Ramp Map", 2D) = "white" { }
         _Remap ("Remap value", vector) = (1, -1, -1, 1)
         _BaseColor ("Color", Color) = (2, 1, 1, 1)

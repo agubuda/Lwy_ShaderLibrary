@@ -10,22 +10,34 @@ public class SimpleMovementController : MonoBehaviour
 
     private float rotateSpeed = 30f;
     private float movespeed = 5;
-    private bool up = false; 
+    private bool left = false; 
+    private bool right = false; 
 
-    public void MoveForward()
+    public void MoveLeft()
     {
-        //transform.Translate(Vector3.forward * speed * Time.deltaTime);
-        up = true;
+        left = true;
     }
-    public void StopMoveForward()
+    public void StopMoveLeft()
     {
-        //transform.Translate(Vector3.forward * speed * Time.deltaTime);
-        up = false;
+        left = false;
+    }
+    public void MoveRight()
+    {
+        right = true;
+    }
+    public void StopMoveRight()
+    {
+        right = false;
     }
     void FixedUpdate()
     {
-        if (up) {
-            transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        if (left) {
+            transform.Translate(Vector3.left * speed * Time.deltaTime);
+        }
+
+        if (right)
+        {
+            transform.Translate(Vector3.right * speed * Time.deltaTime);
         }
         //第二种方式控制移动
         if (Input.GetKey(KeyCode.W)) //前进
@@ -39,12 +51,10 @@ public class SimpleMovementController : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) //前进
         {
             transform.Rotate(0, -rotateSpeed * Time.deltaTime, 0);
-            //transform.Translate(Vector3.left * speed * Time.deltaTime);
         }
         if (Input.GetKey(KeyCode.D)) //后退
         {
             transform.Rotate(0, rotateSpeed * Time.deltaTime, 0);
-            //transform.Translate(Vector3.right * speed * Time.deltaTime);
         }
         if (Input.GetKey(KeyCode.Q))//左平移
         {
