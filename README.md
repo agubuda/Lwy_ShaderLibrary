@@ -1,4 +1,4 @@
-# Personal Shader Library
+# Lwy Shader Sandbox
 Here are some of my own practices from previous projects.
 Feel free to use them if you want to learn some basics.
 Buy me a cup of coffee if you use it commercially.
