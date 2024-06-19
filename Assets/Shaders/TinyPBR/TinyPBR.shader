@@ -1,8 +1,6 @@
 //processing, not finished.
-Shader "LwyShaders/TinyPBR"
-{
-    Properties
-    {
+Shader "LwyShaders/TinyPBR" {
+    Properties {
         _BaseMap ("Albedo", 2D) = "white" { }
         [MainColor] _BaseColor ("BaseColor", color) = (1.0, 1.0, 1.0, 1.0)
         [Space(20)]
@@ -15,26 +13,23 @@ Shader "LwyShaders/TinyPBR"
         [Space(20)]
         [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
         _DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
-        _NormalScale ("Normal scale", Range(-1,1)) = 1
+        _NormalScale ("Normal scale", Range(-1, 1)) = 1
 
         [Space(20)]
-        _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
+        _DNormalization ("UE=>Unity factor", Range(0.318309891613572, 1)) = 0.318309891613572
 
         [Space(20)]
-        _EmissionMap ("Emission Map", 2D) = "black" {}
+        _EmissionMap ("Emission Map", 2D) = "black" { }
         [HDR] _EmissionColor ("Emission Color", color) = (1.0, 1.0, 1.0, 1.0)
 
-        T  ("Temp", Range(0,1)) = 0.25
-
+        T ("Temp", Range(0, 1)) = 0.25
     }
-    SubShader
-    {
+    SubShader {
         Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        Pass
-        {
+        Pass {
             Name "DepthOnly"
-            Tags{"LightMode" = "DepthOnly"}
+            Tags { "LightMode" = "DepthOnly" }
 
             ZWrite On
             ColorMask 0
@@ -62,10 +57,9 @@ Shader "LwyShaders/TinyPBR"
             ENDHLSL
         }
 
-        Pass
-        {
+        Pass {
             Name "ShadowCaster"
-            Tags{"LightMode" = "ShadowCaster"}
+            Tags { "LightMode" = "ShadowCaster" }
 
             ZWrite On
             ZTest LEqual
@@ -99,8 +93,7 @@ Shader "LwyShaders/TinyPBR"
             ENDHLSL
         }
 
-        pass
-        {
+        pass {
             Tags { "LightMode" = "SRPDefaultUnlit" }
             Name "TinyPBR"
 
@@ -133,19 +126,19 @@ Shader "LwyShaders/TinyPBR"
             #pragma shader_feature _ENABLE_MASK_MAP
 
             CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                // float4 _MainTex_ST;
-                float4 _NormalMap_ST;
-                float4 _DetailNormalMap_ST;
-                float4 _MaskMap_ST;
-                half4 _BaseColor;
-                half3 _EmissionColor;
-                float _Metallic, _Roughness;
-                // float _SpecularPower;
-                float _NormalScale;
-                float _DNormalization;
+            float4 _BaseMap_ST;
+            // float4 _MainTex_ST;
+            float4 _NormalMap_ST;
+            float4 _DetailNormalMap_ST;
+            float4 _MaskMap_ST;
+            half4 _BaseColor;
+            half3 _EmissionColor;
+            float _Metallic, _Roughness;
+            // float _SpecularPower;
+            float _NormalScale;
+            float _DNormalization;
 
-                float T;
+            float T;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -153,10 +146,9 @@ Shader "LwyShaders/TinyPBR"
             TEXTURE2D(_DetailNormalMap); SAMPLER(sampler_DetailNormalMap);
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
             TEXTURE2D(_EmissionMap);SAMPLER(sample_EmissionMap);
-            
+
             // #include "Assets/Shaders/GGX_shader/tinyForwardPass.hlsl"
-            struct a2v
-            {
+            struct a2v {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
@@ -167,8 +159,7 @@ Shader "LwyShaders/TinyPBR"
 
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float3 positionWS : TEXCOORD0;
                 //float3 bitangentWS : TEXCOORD1;
                 float4 uv : TEXCOORD2;
@@ -184,15 +175,14 @@ Shader "LwyShaders/TinyPBR"
 
             };
 
-            float4 RNMCulculate(float4 NormalBase, float4 NormalDetail){
-                NormalBase.xyz =NormalBase.xyz*float3( 2,  2, 2) + float3(-1, -1,  0);
-                NormalDetail.xyz = NormalDetail.xyz*float3(-2, -2, 2) + float3( 1,  1, -1);
-                float4 r = NormalBase*dot(NormalBase, NormalDetail)/NormalBase.z - NormalDetail;
-                return r*0.5 + 0.5;
+            float4 RNMCulculate(float4 NormalBase, float4 NormalDetail) {
+                NormalBase.xyz = NormalBase.xyz * float3(2, 2, 2) + float3(-1, -1, 0);
+                NormalDetail.xyz = NormalDetail.xyz * float3(-2, -2, 2) + float3(1, 1, -1);
+                float4 r = NormalBase * dot(NormalBase, NormalDetail) / NormalBase.z - NormalDetail;
+                return r * 0.5 + 0.5;
             }
 
-            float D_GGX_TR(float3 N, float3 H, float roughness)
-            {
+            float D_GGX_TR(float3 N, float3 H, float roughness) {
                 float a2 = roughness * roughness;
                 float NdotH = max(dot(H, N), 0.0001);
                 float NdotH2 = NdotH * NdotH;
@@ -203,16 +193,14 @@ Shader "LwyShaders/TinyPBR"
                 return nom / denom;
             }
 
-            float GeometrySchlickGGX(float NdotV, float k)
-            {
+            float GeometrySchlickGGX(float NdotV, float k) {
                 float nom = NdotV;
                 float denom = NdotV * (1.0 - k) + k;
 
                 return nom / denom;
             }
 
-            float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
-            {
+            float GeometrySmith(float3 N, float3 V, float3 L, float roughness) {
                 float k = pow(_Roughness + 1, 2) * rcp(8);
 
                 float NdotV = max(dot(N, V), 0.0);
@@ -223,36 +211,31 @@ Shader "LwyShaders/TinyPBR"
                 return ggx1 * ggx2;
             }
 
-            float BlinnPhong(float3 H, float3 normalWS, float N)
-            {
+            float BlinnPhong(float3 H, float3 normalWS, float N) {
                 float BlinnPhong = pow(max(dot(H, normalWS), 0.0001), 5);
                 BlinnPhong = pow(BlinnPhong, N) * ((N + 1) / (2 * 3.1415926535));
-                
+
                 return BlinnPhong;
             }
 
-            float Lambert(float3 lightDir, float3 normalWS)
-            {
+            float Lambert(float3 lightDir, float3 normalWS) {
                 float lambert = max(dot(normalize(lightDir), normalize(normalWS)), 0.0001);
-                
+
                 return lambert;
             }
 
-            float3 Fresnel(float3 N, float3 viewDirection, float3 f0)
-            {
+            float3 Fresnel(float3 N, float3 viewDirection, float3 f0) {
                 float3 fresnel = f0 + (1.0 - f0) * pow((1.0 - max(dot(N, viewDirection), 0.0001)), 5.0);
 
                 return fresnel;
             }
 
-            float FresnelLerp(float3 N, float3 viewDirection)
-            {
+            float FresnelLerp(float3 N, float3 viewDirection) {
                 float fresnelLerp = pow(1 - max(dot(N, viewDirection), 0.0001), 5);
                 return fresnelLerp;
             }
 
-            float3 FresnelRoughness(float3 N, float3 viewDirection, float3 f0, float roughness)
-            {
+            float3 FresnelRoughness(float3 N, float3 viewDirection, float3 f0, float roughness) {
                 float3 fresnel = f0 + (max(float3(1.0, 1.0, 1.0) - roughness, f0))
                 * pow((1.0 - dot(N, viewDirection)), 5.0);
 
@@ -260,11 +243,9 @@ Shader "LwyShaders/TinyPBR"
             }
 
             float3 BoxProjection(float3 reflectionWS, float3 positionWS,
-            float4 cubemapPositionWS, float3 boxMin, float3 boxMax)
-            {
+            float4 cubemapPositionWS, float3 boxMin, float3 boxMax) {
                 //UNITY_BRANCH
-                if (cubemapPositionWS.w > 0.0f)
-                {
+                if (cubemapPositionWS.w > 0.0f) {
                     float3 boxMinMax = (reflectionWS > 0.0f) ? boxMax.xyz : boxMin.xyz;
                     float3 rbMinMax = float3(boxMinMax - positionWS) / reflectionWS;
                     //boxMin -= positionWS;
@@ -286,8 +267,7 @@ Shader "LwyShaders/TinyPBR"
             //    return emissionMap *= emissionColor;
             //}
 
-            v2f vert(a2v input)
-            {
+            v2f vert(a2v input) {
                 v2f o;
                 o.positionCS = TransformObjectToHClip(input.positionOS);
                 o.positionWS = TransformObjectToWorld(input.positionOS.xyz);
@@ -296,7 +276,7 @@ Shader "LwyShaders/TinyPBR"
 
                 //real sign = real(input.tangentOS.w) * GetOddNegativeScale();
                 //o.bitangentWS = cross(o.normalWS.xyz, o.tangentWS.xyz) * sign;
-                
+
                 // o.positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
                 // normalVS = TransformWorldToViewDir(normalWS, true);
 
@@ -311,18 +291,16 @@ Shader "LwyShaders/TinyPBR"
                 //receive shadow
                 o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
                 o.normalOS = input.normalOS;
-                
+
                 o.uv.xy = TRANSFORM_TEX(input.texcoord, _BaseMap);
                 o.uv.zw = TRANSFORM_TEX(input.texcoord, _DetailNormalMap);
-                
+
                 return o;
             }
 
-            float4 frag(v2f input) : SV_TARGET
-            {
+            float4 frag(v2f input) : SV_TARGET {
                 uint meshRenderingLayers = GetMeshRenderingLightLayer();
-                
-                
+
                 // float rcpPI = rcp(PI);
                 _Metallic = max(0.04, _Metallic);
 
@@ -333,15 +311,15 @@ Shader "LwyShaders/TinyPBR"
                 float3 D = float3(0, 0, 0);
                 float3 S = float3(0, 0, 0);
                 float3 F = float3(0, 0, 0);
-                
+
                 //normal map
                 float sgn = input.tangentWS.w;
                 half3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
-                
+
                 float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv.xy);
                 float4 detailNormalMap = SAMPLE_TEXTURE2D(_DetailNormalMap, sampler_DetailNormalMap, input.uv.zw);
 
-                float4 mixedNormalMap = RNMCulculate(normalMap,detailNormalMap);
+                float4 mixedNormalMap = RNMCulculate(normalMap, detailNormalMap);
 
                 float3 bump = UnpackNormalScale(mixedNormalMap, _NormalScale);
                 input.normalWS = TransformObjectToWorldNormal(input.normalOS, true);
@@ -354,7 +332,6 @@ Shader "LwyShaders/TinyPBR"
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 //float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
 
-                
                 //albedo
                 float4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv.xy);
                 float4 diffuse = _BaseColor * albedo;
@@ -367,7 +344,6 @@ Shader "LwyShaders/TinyPBR"
                 #endif
 
                 float surfaceReduction = 1.0 / (_Roughness * _Roughness + 1.0);
-                
 
                 //initialize main light
                 Light MainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
@@ -383,9 +359,7 @@ Shader "LwyShaders/TinyPBR"
                     uint lightLayerMask = DEFAULT_LIGHT_LAYERS;
                 #endif
 
-
-                if (IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
-                {
+                if (IsMatchingLightLayer(lightLayerMask, meshRenderingLayers)) {
                     ////main light brdf part
                     //G
                     G = GeometrySmith(input.normalWS, viewDirectionWS, mainLightDir, _Roughness);
@@ -406,7 +380,7 @@ Shader "LwyShaders/TinyPBR"
 
                     color += (D * lambert * _DNormalization + S * F * G) * MainLight.shadowAttenuation;
                 }
-                
+
                 ///GI cube map and mip cul
                 // float MIP = _Roughness * (1.7 - 0.7 * _Roughness) * UNITY_SPECCUBE_LOD_STEPS;
                 float3 reflectDirWS = reflect(-viewDirectionWS, input.normalWS);
@@ -416,7 +390,7 @@ Shader "LwyShaders/TinyPBR"
                     float3 reflectDirWS01 = BoxProjection(reflectDirWS, input.positionWS, unity_SpecCube1_ProbePosition, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
                     // reflectDirWS = float3(1,1,1);
                 #endif
-                
+
                 // ///cube map 01
                 // float4 cubeMap00 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDirWS00, MIP);
                 // //you have to decodeHDR, otherwise it will not work at all.
@@ -425,7 +399,7 @@ Shader "LwyShaders/TinyPBR"
                 //     #else
                 //         float3 cubeMapHDR00 = DecodeHDREnvironment(cubeMap00, unity_SpecCube0_HDR);
                 //     #endif
-                
+
                 // ///cube map 02
                 // float4 cubeMap01 = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube1, samplerunity_SpecCube1, reflectDirWS01, MIP);
                 // //you have to decodeHDR, otherwise it will not work at all.
@@ -434,15 +408,15 @@ Shader "LwyShaders/TinyPBR"
                 //     #else
                 //     float3 cubeMapHDR01 = DecodeHDREnvironment(cubeMap01, unity_SpecCube1_HDR);
                 //     #endif
-                
+
                 //         //cube map importance part.
                 //         half probe0Volume = CalculateProbeVolumeSqrMagnitude(unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
                 //         half probe1Volume = CalculateProbeVolumeSqrMagnitude(unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
 
                 //         half volumeDiff = probe0Volume - probe1Volume;
-                
+
                 //         float importanceSign = unity_SpecCube1_BoxMin.w;
-                
+
                 //         // A probe is dominant if its importance is higher
                 //         // Or have equal importance but smaller volume
                 //         bool probe0Dominant = importanceSign > 0.0f || (importanceSign == 0.0f && volumeDiff < -0.0001h);
@@ -456,22 +430,22 @@ Shader "LwyShaders/TinyPBR"
                 //         float weightProbe1 = probe0Dominant ? min(desiredWeightProbe1, 1.0f - desiredWeightProbe0) : desiredWeightProbe1;
 
                 //     float totalWeight = weightProbe0 + weightProbe1;
-                
+
                 //     weightProbe0 /= max(totalWeight, 1.0f);
                 //     weightProbe1 /= max(totalWeight, 1.0f);
-                
+
                 // half3 cubeMapHDR = half3(0.0h, 0.0h, 0.0h);
-                
+
                 // if(weightProbe0 > 0.01f)
                 // {
                 //     cubeMapHDR += cubeMapHDR00 * weightProbe0;
                 // }
-                
+
                 // if (weightProbe1 > 0.01f)
                 // {
                 //     cubeMapHDR += cubeMapHDR01 * weightProbe1;
                 // }
-                
+
                 // if(totalWeight < 0.99f)
                 // {
                 //     cubeMapHDR += DecodeHDREnvironment(cubeMap00, _GlossyEnvironmentCubeMap_HDR);
@@ -480,7 +454,6 @@ Shader "LwyShaders/TinyPBR"
 
                 float3 cubeMapHDR = CalculateIrradianceFromReflectionProbes(reflectDirWS, input.positionWS, _Roughness);
                 ///end cube map
-                
 
                 ///indirect
                 float3 ambient_contrib = max(0, SampleSH(input.normalWS.xyz)) * diffuse * _DNormalization;
@@ -494,16 +467,14 @@ Shader "LwyShaders/TinyPBR"
 
                 ///punctuation lights
                 uint pixelLightCount = GetAdditionalLightsCount();
-                for (uint lightIndex = 0; lightIndex < pixelLightCount; ++lightIndex)
-                {
+                for (uint lightIndex = 0; lightIndex < pixelLightCount; ++lightIndex) {
                     #ifdef _LIGHT_LAYERS
                         lightLayerMask = asuint(_AdditionalLightsLayerMasks[lightIndex]);
                     #else
                         lightLayerMask = DEFAULT_LIGHT_LAYERS;
                     #endif
 
-                    if (IsMatchingLightLayer(lightLayerMask, meshRenderingLayers))
-                    {
+                    if (IsMatchingLightLayer(lightLayerMask, meshRenderingLayers)) {
                         float4 lightPositionWS = _AdditionalLightsPosition[lightIndex];
                         float distanceAttenuation = _AdditionalLightsAttenuation[lightIndex];
                         float3 lightColor = _AdditionalLightsColor[lightIndex].rgb;
@@ -553,9 +524,9 @@ Shader "LwyShaders/TinyPBR"
                 float3 indirectSpecular = cubeMapHDR /* _DNormalization*/;
 
                 float3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
-                
+
                 //half3 emissionColor = GetEmissionColor(_emissiontColor, _EmissionMap, input.uv.zw);
-                
+
                 //emmision
                 float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, input.uv.zw);
                 emissionMap.rgb *= _EmissionColor;
@@ -574,7 +545,6 @@ Shader "LwyShaders/TinyPBR"
             }
             ENDHLSL
         }
-        
     }
     FallBack "SimpleLit"
 }

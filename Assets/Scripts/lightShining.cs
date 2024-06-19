@@ -14,49 +14,47 @@ public class lightShining : MonoBehaviour
 
     // public Material material1;
     public Color color;
-    Color color1;
+
+    private Color color1;
     public float intensityMin = 0f;
     public float intensityMax = 11f;
-    float intensity;
+    private float intensity;
 
     public int multiplier = 7;
 
-    float intensitySin;
+    private float intensitySin;
+
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        
         // material1 = GetComponent<Renderer>().material;
 
-        color1 = color ;
+        color1 = color;
         // Debug.Log(color);
-        intensity = Random.Range(intensityMin , intensityMax);
-        multiplier += Random.Range(0,2);
+        intensity = Random.Range(intensityMin, intensityMax);
+        multiplier += Random.Range(0, 2);
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        
         intensity += Time.deltaTime;
-        intensitySin = Mathf.Abs(Mathf.Sin(intensity))*multiplier;
+        intensitySin = Mathf.Abs(Mathf.Sin(intensity)) * multiplier;
         // Debug.Log(a);
 
         float factor = Mathf.Pow(2, intensitySin);
 
-        foreach (Material mat in Materials){
-
+        foreach (Material mat in Materials)
+        {
             color.r *= factor;
             color.g *= factor;
             color.b *= factor;
 
-                 // Debug.Log(color);
+            // Debug.Log(color);
             mat.SetColor("_EmissionColor", color);
             // color = Color.red;
             color = color1;
-                 // Debug.Log(mat);
-
+            // Debug.Log(mat);
         }
-
     }
 }

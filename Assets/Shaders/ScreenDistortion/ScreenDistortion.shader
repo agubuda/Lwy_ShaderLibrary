@@ -1,8 +1,5 @@
-Shader "LwyShaders/ScreenDistortion"
-{
-    Properties
-    {
-
+Shader "LwyShaders/ScreenDistortion" {
+    Properties {
 
         [Space(20)][Header(base settings)]
         _BaseMap ("Texture", 2D) = "white" { }
@@ -10,23 +7,20 @@ Shader "LwyShaders/ScreenDistortion"
         _DistortionMap ("_DistortionMap", 2D) = "bump" { }
         _ShadowAlpha ("Shadow alpha", Range(0, 1)) = 0.8
         [Toggle(_VERTEX_COLORS)] _VertexColors ("Vertex Colors", Float) = 0
-        _NormalStength("Normal stength", Range(-1,1)) = 0.1
+        _NormalStength ("Normal stength", Range(-1, 1)) = 0.1
     }
 
-    SubShader
-    {
+    SubShader {
 
         Tags { "Queue" = "Transparent+1" "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        pass
-        {
+        pass {
             Name "ScreenDistortion"
             Tags { "LightMode" = "SRPDefaultUnlit" }
-            
+
             Cull back
             // ZTest off
             Blend SrcAlpha OneMinusSrcAlpha
-
 
             HLSLPROGRAM
 
@@ -49,10 +43,10 @@ Shader "LwyShaders/ScreenDistortion"
 
             CBUFFER_START(UnityPerMaterial)
 
-                float4 _BaseMap_ST;
-                float4 _MainTex_ST;
-                half4 _BaseColor;
-                float _ShadowAlpha, _NormalStength;
+            float4 _BaseMap_ST;
+            float4 _MainTex_ST;
+            half4 _BaseColor;
+            float _ShadowAlpha, _NormalStength;
 
             CBUFFER_END
 
@@ -60,8 +54,7 @@ Shader "LwyShaders/ScreenDistortion"
             TEXTURE2D(_CameraOpaqueTexture); SAMPLER(sampler_CameraOpaqueTexture);
             TEXTURE2D(_DistortionMap); SAMPLER(sampler_DistortionMap);
 
-            struct a2v
-            {
+            struct a2v {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
@@ -69,14 +62,13 @@ Shader "LwyShaders/ScreenDistortion"
                 float flipbookBlend : TEXCOORD1;
 
                 // #if  _VERTEX_COLORS
-                    float4 color : COLOR;
+                float4 color : COLOR;
                 // #endif
 
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 // float3 positionVS : TEXCOORD4;
@@ -84,8 +76,7 @@ Shader "LwyShaders/ScreenDistortion"
                 float4 positionSS : TEXCOORD2;
                 float3 tangentWS : TEXCOORD3;
                 float3 bitangentWS : TEXCOORD4;
-                float3 normalWS: TEXCOORD5;
-
+                float3 normalWS : TEXCOORD5;
 
                 #if  _VERTEX_COLORS
                     float4 color : VAR_COLOR;
@@ -94,8 +85,7 @@ Shader "LwyShaders/ScreenDistortion"
 
             };
 
-            v2f vert(a2v input)
-            {
+            v2f vert(a2v input) {
                 v2f o;
 
                 o.positionCS = TransformObjectToHClip(input.positionOS);
@@ -105,11 +95,11 @@ Shader "LwyShaders/ScreenDistortion"
                 // o.positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
                 // normalVS = TransformWorldToViewDir(normalWS, true);
 
-                o.bitangentWS = normalize(cross(o.normalWS,o.tangentWS) * input.tangentOS.w);
+                o.bitangentWS = normalize(cross(o.normalWS, o.tangentWS) * input.tangentOS.w);
 
                 // //recive shadow
                 // o.shadowCoord = TransformWorldToShadowCoord(o.positionWS); do not cuculate this in vert, could cause glitch problem.
-                
+
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
 
                 #if _VERTEX_COLORS
@@ -121,8 +111,7 @@ Shader "LwyShaders/ScreenDistortion"
                 return o;
             }
 
-            half4 frag(v2f input) : SV_TARGET
-            {
+            half4 frag(v2f input) : SV_TARGET {
 
                 float3 positionVS = TransformWorldToView(input.positionWS);
 
@@ -138,12 +127,13 @@ Shader "LwyShaders/ScreenDistortion"
                 half2 bump2 = UnpackNormalScale(distortionMap, _NormalStength).rg;
                 half2 bump3 = UnpackNormalmapRGorAG(distortionMap, _NormalStength).rg;
 
-                float3x3 TBN = {input.bitangentWS, input.tangentWS, input.normalWS};
-                bump.z = pow(1 - pow(bump.x,2) - pow(bump.y,2), 0.5);
-                input.normalWS = mul(bump,TBN);
+                float3x3 TBN = {
+                    input.bitangentWS, input.tangentWS, input.normalWS
+                };
+                bump.z = pow(1 - pow(bump.x, 2) - pow(bump.y, 2), 0.5);
+                input.normalWS = mul(bump, TBN);
 
                 // float2 temp = DecodeNormal(distortionMap, 1);
-
 
                 half4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 half4 screenOpaqueColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, srcPos.xy + bump3);

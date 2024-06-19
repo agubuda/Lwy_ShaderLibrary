@@ -1,10 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ChangingObejects : MonoBehaviour
 {
-
     public GameObject[] cars;
     private int i;
 
@@ -27,7 +24,7 @@ public class ChangingObejects : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         for (int n = 0; n < cars.Length; n++)
         {
@@ -37,5 +34,4 @@ public class ChangingObejects : MonoBehaviour
         cars[i].SetActive(true);
         // GameObject[] cars = new ;
     }
-
 }

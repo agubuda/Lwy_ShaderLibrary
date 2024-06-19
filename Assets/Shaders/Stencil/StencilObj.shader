@@ -1,7 +1,5 @@
-Shader "LwyShaders/StencilObj"
-{
-    Properties
-    {
+Shader "LwyShaders/StencilObj" {
+    Properties {
         [Space(20)][Header(base settings)]
         _BaseMap ("Texture", 2D) = "white" { }
         _BaseColor ("baseColor", color) = (1, 0, 0, 1)
@@ -10,22 +8,18 @@ Shader "LwyShaders/StencilObj"
         _RefNumber ("Reference Number", Range(0, 255)) = 1
     }
 
-    SubShader
-    {
+    SubShader {
 
         Tags { "Queue" = "Geometry+1" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        pass
-        {
+        pass {
             Name "StencilObj"
             Tags { "LightMode" = "SRPDefaultUnlit" }
-            
+
             // Cull back
             // Blend Zero One
-            
 
-            Stencil
-            {
+            Stencil {
                 Ref [_RefNumber]       //参考值为2
                 Comp NotEqual          //stencil比较方式是相同，只有等于2的才能通过
                 Pass keep              //stencil和Zbuffer都测试通过时，选择保持
@@ -33,7 +27,6 @@ Shader "LwyShaders/StencilObj"
                 ZFail keep             //stencil通过，深度测试没通过时，选择保持
 
             }
-
 
             HLSLPROGRAM
 
@@ -54,17 +47,16 @@ Shader "LwyShaders/StencilObj"
 
             CBUFFER_START(UnityPerMaterial)
 
-                float4 _BaseMap_ST;
-                float4 _MainTex_ST;
-                half4 _BaseColor;
-                // float _ShadowAlpha;
+            float4 _BaseMap_ST;
+            float4 _MainTex_ST;
+            half4 _BaseColor;
+            // float _ShadowAlpha;
 
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 
-            struct a2v
-            {
+            struct a2v {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
@@ -73,8 +65,7 @@ Shader "LwyShaders/StencilObj"
 
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 // float3 positionVS : TEXCOORD4;
@@ -83,8 +74,7 @@ Shader "LwyShaders/StencilObj"
 
             };
 
-            v2f vert(a2v input)
-            {
+            v2f vert(a2v input) {
                 v2f o;
 
                 o.positionCS = TransformObjectToHClip(input.positionOS);
@@ -92,15 +82,13 @@ Shader "LwyShaders/StencilObj"
 
                 // //recive shadow
                 // o.shadowCoord = TransformWorldToShadowCoord(o.positionWS); do not cuculate this in vert, could cause glitch problem.
-                
+
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                
 
                 return o;
             }
 
-            float4 frag(v2f input) : SV_TARGET
-            {
+            float4 frag(v2f input) : SV_TARGET {
 
                 float3 positionVS = TransformWorldToView(input.positionWS);
 
@@ -110,7 +98,7 @@ Shader "LwyShaders/StencilObj"
                 half3 LightColor = MainLight.color.rgb;
 
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-                
+
                 float4 color = (difusse * _BaseColor) ;
 
                 //recive shadow
@@ -123,8 +111,7 @@ Shader "LwyShaders/StencilObj"
             ENDHLSL
         }
 
-        Pass
-        {
+        Pass {
             Name "DepthOnly"
             Tags { "LightMode" = "DepthOnly" }
 
@@ -140,43 +127,42 @@ Shader "LwyShaders/StencilObj"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
 
-
             CBUFFER_START(UnityPerMaterial)
-                half _Surface;
+            half _Surface;
 
-                half4 _BaseColor;
-                half4 _AnisotropyColor;
-                half _Darkness;
-                half _Glossness;
-                half _Cutoff;
-                half4 _SpecColor;
-                half _SpecPower;
-                
-                half4 _BaseMap_ST;
-                half4 _NormalMap_ST;
-                half4 _NoiseMap_ST;
-                half4 _AOMap_ST;
-                
-                half _NormalScale;
-                half _NoisePower;
-                half _AnisotropyPower;
-                half _FrenelPower;
-                half4 _RimColor;
-                half _Exponent;
-                half _FrenelLightness;
-                half _AOContrast;
+            half4 _BaseColor;
+            half4 _AnisotropyColor;
+            half _Darkness;
+            half _Glossness;
+            half _Cutoff;
+            half4 _SpecColor;
+            half _SpecPower;
 
-                float4 _DetailAlbedoMap_ST;
-                half4 _EmissionColor;
-                half _Smoothness;
-                half _Metallic;
-                half _BumpScale;
-                half _Parallax;
-                half _OcclusionStrength;
-                half _ClearCoatMask;
-                half _ClearCoatSmoothness;
-                half _DetailAlbedoMapScale;
-                half _DetailNormalMapScale;
+            half4 _BaseMap_ST;
+            half4 _NormalMap_ST;
+            half4 _NoiseMap_ST;
+            half4 _AOMap_ST;
+
+            half _NormalScale;
+            half _NoisePower;
+            half _AnisotropyPower;
+            half _FrenelPower;
+            half4 _RimColor;
+            half _Exponent;
+            half _FrenelLightness;
+            half _AOContrast;
+
+            float4 _DetailAlbedoMap_ST;
+            half4 _EmissionColor;
+            half _Smoothness;
+            half _Metallic;
+            half _BumpScale;
+            half _Parallax;
+            half _OcclusionStrength;
+            half _ClearCoatMask;
+            half _ClearCoatSmoothness;
+            half _DetailAlbedoMapScale;
+            half _DetailNormalMapScale;
             CBUFFER_END
 
             // -------------------------------------

@@ -2,10 +2,8 @@
 -> Rendering-> Depth priming Mode to FORCED,
 or write a render feature instead. */
 
-Shader "LwyShaders/loongEffect"
-{
-    Properties
-    {
+Shader "LwyShaders/loongEffect" {
+    Properties {
         [Space(20)][Header(emissive map)]
         _EmissiveMap ("_EmissiveMap", 2D) = "white" { }
         [HDR]_EmissiveColor ("_EmissiveColor", color) = (1, 0, 0, 1)
@@ -22,7 +20,7 @@ Shader "LwyShaders/loongEffect"
         [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP (" Enable normal map", float) = 0
         _NormalMap ("Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", float) = 1
-        
+
         // [Space(20)][Header(Outline settings)]
         // _OutLineWidth ("Outline width", float) = -0.04
         // _OutLineColor ("Outline color", color) = (0.4, 0.3, 0.3, 1)
@@ -33,7 +31,7 @@ Shader "LwyShaders/loongEffect"
         _RimColor ("RimColor", color) = (0.8, 0.7, 0.7, 1)
         // _FresnelPower ("Fresnel power", Range(0, 10)) = 3
         // _FresnelStepValue ("_FresnelStepValue", Range(0, 1)) = 0.1
-        
+
         [Space(20)][Header(AO map)]
         _MaskMap ("Mask Map", 2D) = "white" { }//as urp default settings, g = AO, a = Metalic
         _AOPower ("AO power", Range(0, 6)) = 1
@@ -51,15 +49,14 @@ Shader "LwyShaders/loongEffect"
         // _HueRed ("Hue red", Range(-1, 1)) = 0
         // _HueBlue ("Hue blue", Range(-1, 1)) = 0
         // _HueGreen ("Hue green", Range(-1, 1)) = 0
+
     }
 
-    SubShader
-    {
+    SubShader {
 
         Tags { "Queue" = "AlphaTest" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        Pass
-        {
+        Pass {
             Name "DepthOnly"
             Tags { "LightMode" = "DepthOnly" }
 
@@ -73,8 +70,6 @@ Shader "LwyShaders/loongEffect"
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
 
-
-
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
 
             // -------------------------------------
@@ -87,35 +82,35 @@ Shader "LwyShaders/loongEffect"
             // #pragma multi_compile _ DOTS_INSTANCING_ON
 
             #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
-            
+
             CBUFFER_START(UnityPerMaterial)
 
-                // float4 _BaseMap_ST;
-                float4 _MainTex_ST;
-                float4 _EmissiveMap_ST;
-                half _SpecPower;
-                float4 _SpecColor;
-                float4 _EmissiveColor;
-                float _SpecRange, _NormalScale, _brightness, _darkness, _darkAreaEdge, _darkArea;
-                // float _SpecStrength;
-                float _OutLineWidth;
-                float _OffsetMul;
-                float _Threshold;
-                float4 _RimColor;
-                float _FresnelPower;
-                float _AOPower;
-                float _SpacSmoothness;
-                float _SpecAOPower;
-                float _SpecMaskPower;
-                float _LightInfluence;
-                float _HueBlue;
-                float _HueRed;
-                float _HueGreen;
-                float _FresnelStepValue;
-                // float4 _BaseColor;
-                // float4 _NormalMap;
-                float4 _NormalMap_ST;
-                // float4 _AOMap;
+            // float4 _BaseMap_ST;
+            float4 _MainTex_ST;
+            float4 _EmissiveMap_ST;
+            half _SpecPower;
+            float4 _SpecColor;
+            float4 _EmissiveColor;
+            float _SpecRange, _NormalScale, _brightness, _darkness, _darkAreaEdge, _darkArea;
+            // float _SpecStrength;
+            float _OutLineWidth;
+            float _OffsetMul;
+            float _Threshold;
+            float4 _RimColor;
+            float _FresnelPower;
+            float _AOPower;
+            float _SpacSmoothness;
+            float _SpecAOPower;
+            float _SpecMaskPower;
+            float _LightInfluence;
+            float _HueBlue;
+            float _HueRed;
+            float _HueGreen;
+            float _FresnelStepValue;
+            // float4 _BaseColor;
+            // float4 _NormalMap;
+            float4 _NormalMap_ST;
+            // float4 _AOMap;
 
             CBUFFER_END
 
@@ -123,19 +118,17 @@ Shader "LwyShaders/loongEffect"
             ENDHLSL
         }
 
-        pass
-        {
+        pass {
             Name "NPR skin"
             Tags { "LightMode" = "SRPDefaultUnlit" }
             // ZWrite On
             Cull off
 
-
             HLSLPROGRAM
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            
+
             #pragma vertex vert
             #pragma fragment frag
 
@@ -148,32 +141,32 @@ Shader "LwyShaders/loongEffect"
 
             CBUFFER_START(UnityPerMaterial)
 
-                float4 _BaseMap_ST;
-                float4 _MainTex_ST;
-                float4 _EmissiveMap_ST;
-                half _SpecPower;
-                float4 _SpecColor;
-                float4 _EmissiveColor;
-                float _SpecRange, _NormalScale, _brightness, _darkness, _darkAreaEdge, _darkArea;
-                // float _SpecStrength;
-                float _OutLineWidth;
-                float _OffsetMul;
-                float _Threshold;
-                float4 _RimColor;
-                float _FresnelPower;
-                float _AOPower;
-                float _SpacSmoothness;
-                float _SpecAOPower;
-                float _SpecMaskPower;
-                float _LightInfluence;
-                float _HueBlue;
-                float _HueRed;
-                float _HueGreen;
-                float _FresnelStepValue;
-                float4 _BaseColor;
-                // float4 _NormalMap;
-                float4 _NormalMap_ST;
-                // float4 _AOMap;
+            float4 _BaseMap_ST;
+            float4 _MainTex_ST;
+            float4 _EmissiveMap_ST;
+            half _SpecPower;
+            float4 _SpecColor;
+            float4 _EmissiveColor;
+            float _SpecRange, _NormalScale, _brightness, _darkness, _darkAreaEdge, _darkArea;
+            // float _SpecStrength;
+            float _OutLineWidth;
+            float _OffsetMul;
+            float _Threshold;
+            float4 _RimColor;
+            float _FresnelPower;
+            float _AOPower;
+            float _SpacSmoothness;
+            float _SpecAOPower;
+            float _SpecMaskPower;
+            float _LightInfluence;
+            float _HueBlue;
+            float _HueRed;
+            float _HueGreen;
+            float _FresnelStepValue;
+            float4 _BaseColor;
+            // float4 _NormalMap;
+            float4 _NormalMap_ST;
+            // float4 _AOMap;
 
             CBUFFER_END
 
@@ -182,9 +175,8 @@ Shader "LwyShaders/loongEffect"
             TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
             TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
-            
-            struct a2v
-            {
+
+            struct a2v {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
@@ -193,8 +185,7 @@ Shader "LwyShaders/loongEffect"
 
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 // float3 positionVS : TEXCOORD4;
@@ -209,8 +200,7 @@ Shader "LwyShaders/loongEffect"
                 float3 bitangentWS : TEXCOORD10;
             };
 
-            v2f vert(a2v input)
-            {
+            v2f vert(a2v input) {
                 v2f o;
 
                 o.positionCS = TransformObjectToHClip(input.positionOS);
@@ -232,15 +222,13 @@ Shader "LwyShaders/loongEffect"
 
                 // //recive shadow
                 // o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
-                
+
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                
 
                 return o;
             }
 
-            float4 frag(v2f input) : SV_TARGET
-            {
+            float4 frag(v2f input) : SV_TARGET {
 
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
@@ -249,7 +237,6 @@ Shader "LwyShaders/loongEffect"
                 Light MainLight = GetMainLight(input.shadowCoord);
                 float3 LightDir = normalize(float3(MainLight.direction));
                 float4 LightColor = float4(MainLight.color, 1);
-
 
                 //Normal map
                 #if _ENABLENORMALMAP
@@ -283,7 +270,7 @@ Shader "LwyShaders/loongEffect"
 
                 float stepHalfLambert = smoothstep(_darkArea, _darkAreaEdge, halfLambert);
                 stepHalfLambert = clamp(stepHalfLambert, _darkness, _brightness);
-                
+
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
 
                 //rim light
@@ -293,7 +280,7 @@ Shader "LwyShaders/loongEffect"
                 float2 screenPos = input.scrPos.xy / input.scrPos.w;
                 float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
                 float2 RimOffsetUV = RimScreenUV + normalVS * _OffsetMul;
-                
+
                 float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams); // 离相机越近越小
                 float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r; // _CameraDepthTexture.r = input.positionNDC.z / input.positionNDC.w
                 float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
@@ -319,17 +306,13 @@ Shader "LwyShaders/loongEffect"
             ENDHLSL
         }
 
-
         // Pass
         // {
         //     Name "Outline"
         //     Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "SRPDefaultUnlit" }
         //     Cull Front
 
-        
         //     HLSLPROGRAM
-
-        
 
         //     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         //     // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -339,12 +322,10 @@ Shader "LwyShaders/loongEffect"
 
         //     CBUFFER_START(UnityPerMaterial)
 
-        
         //         float _OutLineWidth;
         //         float4 _OutLineColor;
 
         //     CBUFFER_END
-
 
         //     struct a2v
         //     {
@@ -376,13 +357,11 @@ Shader "LwyShaders/loongEffect"
         //         o.positionCS.xy += input.normal.xy * _OutLineWidth * 0.1 * input.vertColor.r;
         //         // o.vertColor = input.vertColor;
 
-        
         //         // o.uv = input.uv;
-        
 
         //         return o;
         //     }
-        
+
         //     half4 frag(v2f input) : SV_TARGET
         //     {
         //         return _OutLineColor;

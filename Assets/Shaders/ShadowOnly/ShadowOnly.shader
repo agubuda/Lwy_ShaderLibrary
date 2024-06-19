@@ -1,31 +1,23 @@
-Shader "LwyShaders/ShadowOnly"
-{
-     Properties
-    {
+Shader "LwyShaders/ShadowOnly" {
+    Properties {
 
-
-        [Space(20)][Header(base settings)]   
+        [Space(20)][Header(base settings)]
         _BaseMap ("Texture", 2D) = "white" { }
-        _BaseColor("baseColor", color) = (0,0,0,1)
+        _BaseColor ("baseColor", color) = (0, 0, 0, 1)
 
-        _ShadowAlpha("Shadow alpha", Range(0,1)) = 0.8
-
-
+        _ShadowAlpha ("Shadow alpha", Range(0, 1)) = 0.8
     }
 
-    SubShader
-    {
+    SubShader {
 
         Tags { "Queue" = "Transparent" "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        pass
-        {
+        pass {
             Name "ghostEffect"
             Tags { "LightMode" = "SRPDefaultUnlit" }
-            
+
             Cull back
             Blend SrcAlpha OneMinusSrcAlpha
-
 
             HLSLPROGRAM
 
@@ -46,26 +38,25 @@ Shader "LwyShaders/ShadowOnly"
 
             CBUFFER_START(UnityPerMaterial)
 
-                float4 _BaseMap_ST;
-                float4 _MainTex_ST;
-                half4 _BaseColor;
-                float _ShadowAlpha;
+            float4 _BaseMap_ST;
+            float4 _MainTex_ST;
+            half4 _BaseColor;
+            float _ShadowAlpha;
 
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 
-            struct a2v
-            {
+            struct a2v {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
                 float2 texcoord : TEXCOORD0;
                 // float2 secondTexcoord : TEXCOORD1;
+
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 // float3 positionVS : TEXCOORD4;
@@ -74,8 +65,7 @@ Shader "LwyShaders/ShadowOnly"
 
             };
 
-            v2f vert(a2v input)
-            {
+            v2f vert(a2v input) {
                 v2f o;
 
                 o.positionCS = TransformObjectToHClip(input.positionOS);
@@ -83,15 +73,13 @@ Shader "LwyShaders/ShadowOnly"
 
                 // //recive shadow
                 // o.shadowCoord = TransformWorldToShadowCoord(o.positionWS); do not cuculate this in vert, could cause glitch problem.
-                
+
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-              
 
                 return o;
             }
 
-            float4 frag(v2f input) : SV_TARGET
-            {
+            float4 frag(v2f input) : SV_TARGET {
 
                 float3 positionVS = TransformWorldToView(input.positionWS);
 
@@ -101,8 +89,8 @@ Shader "LwyShaders/ShadowOnly"
                 half3 LightColor = MainLight.color.rgb;
 
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-                
-                float4 color = (difusse  * _BaseColor ) ;
+
+                float4 color = (difusse * _BaseColor) ;
 
                 //recive shadow
 
@@ -113,7 +101,5 @@ Shader "LwyShaders/ShadowOnly"
 
             ENDHLSL
         }
-
-    
-}
+    }
 }

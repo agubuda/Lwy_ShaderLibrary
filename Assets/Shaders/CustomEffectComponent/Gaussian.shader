@@ -1,50 +1,43 @@
-Shader "Hidden/Custom/Gaussian"
-{
-    Properties
-    {
+Shader "Hidden/Custom/Gaussian" {
+    Properties {
         _MainTex ("Main Texture", 2D) = "white" { }
         // _Offset ("Offset value", int) = 0
+
     }
-    SubShader
-    {
+    SubShader {
         Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
-        
-        Pass
-        {
+
+        Pass {
             HLSLPROGRAM
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-            
+
             #pragma vertex vert
             #pragma fragment frag
-            
+
             TEXTURE2D(_MainTex);
             TEXTURE2D_X_FLOAT(_CameraDepthAttachment);
             SAMPLER(sampler_CameraDepthAttachment);
             SAMPLER(sampler_MainTex);
-            
+
             float _Intensity;
             int _Offset;
-            
-            struct Attributes
-            {
+
+            struct Attributes {
                 float4 positionOS : POSITION;
                 float2 uv : TEXCOORD0;
                 uint vertexID : SV_VertexID;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
-            struct Varyings
-            {
+            struct Varyings {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float2 texcoord : TEXCOORD2;
                 float4 positionSS : TEXCOORD3;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
-            
-            
-            Varyings vert(Attributes input)
-            {
+
+            Varyings vert(Attributes input) {
                 Varyings output = (Varyings)0;
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
@@ -59,15 +52,13 @@ Shader "Hidden/Custom/Gaussian"
                 return output;
             }
 
-            float2 offsetResult(float2 scrPos, int _OffsetX, int _OffsetY)
-            {
+            float2 offsetResult(float2 scrPos, int _OffsetX, int _OffsetY) {
                 scrPos.x = scrPos.x + ((_OffsetX) / _ScreenParams.x);
                 scrPos.y = scrPos.y + ((_OffsetY) / _ScreenParams.y);
                 return scrPos;
             }
-            
-            float4 frag(Varyings input) : SV_Target
-            {
+
+            float4 frag(Varyings input) : SV_Target {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float2 scrPos = input.positionSS.xy / input.positionSS.w;
@@ -87,14 +78,13 @@ Shader "Hidden/Custom/Gaussian"
 
                 // SampleInput(_CameraDepthAttachment, sampler_CameraDepthAttachment, scrPos);
 
-                float4 Gaussian = (c0*1 + c1*2 + c2*1 + c3*2 + c4*4  + c5*2 + c6*1 + c7*2 + c8*1) / 16;
+                float4 Gaussian = (c0 * 1 + c1 * 2 + c2 * 1 + c3 * 2 + c4 * 4 + c5 * 2 + c6 * 1 + c7 * 2 + c8 * 1) / 16;
 
                 return Gaussian ;
             }
-            
+
             ENDHLSL
         }
-
     }
 
     // SubShader

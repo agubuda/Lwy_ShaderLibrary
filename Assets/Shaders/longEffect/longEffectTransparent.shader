@@ -1,20 +1,17 @@
-Shader "LwyShaders/longEffectTransparent"
-{
-     Properties
-    {
+Shader "LwyShaders/longEffectTransparent" {
+    Properties {
         // [Space(20)][Header(emissive map)]
         // _EmissiveMap ("_EmissiveMap", 2D) = "white" { }
-        // [HDR]_EmissiveColor("_EmissiveColor", color) = (1,0,0,1)
+        // [HDR]_EmissiveColor ("_EmissiveColor", color) = (1,0,0,1)
 
-        [Space(20)][Header(base settings)]   
+        [Space(20)][Header(base settings)]
         _BaseMap ("Texture", 2D) = "white" { }
-        _BaseColor("baseColor", color) = (0,0,0,1)
+        _BaseColor ("baseColor", color) = (0, 0, 0, 1)
 
+        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP (" Enable normal map", float) = 0
+        _NormalMap ("Normal map", 2D) = "White" { }
+        _NormalScale ("Normal scale", float) = 1
 
-        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP(" Enable normal map",float) = 0
-        _NormalMap("Normal map", 2D) = "White"{}
-        _NormalScale("Normal scale", float) = 1
-        
         // [Space(20)][Header(Outline settings)]
         // _OutLineWidth ("Outline width", float) = -0.04
         // _OutLineColor ("Outline color", color) = (0.4, 0.3, 0.3, 1)
@@ -26,7 +23,7 @@ Shader "LwyShaders/longEffectTransparent"
         _FresnelPower ("Fresnel power", Range(0, 10)) = 3
         _FresnelStepValue ("_FresnelStepValue", Range(0, 1)) = 0.1
         _FresnelStepValue2 ("_FresnelStepValue2", Range(0, 1)) = 0.2
-        
+
         [Space(20)][Header(AO map)]
         _MaskMap ("Mask Map", 2D) = "white" { }//as urp default settings, g = AO, a = Metalic
         _AOPower ("AO power", Range(0, 6)) = 1
@@ -44,21 +41,19 @@ Shader "LwyShaders/longEffectTransparent"
         // _HueRed ("Hue red", Range(-1, 1)) = 0
         // _HueBlue ("Hue blue", Range(-1, 1)) = 0
         // _HueGreen ("Hue green", Range(-1, 1)) = 0
+
     }
 
-    SubShader
-    {
+    SubShader {
 
         Tags { "Queue" = "Transparent" "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        pass
-        {
+        pass {
             Name "ghostEffect"
             Tags { "LightMode" = "SRPDefaultUnlit" }
-            
+
             Cull back
             Blend SrcAlpha OneMinusSrcAlpha
-
 
             HLSLPROGRAM
 
@@ -77,49 +72,47 @@ Shader "LwyShaders/longEffectTransparent"
 
             CBUFFER_START(UnityPerMaterial)
 
-                float4 _BaseMap_ST;
-                float4 _MainTex_ST;
-                // float4 _EmissiveMap_ST;
-                // half _SpecPower;
-                // float4 _SpecColor;
-                // float4 _EmissiveColor;
-                float  _NormalScale , _FresnelStepValue2;
-                float _OutLineWidth;
-                float4 _RimColor;
-                float _FresnelPower;
-                float _AOPower;
-                // float _SpacSmoothness;
-                // float _SpecAOPower;
-                // float _SpecMaskPower;
-                float _LightInfluence;
-                // float _HueBlue;
-                // float _HueRed;
-                // float _HueGreen;
-                float _FresnelStepValue;
-                float4 _BaseColor;
-                float4 _NormalMap_ST;
+            float4 _BaseMap_ST;
+            float4 _MainTex_ST;
+            // float4 _EmissiveMap_ST;
+            // half _SpecPower;
+            // float4 _SpecColor;
+            // float4 _EmissiveColor;
+            float _NormalScale, _FresnelStepValue2;
+            float _OutLineWidth;
+            float4 _RimColor;
+            float _FresnelPower;
+            float _AOPower;
+            // float _SpacSmoothness;
+            // float _SpecAOPower;
+            // float _SpecMaskPower;
+            float _LightInfluence;
+            // float _HueBlue;
+            // float _HueRed;
+            // float _HueGreen;
+            float _FresnelStepValue;
+            float4 _BaseColor;
+            float4 _NormalMap_ST;
 
             CBUFFER_END
 
-        
             // TEXTURE2D(_EmissiveMap); SAMPLER(sampler_EmissiveMap);
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
             // TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
-            
-            struct a2v
-            {
+
+            struct a2v {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
                 float2 texcoord : TEXCOORD0;
                 float4 color : COLOR;
                 // float2 secondTexcoord : TEXCOORD1;
+
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 // float3 positionVS : TEXCOORD4;
@@ -132,11 +125,10 @@ Shader "LwyShaders/longEffectTransparent"
                 float4 shadowCoord : TEXCOORD8;
                 float3 tangentWS : TEXCOORD9;
                 float3 bitangentWS : TEXCOORD10;
-                float4 vertexColor :TEXCOORD11;
+                float4 vertexColor : TEXCOORD11;
             };
 
-            v2f vert(a2v input)
-            {
+            v2f vert(a2v input) {
                 v2f o;
 
                 o.positionCS = TransformObjectToHClip(input.positionOS);
@@ -146,7 +138,7 @@ Shader "LwyShaders/longEffectTransparent"
                 // o.positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
                 // normalVS = TransformWorldToViewDir(normalWS, true);
 
-                o.bitangentWS = normalize(cross(o.normalWS,o.tangentWS) * input.tangentOS.w);
+                o.bitangentWS = normalize(cross(o.normalWS, o.tangentWS) * input.tangentOS.w);
 
                 // //NDC
                 // float4 ndc = input.positionOS * 0.5f;
@@ -158,16 +150,14 @@ Shader "LwyShaders/longEffectTransparent"
 
                 // //recive shadow
                 // o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
-                
+
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
                 o.vertexColor = input.color;
-                
 
                 return o;
             }
 
-            float4 frag(v2f input) : SV_TARGET
-            {
+            float4 frag(v2f input) : SV_TARGET {
 
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
@@ -177,15 +167,16 @@ Shader "LwyShaders/longEffectTransparent"
                 half3 LightDir = normalize(half3(MainLight.direction));
                 half3 LightColor = MainLight.color.rgb;
 
-
                 //Normal map
                 #if _ENABLENORMALMAP
-                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
-                float3 bump  = UnpackNormalScale(normalMap, _NormalScale);
-                // input.normalWS = TransformTangentToWorld(bump, float3x3(input.bitangentWS,input.tangentWS, input.normalWS  ));
-                float3x3 TBN = {input.bitangentWS,input.tangentWS, input.normalWS };
-                bump.z = pow((1- pow(bump.x,2) - pow(bump.y,2)), 0.5);
-                input.normalWS = mul(bump, TBN);
+                    float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
+                    float3 bump = UnpackNormalScale(normalMap, _NormalScale);
+                    // input.normalWS = TransformTangentToWorld(bump, float3x3(input.bitangentWS,input.tangentWS, input.normalWS  ));
+                    float3x3 TBN = {
+                        input.bitangentWS, input.tangentWS, input.normalWS
+                    };
+                    bump.z = pow((1 - pow(bump.x, 2) - pow(bump.y, 2)), 0.5);
+                    input.normalWS = mul(bump, TBN);
                 #endif
 
                 // //EmissiveMap
@@ -201,7 +192,6 @@ Shader "LwyShaders/longEffectTransparent"
                 // half blinnPhong = (pow(saturate(max(0,dot(input.normalWS, HalfWay))), _SpecPower)) * (MaskMap.a * _SpecMaskPower);
                 // half4 blinnPhongNPR = smoothstep(_SpecRange, _SpecRange + _SpacSmoothness, blinnPhong) * _SpecColor;
 
-
                 //Lambert & ramp
 
                 // float Lambert = dot(LightDir, input.normalWS)  ;
@@ -209,9 +199,8 @@ Shader "LwyShaders/longEffectTransparent"
 
                 // float stepHalfLambert = smoothstep(_darkArea, _darkAreaEdge, halfLambert);
                 // stepHalfLambert = clamp(stepHalfLambert, _darkness, _brightness);
-                
-                float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
 
+                float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
 
                 // //rim light
 
@@ -220,7 +209,7 @@ Shader "LwyShaders/longEffectTransparent"
                 // float2 screenPos = input.scrPos.xy / input.scrPos.w;
                 // float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
                 // float2 RimOffsetUV = RimScreenUV + normalVS * _OffsetMul;
-                
+
                 // float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams); // 离相机越近越小
                 // float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r; // _CameraDepthTexture.r = input.positionNDC.z / input.positionNDC.w
                 // float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
@@ -229,22 +218,18 @@ Shader "LwyShaders/longEffectTransparent"
 
                 //frenel rim
                 float4 fresnelRim = pow(1 - saturate(dot(normalize(input.normalWS), viewDir)), _FresnelPower);
-                float4 finalFresnelRim = smoothstep(_FresnelStepValue,_FresnelStepValue2,fresnelRim);
-                finalFresnelRim *=  fresnelRim ;
+                float4 finalFresnelRim = smoothstep(_FresnelStepValue, _FresnelStepValue2, fresnelRim);
+                finalFresnelRim *= fresnelRim ;
                 finalFresnelRim *= _RimColor;
                 finalFresnelRim *= MaskMap.r;
 
-
-
-
                 // if(((1 - smoothstep(0,0.3,Lambert) ) * ambient) = 0){}
-                float4 color = (difusse  * _BaseColor  + finalFresnelRim) ;
+                float4 color = (difusse * _BaseColor + finalFresnelRim) ;
 
                 // //hue
                 //     color.r = color.r + _HueRed;
                 //     color.g = color.g + _HueGreen;
                 //     color.b = color.b + _HueBlue;
-
 
                 return color;
             }
@@ -258,10 +243,7 @@ Shader "LwyShaders/longEffectTransparent"
         //     Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "SRPDefaultUnlit" }
         //     Cull Front
 
-            
         //     HLSLPROGRAM
-
-            
 
         //     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         //     // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -271,12 +253,10 @@ Shader "LwyShaders/longEffectTransparent"
 
         //     CBUFFER_START(UnityPerMaterial)
 
-                
         //         float _OutLineWidth;
         //         float4 _OutLineColor;
 
         //     CBUFFER_END
-
 
         //     struct a2v
         //     {
@@ -308,13 +288,11 @@ Shader "LwyShaders/longEffectTransparent"
         //         o.positionCS.xy += input.normal.xy * _OutLineWidth * 0.1 * input.vertColor.r;
         //         // o.vertColor = input.vertColor;
 
-                
         //         // o.uv = input.uv;
-                
 
         //         return o;
         //     }
-            
+
         //     half4 frag(v2f input) : SV_TARGET
         //     {
         //         return _OutLineColor;
@@ -322,5 +300,6 @@ Shader "LwyShaders/longEffectTransparent"
 
         //     ENDHLSL
         // }
-}
+
+    }
 }

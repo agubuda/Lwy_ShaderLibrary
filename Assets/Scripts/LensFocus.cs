@@ -6,16 +6,17 @@ using UnityEngine.Rendering.Universal;
 
 public class LensFocus : MonoBehaviour
 {
-    DepthOfField dofComponent;
+    private DepthOfField dofComponent;
     // Start is called before the first frame update
 
     public Volume GetVolume;
     public float focusSpeed;
-    void Start()
+
+    private void Start()
     {
         DepthOfField tmp;
 
-        if(GetVolume.profile.TryGet<DepthOfField>(out tmp))
+        if (GetVolume.profile.TryGet<DepthOfField>(out tmp))
         {
             dofComponent = tmp;
         }
@@ -23,27 +24,28 @@ public class LensFocus : MonoBehaviour
 
     // Update is called once per frame
 
-    Ray raycast;
-    RaycastHit hit;
-    bool isHit;
-    float hitDistance;
-    
-    void FixedUpdate()
+    private Ray raycast;
+    private RaycastHit hit;
+    private bool isHit;
+    private float hitDistance;
+
+    private void FixedUpdate()
     {
         //set ray of camera
 
-        raycast = new Ray(transform.position, transform.forward *100);
+        raycast = new Ray(transform.position, transform.forward * 100);
         isHit = false;
         Debug.DrawRay(transform.position, Vector3.forward, Color.red);
 
-        if(Physics.Raycast(raycast, out hit, 100f))
+        if (Physics.Raycast(raycast, out hit, 100f))
         {
             isHit = true;
             hitDistance = Vector3.Distance(transform.position, hit.point);
             Debug.Log("hit");
         }
-        else{
-            if(hitDistance <100f)
+        else
+        {
+            if (hitDistance < 100f)
             {
                 hitDistance++;
             }
@@ -54,11 +56,10 @@ public class LensFocus : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if(isHit)
+        if (isHit)
         {
-            Gizmos.DrawSphere(hit.point,0.1f);
-            Debug.DrawRay(transform.position, transform.forward *Vector3.Distance(transform.position, hit.point));
-
+            Gizmos.DrawSphere(hit.point, 0.1f);
+            Debug.DrawRay(transform.position, transform.forward * Vector3.Distance(transform.position, hit.point));
         }
         else
         {
@@ -66,8 +67,8 @@ public class LensFocus : MonoBehaviour
         }
     }
 
-    void SetFocus()
+    private void SetFocus()
     {
-        dofComponent.focusDistance.value = Mathf.Lerp(dofComponent.focusDistance.value, hitDistance,Time.deltaTime*focusSpeed);
+        dofComponent.focusDistance.value = Mathf.Lerp(dofComponent.focusDistance.value, hitDistance, Time.deltaTime * focusSpeed);
     }
 }

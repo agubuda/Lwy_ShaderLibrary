@@ -1,11 +1,9 @@
-Shader "ComputeShader/Texturing"
-{
-    Properties
-    {
-        _Spring("Sping",float) = 1.0
-        _Damper("_Damper",float) = 5.0
-        _MoveScale("_MoveScale",float) = 1.0
-        // _Gravity("_Gravity",float) = 1.0
+Shader "ComputeShader/Texturing" {
+    Properties {
+        _Spring ("Sping", float) = 1.0
+        _Damper ("_Damper", float) = 5.0
+        _MoveScale ("_MoveScale", float) = 1.0
+        // _Gravity ("_Gravity", float) = 1.0
         [Space(20)]
         _MainTex ("Texture", 2D) = "white" { }
         _NormalMap ("Normal Map", 2D) = "white" { }
@@ -27,12 +25,10 @@ Shader "ComputeShader/Texturing"
         // _SoftDepth ("soft depth", float) = 1
 
     }
-    SubShader
-    {
+    SubShader {
         Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        Pass
-        {
+        Pass {
             ZWrite On
             Cull off
 
@@ -49,36 +45,32 @@ Shader "ComputeShader/Texturing"
 
             // #include "UnityCG.cginc"
 
-
             CBUFFER_START(UnityPerMaterial)
-                // half4 _MainTex;
-                half4 _BaseColor;
-                half4 _AnisotropyColor;
-                float _Darkness;
-                float _Glossness;
-                float _Cutoff;
-                half4 _SpecColor;
-                float _SpecPower;
-                // half4 _RampMap;
-                // float4 _RampMap_ST;
-                float4 _MainTex_ST;
-                float4 _NormalMap_ST;
-                float4 _NoiseMap_ST;
-                half4 _Remap;
-                // half3 _LightDebug;
-                float _NormalScale;
-                float _NoisePower;
-                float _AnisotropyPower;
-                float _FrenelPower;
-                // float _SoftDepth;
-                float _Damper, _Spring, _Gravity, _MoveScale;
+            // half4 _MainTex;
+            half4 _BaseColor;
+            half4 _AnisotropyColor;
+            float _Darkness;
+            float _Glossness;
+            float _Cutoff;
+            half4 _SpecColor;
+            float _SpecPower;
+            // half4 _RampMap;
+            // float4 _RampMap_ST;
+            float4 _MainTex_ST;
+            float4 _NormalMap_ST;
+            float4 _NoiseMap_ST;
+            half4 _Remap;
+            // half3 _LightDebug;
+            float _NormalScale;
+            float _NoisePower;
+            float _AnisotropyPower;
+            float _FrenelPower;
+            // float _SoftDepth;
+            float _Damper, _Spring, _Gravity, _MoveScale;
 
             CBUFFER_END
 
-
-
-            struct a2v
-            {
+            struct a2v {
                 float4 vertex : POSITION;
                 float3 normal : NORMAL;
                 float4 texcoord : TEXCOORD0;
@@ -86,8 +78,7 @@ Shader "ComputeShader/Texturing"
                 uint id : SV_VertexID;
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float4 pos : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
@@ -98,8 +89,6 @@ Shader "ComputeShader/Texturing"
                 half fogFactor : TEXCOORD6;
                 uint id : TEXCOORD7;
             };
-
-
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
@@ -116,10 +105,7 @@ Shader "ComputeShader/Texturing"
             TEXTURE2D(_CameraDepthTexture);
             SAMPLER(sampler_CameraDepthTexture);
 
-
-            v2f vert(a2v input)
-            {
-
+            v2f vert(a2v input) {
 
                 v2f o;
 
@@ -127,16 +113,12 @@ Shader "ComputeShader/Texturing"
 
                 o.pos = TransformObjectToHClip(input.vertex.xyz);
 
-
-
                 o.worldNormal = TransformObjectToWorldNormal(input.normal);
                 o.worldPos = TransformObjectToWorld(input.vertex.xyz);
                 o.worldTangent = TransformObjectToWorldDir(input.tangent.xyz);
-                
 
                 //cul bitangent
                 o.worlBbitangent = normalize(cross(o.worldNormal, o.worldTangent) * input.tangent.w);
-                
 
                 // o.uv = TRANSFORM_TEX(input.texcoord, _RampMap);
                 o.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
@@ -151,11 +133,8 @@ Shader "ComputeShader/Texturing"
                 return o;
             };
 
+            float4 frag(v2f inside) : SV_TARGET {
 
-
-            float4 frag(v2f inside) : SV_TARGET
-            {
-                
                 //diffuse color
                 float4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, inside.uv);
                 // clip(col.a - _Cutoff);
@@ -173,7 +152,6 @@ Shader "ComputeShader/Texturing"
                 // //lambert
                 // float Lambert = dot(mlight.direction, inside.worldNormal) * 0.5 + _Darkness;
 
-                
                 // //Phong
 
                 // half3 lightDir = normalize(saturate(mlight.direction));
@@ -182,11 +160,7 @@ Shader "ComputeShader/Texturing"
 
                 // float phong = pow(saturate(dot(viewDir, -reflectDir)), _Glossness);
 
-
-                
                 // half4 phongSpecular = phong * _SpecColor * lightColor * _SpecPower;
-
-                
 
                 // if(lightDir = 0){return 0;}
                 return col;
@@ -194,10 +168,7 @@ Shader "ComputeShader/Texturing"
 
             };
 
-
-
             ENDHLSL
         }
     }
 }
-

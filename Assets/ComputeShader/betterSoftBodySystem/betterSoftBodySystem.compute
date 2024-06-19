@@ -2,19 +2,17 @@
 #pragma kernel meshModifier
 #pragma kernel skinnedMeshModifier
 
-struct cacheData
-{
-	float3 prevPosWS;
-	float3 velocityWS;
-	float3 dPoseWS;
+struct cacheData {
+    float3 prevPosWS;
+    float3 velocityWS;
+    float3 dPoseWS;
 };
 
-struct skinnedMeshBuffer
-{
-	float3 position;
-	float3 tangent;
-	float2 uv1;
-	float2 uv2;
+struct skinnedMeshBuffer {
+    float3 position;
+    float3 tangent;
+    float2 uv1;
+    float2 uv2;
 };
 
 float4 _rootbonePosition;
@@ -34,75 +32,68 @@ RWStructuredBuffer<float3> _pos;
 RWStructuredBuffer<cacheData> data;
 RWStructuredBuffer<skinnedMeshBuffer> _skinnedPos;
 
-
-
 [numthreads(128, 1, 1)]
-void skinnedMeshModifier(uint3 id : SV_DispatchThreadID)
-{
-	if (id.x > vertCount)
-	{
-		return;
-	}
-
-	_skinnedPos[id.x].position = float3(_skinnedPos[id.x].position.x - _rootbonePosition.x, 
-										_skinnedPos[id.x].position.y + _rootbonePosition.z,
-										_skinnedPos[id.x].position.z - _rootbonePosition.y);
-
-	// _skinnedPos[id.x].position = mul(_rootboneRotation, float4(_skinnedPos[id.x].position, 1.0));
-	
-	_pos[id.x] = mul(_LocalToWorld, float4(_skinnedPos[id.x].position, 1.0)).xyz;
-
-	if (_VertexColor[id.x].r < 1e-3) 
-    { 
+void skinnedMeshModifier(uint3 id : SV_DispatchThreadID) {
+    if (id.x > vertCount) {
         return;
     }
 
-	float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
-	float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;
+    _skinnedPos[id.x].position = float3(_skinnedPos[id.x].position.x - _rootbonePosition.x,
+    _skinnedPos[id.x].position.y + _rootbonePosition.z,
+    _skinnedPos[id.x].position.z - _rootbonePosition.y);
 
-	float dt = 1.0 / 60;
-	data[id.x].velocityWS += forceWS * dt;
-	data[id.x].prevPosWS.xyz += data[id.x].velocityWS * dt;
-	data[id.x].dPoseWS  = (data[id.x].prevPosWS - _pos[id.x]) * _MoveScale;
+    // _skinnedPos[id.x].position = mul(_rootboneRotation, float4(_skinnedPos[id.x].position, 1.0));
 
-	float move = length(data[id.x].dPoseWS);
-	data[id.x].dPoseWS  = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
-	
-	//targetPositionWS += dPoseWS;
-	_pos[id.x] += (data[id.x].dPoseWS * (_VertexColor[id.x].r));
+    _pos[id.x] = mul(_LocalToWorld, float4(_skinnedPos[id.x].position, 1.0)).xyz;
 
-	//cache data[id.x] from last frame.
-	data[id.x] = data[id.x];
+    if (_VertexColor[id.x].r < 1e-3) {
+        return;
+    }
+
+    float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
+    float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;
+
+    float dt = 1.0 / 60;
+    data[id.x].velocityWS += forceWS * dt;
+    data[id.x].prevPosWS.xyz += data[id.x].velocityWS * dt;
+    data[id.x].dPoseWS = (data[id.x].prevPosWS - _pos[id.x]) * _MoveScale;
+
+    float move = length(data[id.x].dPoseWS);
+    data[id.x].dPoseWS = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
+
+    //targetPositionWS += dPoseWS;
+    _pos[id.x] += (data[id.x].dPoseWS * (_VertexColor[id.x].r));
+
+    //cache data[id.x] from last frame.
+    data[id.x] = data[id.x];
 }
 
 [numthreads(128, 1, 1)]
-void meshModifier(uint3 id : SV_DispatchThreadID)
-{
-	if (id.x > vertCount)
-	{
-		return;
-	}
-	// int index = id.x;
+void meshModifier(uint3 id : SV_DispatchThreadID) {
+    if (id.x > vertCount) {
+        return;
+    }
+    // int index = id.x;
 
-	// TODO: insert actual code here!
-		
-	_pos[id.x] = mul(_LocalToWorld, float4(_pos[id.x], 1.0)).xyz;
-	float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
-	float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;
+    // TODO: insert actual code here!
 
-	float dt = 1.0 / 60;
-	data[id.x].velocityWS += forceWS * dt;
-	data[id.x].prevPosWS.xyz += data[id.x].velocityWS * dt;
-	data[id.x].dPoseWS  = (data[id.x].prevPosWS - _pos[id.x]) * _MoveScale;
+    _pos[id.x] = mul(_LocalToWorld, float4(_pos[id.x], 1.0)).xyz;
+    float3 dPoseWSTemp = (_pos[id.x] - data[id.x].prevPosWS).xyz;
+    float3 forceWS = _Spring * dPoseWSTemp - data[id.x].velocityWS * _Damper;
 
-	float move = length(data[id.x].dPoseWS);
-	data[id.x].dPoseWS  = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
-	
-	//targetPositionWS += dPoseWS;
-	_pos[id.x] += (data[id.x].dPoseWS * _VertexColor[id.x].r);
+    float dt = 1.0 / 60;
+    data[id.x].velocityWS += forceWS * dt;
+    data[id.x].prevPosWS.xyz += data[id.x].velocityWS * dt;
+    data[id.x].dPoseWS = (data[id.x].prevPosWS - _pos[id.x]) * _MoveScale;
 
-	//cache data[id.x] from last frame.
-	data[id.x] = data[id.x];
+    float move = length(data[id.x].dPoseWS);
+    data[id.x].dPoseWS = min(move, 1.0) / max(move, 0.01) * data[id.x].dPoseWS;
+
+    //targetPositionWS += dPoseWS;
+    _pos[id.x] += (data[id.x].dPoseWS * _VertexColor[id.x].r);
+
+    //cache data[id.x] from last frame.
+    data[id.x] = data[id.x];
 }
 
 // Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);

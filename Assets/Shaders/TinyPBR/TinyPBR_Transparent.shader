@@ -1,9 +1,7 @@
 //processing, not finished.
 
-Shader "LwyShaders/TinyPBR_Transparent"
-{
-    Properties
-    {
+Shader "LwyShaders/TinyPBR_Transparent" {
+    Properties {
         _BaseMap ("Albedo", 2D) = "white" { }
         [MainColor] _BaseColor ("BaseColor", color) = (1.0, 1.0, 1.0, 1.0)
         [Space(20)]
@@ -18,21 +16,18 @@ Shader "LwyShaders/TinyPBR_Transparent"
         _NormalScale ("Normal scale", float) = 1
 
         [Space(20)]
-        _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
+        _DNormalization ("UE=>Unity factor", Range(0.318309891613572, 1)) = 0.318309891613572
 
         [Space(20)]
-        _EmissionMap ("Emission Map", 2D) = "black" {}
+        _EmissionMap ("Emission Map", 2D) = "black" { }
         [HDR] _EmissionColor ("Emission Color", color) = (1.0, 1.0, 1.0, 1.0)
-
     }
-    SubShader
-    {
-        Tags { "Queue" = "Transparent"  "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
+    SubShader {
+        Tags { "Queue" = "Transparent" "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        Pass
-        {
+        Pass {
             Name "DepthOnly"
-            Tags{"LightMode" = "DepthOnly"}
+            Tags { "LightMode" = "DepthOnly" }
 
             ZWrite On
             ColorMask 0
@@ -60,10 +55,9 @@ Shader "LwyShaders/TinyPBR_Transparent"
             ENDHLSL
         }
 
-        Pass
-        {
+        Pass {
             Name "ShadowCaster"
-            Tags{"LightMode" = "ShadowCaster"}
+            Tags { "LightMode" = "ShadowCaster" }
 
             ZWrite On
             ZTest LEqual
@@ -97,8 +91,7 @@ Shader "LwyShaders/TinyPBR_Transparent"
             ENDHLSL
         }
 
-        pass
-        {
+        pass {
             Tags { "LightMode" = "SRPDefaultUnlit" }
             Name "TinyPBR_Transparent"
 
@@ -133,28 +126,27 @@ Shader "LwyShaders/TinyPBR_Transparent"
             #pragma shader_feature _ENABLE_MASK_MAP
 
             CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                // float4 _MainTex_ST;
-                float4 _NormalMap_ST;
-                float4 _MaskMap_ST;
-                half4 _BaseColor;
-                half3 _EmissionColor;
-                float _Metallic, _Roughness;
-                // float _SpecularPower;
-                float _NormalScale;
-                float _DNormalization;
+            float4 _BaseMap_ST;
+            // float4 _MainTex_ST;
+            float4 _NormalMap_ST;
+            float4 _MaskMap_ST;
+            half4 _BaseColor;
+            half3 _EmissionColor;
+            float _Metallic, _Roughness;
+            // float _SpecularPower;
+            float _NormalScale;
+            float _DNormalization;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
             TEXTURE2D(_EmissionMap);SAMPLER(sample_EmissionMap);
-            
+
             #include "Assets/Shaders/GGX_shader/tinyForwardPass.hlsl"
 
             ENDHLSL
         }
-        
     }
     FallBack "SimpleLit"
 }

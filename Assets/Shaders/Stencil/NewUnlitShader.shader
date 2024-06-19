@@ -1,21 +1,17 @@
-Shader "Unlit/NewUnlitShader"
-{
-    Properties
-    {
-        _MainTex ("Texture", 2D) = "white" {}
+Shader "Unlit/NewUnlitShader" {
+    Properties {
+        _MainTex ("Texture", 2D) = "white" { }
     }
-    SubShader
-    {
-        Tags { "RenderType"="Opaque" }
+    SubShader {
+        Tags { "RenderType" = "Opaque" }
         LOD 100
 
-        Pass
-        {
+        Pass {
             Name "Stencil"
-            Tags {"LightMode" = "SRPDefaultUnlit"}
+            Tags { "LightMode" = "SRPDefaultUnlit" }
 
             CGINCLUDE
-            
+
             #pragma vertex vert
             #pragma fragment frag
             // make fog work
@@ -23,14 +19,12 @@ Shader "Unlit/NewUnlitShader"
 
             #include "UnityCG.cginc"
 
-            struct appdata
-            {
+            struct appdata {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
@@ -39,17 +33,15 @@ Shader "Unlit/NewUnlitShader"
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
-            v2f vert (appdata v)
-            {
+            v2f vert(appdata v) {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                UNITY_TRANSFER_FOG(o, o.vertex);
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
-            {
+            fixed4 frag(v2f i) : SV_Target {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 // apply fog

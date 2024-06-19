@@ -1,7 +1,9 @@
 using UnityEngine;
-public class ShowFPS : MonoBehaviour {
+
+public class ShowFPS : MonoBehaviour
+{
     //设置帧率
-    
+
     public float f_UpdateInterval = 0.5F;
 
     private float f_LastInterval;
@@ -10,19 +12,19 @@ public class ShowFPS : MonoBehaviour {
 
     private float f_Fps;
 
-    void Start()
+    private void Start()
     {
         Application.targetFrameRate = -1;
         f_LastInterval = Time.realtimeSinceStartup;
         i_Frames = 0;
     }
 
-    void OnGUI()
+    private void OnGUI()
     {
         GUI.Label(new Rect(0, 100, 200, 200), "FPS:" + f_Fps.ToString("f2"));
     }
 
-    void Update()
+    private void Update()
     {
         ++i_Frames;
 

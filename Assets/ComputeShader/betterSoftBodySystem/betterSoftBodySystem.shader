@@ -1,13 +1,11 @@
-Shader "LwyShaders/NPRSkin_Softbody"
-{
-    Properties
-    {
+Shader "LwyShaders/NPRSkin_Softbody" {
+    Properties {
         _BaseMap ("Texture", 2D) = "white" { }
 
-        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP(" Enable normal map",float) = 0
-        _NormalMap("Normal map", 2D) = "White"{}
-        _NormalScale("Normal scale", float) = 1
-        
+        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP (" Enable normal map", float) = 0
+        _NormalMap ("Normal map", 2D) = "White" { }
+        _NormalScale ("Normal scale", float) = 1
+
         [Space(20)][Header(Ramp lights)]
         _RampMap ("Ramp Map", 2D) = "White" { }
         _RampColum ("Ramp colum", float) = 0.8
@@ -22,7 +20,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
         _Threshold ("_Threshold", Range(0, 1)) = 0.02
         _RimColor ("RimColor", color) = (0.8, 0.7, 0.7, 1)
         _FresnelPower ("Fresnel power", Range(0, 10)) = 3
-        
+
         [Space(20)][Header(AO map)]
         _MaskMap ("Mask Map", 2D) = "white" { }//as urp default settings, g = AO, a = Metalic
         _AOPower ("AO power", Range(0, 6)) = 1
@@ -37,22 +35,18 @@ Shader "LwyShaders/NPRSkin_Softbody"
         _SpecMaskPower ("Specular Mask power", Range(0, 10)) = 1
 
         [Space(20)][Header(Better Stay in One)]
-        [Toggle(_ENABLEENVIROMENTLIGHT)] _ENABLEENVIROMENTLIGHT("Enable enviroment light", Float) = 0.0
+        [Toggle(_ENABLEENVIROMENTLIGHT)] _ENABLEENVIROMENTLIGHT ("Enable enviroment light", Float) = 0.0
         _LightInfluence ("Light influence", Range(0.1, 1.5)) = 1
-
     }
 
-    SubShader
-    {
+    SubShader {
 
         Tags { "Queue" = "Geometry" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        pass
-        {
+        pass {
             Name "NPR skin"
-            Tags { "LightMode" = "SRPDefaultUnlit" "RenderType" = "AlphaTest"}
+            Tags { "LightMode" = "SRPDefaultUnlit" "RenderType" = "AlphaTest" }
             ZWrite On
-
 
             HLSLPROGRAM
 
@@ -73,39 +67,37 @@ Shader "LwyShaders/NPRSkin_Softbody"
 
             CBUFFER_START(UnityPerMaterial)
 
-                float4 _BaseMap_ST;
-                float4 _MainTex_ST;
-                half _SpecPower;
-                float4 _SpecColor;
-                float _SpecRange, _NormalScale;
-                float _SpecStrength;
-                float _Darkness;
-                float _OutLineWidth;
-                float _RampColum;
-                float _OffsetMul;
-                float _Threshold;
-                float4 _RimColor;
-                float _FresnelPower;
-                float _AOPower;
-                float _SpacSmoothness;
-                float _SpecAOPower;
-                float _SpecMaskPower;
-                float _LightInfluence;
-                // float4 _NormalMap;
-                float4 _NormalMap_ST;
-                // float4 _AOMap;
+            float4 _BaseMap_ST;
+            float4 _MainTex_ST;
+            half _SpecPower;
+            float4 _SpecColor;
+            float _SpecRange, _NormalScale;
+            float _SpecStrength;
+            float _Darkness;
+            float _OutLineWidth;
+            float _RampColum;
+            float _OffsetMul;
+            float _Threshold;
+            float4 _RimColor;
+            float _FresnelPower;
+            float _AOPower;
+            float _SpacSmoothness;
+            float _SpecAOPower;
+            float _SpecMaskPower;
+            float _LightInfluence;
+            // float4 _NormalMap;
+            float4 _NormalMap_ST;
+            // float4 _AOMap;
 
             CBUFFER_END
 
-            
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_RampMap); SAMPLER(sampler_RampMap);
             TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
             TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
-            
-            struct a2v
-            {
+
+            struct a2v {
 
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
@@ -113,10 +105,10 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 float2 texcoord : TEXCOORD0;
                 uint ID : SV_VERTEXID;
                 // float2 secondTexcoord : TEXCOORD1;
+
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 // float3 positionVS : TEXCOORD4;
@@ -129,14 +121,13 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 float4 shadowCoord : TEXCOORD8;
                 float3 tangentWS : TEXCOORD9;
                 float3 bitangentWS : TEXCOORD10;
-                float4 vertColor: TEXCOORD2;
+                float4 vertColor : TEXCOORD2;
             };
 
             StructuredBuffer<float3> _Pos;
             StructuredBuffer<float4> _VertexColor;
 
-            v2f vert(a2v input)
-            {
+            v2f vert(a2v input) {
                 v2f o;
 
                 o.positionCS = TransformWorldToHClip(_Pos[input.ID]);
@@ -147,10 +138,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 // o.positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
                 // normalVS = TransformWorldToViewDir(normalWS, true);
 
-                o.bitangentWS = normalize(cross(o.normalWS,o.tangentWS) * input.tangentOS.w);
-
-
-
+                o.bitangentWS = normalize(cross(o.normalWS, o.tangentWS) * input.tangentOS.w);
 
                 //NDC
                 float4 ndc = input.positionOS * 0.5f;
@@ -162,18 +150,14 @@ Shader "LwyShaders/NPRSkin_Softbody"
 
                 //recive shadow
                 o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
-                
+
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
                 o.vertColor = _VertexColor[input.ID];
 
                 return o;
             }
 
-
-            
-
-            float4 frag(v2f input) : SV_TARGET
-            {
+            float4 frag(v2f input) : SV_TARGET {
 
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
@@ -183,29 +167,26 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 float3 LightDir = normalize(float3(MainLight.direction));
                 float4 LightColor = float4(MainLight.color, 1);
 
-
                 //Normal map
                 #if _ENABLENORMALMAP
-                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
-                float3 bump  = UnpackNormalScale(normalMap, _NormalScale);
-                // input.normalWS = TransformTangentToWorld(bump, float3x3(input.bitangentWS,input.tangentWS, input.normalWS  ));
-                float3x3 TBN = {input.bitangentWS,input.tangentWS, input.normalWS };
-                bump.z = pow((1- pow(bump.x,2) - pow(bump.y,2)), 0.5);
-                input.normalWS = mul(bump, TBN);
+                    float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
+                    float3 bump = UnpackNormalScale(normalMap, _NormalScale);
+                    // input.normalWS = TransformTangentToWorld(bump, float3x3(input.bitangentWS,input.tangentWS, input.normalWS  ));
+                    float3x3 TBN = {
+                        input.bitangentWS, input.tangentWS, input.normalWS
+                    };
+                    bump.z = pow((1 - pow(bump.x, 2) - pow(bump.y, 2)), 0.5);
+                    input.normalWS = mul(bump, TBN);
                 #endif
 
-                
-
-                
                 //AO map
                 float4 MaskMap = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv);
 
                 //Blinn_phong
                 float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
                 float3 HalfWay = normalize(viewDir + LightDir);
-                half blinnPhong = (pow(saturate(max(0,dot(input.normalWS, HalfWay))), _SpecPower)) * (MaskMap.a * _SpecMaskPower);
+                half blinnPhong = (pow(saturate(max(0, dot(input.normalWS, HalfWay))), _SpecPower)) * (MaskMap.a * _SpecMaskPower);
                 half4 blinnPhongNPR = smoothstep(_SpecRange, _SpecRange + _SpacSmoothness, blinnPhong) * _SpecColor;
-
 
                 //Lambert & ramp
 
@@ -222,7 +203,6 @@ Shader "LwyShaders/NPRSkin_Softbody"
                     LightColor *= rampLambertColor;
                     ambient *= (1 - rampLambertColor);
                 #endif
-                
 
                 //rim light
 
@@ -231,7 +211,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 float2 screenPos = input.scrPos.xy / input.scrPos.w;
                 float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
                 float2 RimOffsetUV = RimScreenUV + normalVS * _OffsetMul;
-                
+
                 float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams); // �����Խ��ԽС
                 float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r; // _CameraDepthTexture.r = input.positionNDC.z / input.positionNDC.w
                 float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
@@ -249,7 +229,6 @@ Shader "LwyShaders/NPRSkin_Softbody"
                     color *= ((LightColor + ambient) * _LightInfluence + _LightInfluence);
                 #endif
 
-                
                 // return fresnelDepthRim;
 
                 return color;
@@ -259,8 +238,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
             ENDHLSL
         }
 
-        Pass
-        {
+        Pass {
             Name "Outline"
             Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "SRPDefaultUnlit" }
             Cull Front
@@ -273,23 +251,20 @@ Shader "LwyShaders/NPRSkin_Softbody"
             #pragma fragment frag
 
             CBUFFER_START(UnityPerMaterial)
-                float _OutLineWidth;
-                float4 _OutLineColor;
+            float _OutLineWidth;
+            float4 _OutLineColor;
             CBUFFER_END
 
-
-            struct a2v
-            {
+            struct a2v {
                 float4 positionOS : POSITION;
                 float3 normal : NORMAL;
                 float4 tangent : TANGENT;
                 float2 uv : TEXCOORD0;
                 float3 vertColor : COLOR;
-                uint ID: SV_VERTEXID;
+                uint ID : SV_VERTEXID;
             };
 
-            struct v2f
-            {
+            struct v2f {
                 float4 positionCS : SV_POSITION;
                 // float3 positionWS : TEXCOORD0;
                 // float2 worldNormal : TEXCOORD1;
@@ -300,8 +275,7 @@ Shader "LwyShaders/NPRSkin_Softbody"
 
             StructuredBuffer<float3> _Pos;
 
-            v2f vert(a2v input)
-            {
+            v2f vert(a2v input) {
                 v2f o;
 
                 // input.positionOS.xyz += input.tangent * 0.01 *_OutLineWidth;
@@ -312,17 +286,15 @@ Shader "LwyShaders/NPRSkin_Softbody"
                 // o.uv = input.uv;
                 return o;
             }
-            
-            half4 frag(v2f input) : SV_TARGET
-            {
+
+            half4 frag(v2f input) : SV_TARGET {
                 return _OutLineColor;
             }
 
             ENDHLSL
         }
 
-        Pass
-        {
+        Pass {
             Name "ShadowCaster"
             Tags { "LightMode" = "ShadowCaster" }
 
@@ -335,12 +307,10 @@ Shader "LwyShaders/NPRSkin_Softbody"
             #pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
 
-            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ParallaxMapping.hlsl"
-            
 
             // -------------------------------------
             // Material Keywords
@@ -359,9 +329,8 @@ Shader "LwyShaders/NPRSkin_Softbody"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
-        
-        Pass
-        {
+
+        Pass {
             Name "DepthOnly"
             Tags { "LightMode" = "DepthOnly" }
 
@@ -377,7 +346,6 @@ Shader "LwyShaders/NPRSkin_Softbody"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
 
-
             // -------------------------------------
             // Material Keywords
             // #pragma shader_feature_local_fragment _ALPHATEST_ON
@@ -391,6 +359,5 @@ Shader "LwyShaders/NPRSkin_Softbody"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
             ENDHLSL
         }
-
     }
 }
