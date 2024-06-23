@@ -13,7 +13,8 @@ Shader "LwyShaders/TinyPBR_Transparent" {
 
         [Space(20)]
         [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
-        _NormalScale ("Normal scale", float) = 1
+        _DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
+        _NormalScale ("Normal scale", Range(-1, 1)) = 1
 
         [Space(20)]
         _DNormalization ("UE=>Unity factor", Range(0.318309891613572, 1)) = 0.318309891613572
@@ -21,6 +22,8 @@ Shader "LwyShaders/TinyPBR_Transparent" {
         [Space(20)]
         _EmissionMap ("Emission Map", 2D) = "black" { }
         [HDR] _EmissionColor ("Emission Color", color) = (1.0, 1.0, 1.0, 1.0)
+
+        T ("Temp", Range(0, 1)) = 0.25
     }
     SubShader {
         Tags { "Queue" = "Transparent" "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
@@ -112,7 +115,7 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             #pragma vertex vert
             #pragma fragment frag
 
-            // #pragma multi_compile _fog
+            #pragma multi_compile _fog
             #pragma multi_compile  _MAIN_LIGHT_SHADOWS
             #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile  _SHADOWS_SOFT
@@ -129,6 +132,7 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             float4 _BaseMap_ST;
             // float4 _MainTex_ST;
             float4 _NormalMap_ST;
+            float4 _DetailNormalMap_ST;
             float4 _MaskMap_ST;
             half4 _BaseColor;
             half3 _EmissionColor;
@@ -136,14 +140,17 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             // float _SpecularPower;
             float _NormalScale;
             float _DNormalization;
+
+            float T;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
+            TEXTURE2D(_DetailNormalMap); SAMPLER(sampler_DetailNormalMap);
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
             TEXTURE2D(_EmissionMap);SAMPLER(sample_EmissionMap);
 
-            #include "Assets/Shaders/GGX_shader/tinyForwardPass.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/tinyForwardPass.hlsl"
 
             ENDHLSL
         }
