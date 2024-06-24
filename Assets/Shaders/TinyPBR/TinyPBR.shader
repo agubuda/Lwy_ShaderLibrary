@@ -15,14 +15,15 @@ Shader "LwyShaders/TinyPBR" {
         _DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", Range(-1, 1)) = 1
 
-        [Space(20)]
-        _DNormalization ("UE=>Unity factor", Range(0.318309891613572, 1)) = 0.318309891613572
+        /*[Space(20)]
+        _DNormalization ("UE=>Unity factor", Range(0.318309891613572, 1)) = 0.318309891613572*/
 
         [Space(20)]
         _EmissionMap ("Emission Map", 2D) = "black" { }
         [HDR] _EmissionColor ("Emission Color", color) = (1.0, 1.0, 1.0, 1.0)
 
-        T ("Temp", Range(0, 1)) = 0.25
+        //T ("Temp", Range(0, 1)) = 0.25
+
     }
     SubShader {
         Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
@@ -136,9 +137,9 @@ Shader "LwyShaders/TinyPBR" {
             float _Metallic, _Roughness;
             // float _SpecularPower;
             float _NormalScale;
-            float _DNormalization;
+            float _DNormalization = 0.318309891613572;
 
-            float T;
+            //float T;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);

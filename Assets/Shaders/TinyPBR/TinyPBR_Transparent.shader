@@ -16,14 +16,15 @@ Shader "LwyShaders/TinyPBR_Transparent" {
         _DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
         _NormalScale ("Normal scale", Range(-1, 1)) = 1
 
-        [Space(20)]
-        _DNormalization ("UE=>Unity factor", Range(0.318309891613572, 1)) = 0.318309891613572
+        /* [Space(20)]
+        _DNormalization ("UE = > Unity factor", Range(0.318309891613572, 1)) = 0.318309891613572 */
 
         [Space(20)]
         _EmissionMap ("Emission Map", 2D) = "black" { }
         [HDR] _EmissionColor ("Emission Color", color) = (1.0, 1.0, 1.0, 1.0)
 
-        T ("Temp", Range(0, 1)) = 0.25
+        //T ("Temp", Range(0, 1)) = 0.25
+
     }
     SubShader {
         Tags { "Queue" = "Transparent" "RenderType" = "Transparent" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
@@ -43,7 +44,7 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
 
-            // -------------------------------------
+            //-------------------------------------
             // Material Keywords
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _GLOSSINESS_FROM_BASE_ALPHA
@@ -53,8 +54,8 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+            #include "Packages / com.unity.render - pipelines.universal / Shaders / SimpleLitInput.hlsl"
+            #include "Packages / com.unity.render - pipelines.universal / Shaders / DepthOnlyPass.hlsl"
             ENDHLSL
         }
 
@@ -71,12 +72,12 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma target 2.0
 
-            // -------------------------------------
+            //-------------------------------------
             // Material Keywords
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _GLOSSINESS_FROM_BASE_ALPHA
 
-            // -------------------------------------
+            //-------------------------------------
             // Universal Pipeline keywords
 
             // This is used during shadow map generation to differentiate between directional and punctual light shadows, as they use different formulas to apply Normal Bias
@@ -89,8 +90,8 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            #include "Packages / com.unity.render - pipelines.universal / Shaders / SimpleLitInput.hlsl"
+            #include "Packages / com.unity.render - pipelines.universal / Shaders / ShadowCasterPass.hlsl"
             ENDHLSL
         }
 
@@ -106,8 +107,8 @@ Shader "LwyShaders/TinyPBR_Transparent" {
 
             HLSLPROGRAM
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages / com.unity.render - pipelines.universal / ShaderLibrary / Core.hlsl"
+            #include "Packages / com.unity.render - pipelines.universal / ShaderLibrary / Lighting.hlsl"
 
             // #pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
@@ -139,9 +140,9 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             float _Metallic, _Roughness;
             // float _SpecularPower;
             float _NormalScale;
-            float _DNormalization;
+            float _DNormalization = 0.318309891613572;
 
-            float T;
+            //float T;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -150,7 +151,7 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
             TEXTURE2D(_EmissionMap);SAMPLER(sample_EmissionMap);
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/tinyForwardPass.hlsl"
+            #include "Packages / com.unity.render - pipelines.universal / ShaderLibrary / tinyForwardPass.hlsl"
 
             ENDHLSL
         }

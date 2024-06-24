@@ -21,12 +21,12 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
+        m_Texture: {fileID: 2800000, guid: 5aef9367d9ae62549bd25bb528e435f4, type: 3}
+        m_Scale: {x: 0, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailNormalMap:
         m_Texture: {fileID: 2800000, guid: 5fdda735a1fedc441adf565a6b0858fb, type: 3}
-        m_Scale: {x: 1, y: 12.91}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
@@ -43,11 +43,11 @@ Material:
     m_Ints: []
     m_Floats:
     - T: 0.25
-    - _DNormalization: 0.32
+    - _DNormalization: 0.3183099
     - _ENABLE_MASK_MAP: 0
-    - _Metallic: 0.982
+    - _Metallic: 1
     - _NormalScale: 1
-    - _Roughness: 0.01
+    - _Roughness: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}

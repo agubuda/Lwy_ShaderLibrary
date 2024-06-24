@@ -184,7 +184,7 @@ float4 frag(v2f input) : SV_TARGET {
 
     //albedo
     float4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv.xy);
-    float4 diffuse = _BaseColor * albedo;
+    float4 diffuse = _BaseColor.rgba * albedo.rgba;
 
     //enable mask map
     #if defined(_ENABLE_MASK_MAP)
@@ -226,7 +226,7 @@ float4 frag(v2f input) : SV_TARGET {
         float3 kd = float3(1.0, 1.0, 1.0) - F;
         kd *= (1.0 - _Metallic);
         // ambient_contrib *=kd;
-        D = diffuse * kd * mainLightColor ;
+        D = diffuse.rgb * kd * mainLightColor ;
 
         color += (D * lambert * _DNormalization + S * F * G) * MainLight.shadowAttenuation;
     }
@@ -306,10 +306,10 @@ float4 frag(v2f input) : SV_TARGET {
     ///end cube map
 
     ///indirect
-    float3 ambient_contrib = max(0, SampleSH(input.normalWS.xyz)) * diffuse * _DNormalization;
+    float3 ambient_contrib = max(0, SampleSH(input.normalWS.xyz)) * diffuse.rgb * _DNormalization;
 
     //Ambient Fresnel
-    f0 = lerp(f0, diffuse, _Metallic);
+    f0 = lerp(f0, diffuse.rgb, _Metallic);
 
     float3 AmbientKs = FresnelRoughness(input.normalWS, viewDirectionWS, f0, _Roughness);
     float3 AmbientKd = float3(1.0, 1.0, 1.0) - AmbientKs;
@@ -363,14 +363,14 @@ float4 frag(v2f input) : SV_TARGET {
             float3 kd = float3(1.0, 1.0, 1.0) - F;
             kd *= (1.0 - _Metallic);
             // ambient_contrib *=kd;
-            D = diffuse * kd * lightColor ;
+            D = diffuse.rgb * kd * lightColor ;
 
             color += (D * lambert * _DNormalization + S * F * G);
         }
     }
     // f0 = lerp(f0, diffuse, _Metallic);
     float fresnelTerm = FresnelLerp(input.normalWS, viewDirectionWS) * (1 - _Roughness) /* rcp(PI)*/;
-    cubeMapHDR = lerp(diffuse * cubeMapHDR, cubeMapHDR, fresnelTerm);
+    cubeMapHDR = lerp(diffuse.rgb * cubeMapHDR, cubeMapHDR, fresnelTerm);
     float3 indirectSpecular = cubeMapHDR /* _DNormalization*/;
 
     float3 envColor = ambient_contrib * (1 - _Metallic) + indirectSpecular;
@@ -381,9 +381,9 @@ float4 frag(v2f input) : SV_TARGET {
     float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, input.uv.zw);
     emissionMap.rgb *= _EmissionColor;
 
-    float tempShadow = 1.0 - (1.0 - MainLight.shadowAttenuation) * T;
+    //float tempShadow = 1.0 - (1.0 - MainLight.shadowAttenuation) * T;
 
-    envColor *= tempShadow;
+    //envColor *= tempShadow;
 
     color += (envColor + emissionMap) /* tempShadow */;
     // color *= ;
