@@ -18,3 +18,9 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_002_0002.png?raw=true">
 </div>
+<div align = "center">
+  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_003_0000.png?raw=true">
+</div>
+<div align = "center">
+  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_006_0161.png?raw=true">
+</div>
