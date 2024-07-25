@@ -10,6 +10,7 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 如果丢失FBX或者贴图请联系作者。
 
 切换到Android，其他未处理图形api兼容性问题。
+工作于URP管线，针对移动端进行性能消耗评估。
 
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_001_0002.png?raw=true">
