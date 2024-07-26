@@ -13,30 +13,30 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 工作于URP管线，针对移动端进行性能消耗评估。<br>
 ————————截图持续整理中————————<br>
 <br>
-移动端URP光照场景实践
+·移动端URP光照场景实践
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_002_0002.png?raw=true">
 </div>
-项目定制PBR shader
+·项目定制PBR shader
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_001_0002.png?raw=true">
 </div>
-基于深度描边与基于菲涅尔的特效Shader
+·基于深度描边与基于菲涅尔的特效Shader
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_003_0000.png?raw=true">
 </div>
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_006_0161.png?raw=true">
 </div>
-基本的Matcap
+·基本的Matcap
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_007_0002.png?raw=true">
 </div>
-Compute shader软体物理<br>
+·Compute shader软体物理<br>
 尚未整理截图，项目内查看。<br>
-URP后处理丢失A通道<br>
+·URP后处理丢失A通道<br>
 尚未整理截图，项目内查看。<br>
-URP lit 1单位以内点光源爆闪修复<br>
+·URP lit 1单位以内点光源爆闪修复<br>
 尚未整理截图，项目内查看。<br>
 
 
