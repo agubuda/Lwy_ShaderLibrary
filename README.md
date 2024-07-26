@@ -32,4 +32,11 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_007_0002.png?raw=true">
 </div>
+Compute shader软体物理<br>
+尚未整理截图，项目内查看。<br>
+URP后处理丢失A通道<br>
+尚未整理截图，项目内查看。<br>
+URP lit 1单位以内点光源爆闪修复<br>
+尚未整理截图，项目内查看。<br>
+
 
