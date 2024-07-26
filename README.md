@@ -11,7 +11,7 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 
 切换到Android，其他未处理图形api兼容性问题。<br>
 工作于URP管线，针对移动端进行性能消耗评估。<br>
-————————————————截图持续整理中——————————————————<br>
+————————截图持续整理中————————<br>
 <br>
 移动端URP光照场景实践
 <div align = "center">
