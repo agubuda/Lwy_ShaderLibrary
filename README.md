@@ -17,7 +17,7 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_002_0002.png?raw=true">
 </div>
-·项目定制PBR shader
+·Tiny PBR shader
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_001_0002.png?raw=true">
 </div>
