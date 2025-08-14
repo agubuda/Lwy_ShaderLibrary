@@ -1,6 +1,8 @@
 //processing, not finished.
-Shader "LwyShaders/TinyPBR" {
-    Properties {
+Shader "LwyShaders/TinyPBR"
+{
+    Properties
+    {
         _BaseMap ("Albedo", 2D) = "white" { }
         [MainColor] _BaseColor ("BaseColor", color) = (1.0, 1.0, 1.0, 1.0)
         [Space(20)]
@@ -13,32 +15,35 @@ Shader "LwyShaders/TinyPBR" {
         [Space(20)]
         [Normal]_NormalMap ("Normal map", 2D) = "bump" { }
         _DetailNormalMap ("Detail Normal map", 2D) = "bump" { }
-        _NormalScale ("Normal scale", Range(-1, 1)) = 1
-
-        /*[Space(20)]
-        _DNormalization ("UE=>Unity factor", Range(0.318309891613572, 1)) = 0.318309891613572*/
+        _NormalScale ("Normal scale", Range(-1,1)) = 1
 
         [Space(20)]
-        _EmissionMap ("Emission Map", 2D) = "black" { }
+        _DNormalization ("UE=>Unity factor", Range(0.318309891613572,1)) = 0.318309891613572
+
+        [Space(20)]
+        _EmissionMap ("Emission Map", 2D) = "black" {}
         [HDR] _EmissionColor ("Emission Color", color) = (1.0, 1.0, 1.0, 1.0)
 
-        //T ("Temp", Range(0, 1)) = 0.25
+        T  ("Temp", Range(0,1)) = 0.25
 
     }
-    SubShader {
+    SubShader
+    {
         Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        Pass {
+        Pass
+        {
             Name "DepthOnly"
-            Tags { "LightMode" = "DepthOnly" }
+            Tags{"LightMode" = "DepthOnly"}
 
             ZWrite On
             ColorMask 0
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma exclude_renderers gles gles3 glcore
-            #pragma target 4.5
+            #pragma prefer_hlslcc gles //默认gles没用HLSLcc编译, gles 2.0要用urp标准库, 也要用HLSLcc编译
+            #pragma exclude_renderers d3d11_9x //directX的renderer不使用这部分URP pass
+            #pragma target 2.0
 
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
@@ -58,9 +63,10 @@ Shader "LwyShaders/TinyPBR" {
             ENDHLSL
         }
 
-        Pass {
+        Pass
+        {
             Name "ShadowCaster"
-            Tags { "LightMode" = "ShadowCaster" }
+            Tags{"LightMode" = "ShadowCaster"}
 
             ZWrite On
             ZTest LEqual
@@ -68,7 +74,8 @@ Shader "LwyShaders/TinyPBR" {
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma only_renderers gles gles3 glcore d3d11
+            #pragma prefer_hlslcc gles //默认gles没用HLSLcc编译, gles 2.0要用urp标准库, 也要用HLSLcc编译
+            #pragma exclude_renderers d3d11_9x //directX的renderer不使用这部分URP pass
             #pragma target 2.0
 
             // -------------------------------------
@@ -94,13 +101,14 @@ Shader "LwyShaders/TinyPBR" {
             ENDHLSL
         }
 
-        pass {
+        pass
+        {
             Tags { "LightMode" = "SRPDefaultUnlit" }
             Name "TinyPBR"
 
             ZWrite On
             ZTest LEqual
-            Cull back
+            Cull off
 
             HLSLPROGRAM
 
@@ -108,15 +116,17 @@ Shader "LwyShaders/TinyPBR" {
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             // #pragma exclude_renderers gles gles3 glcore
-            #pragma target 4.5
+            #pragma prefer_hlslcc gles //默认gles没用HLSLcc编译, gles 2.0要用urp标准库, 也要用HLSLcc编译
+            #pragma exclude_renderers d3d11_9x //directX的renderer不使用这部分URP pass
+            #pragma target 2.0
 
             #pragma vertex vert
             #pragma fragment frag
 
-            #pragma multi_compile _fog
-            #pragma multi_compile  _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile  _SHADOWS_SOFT
+            #pragma multi_compile _ _fog
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _SHADOWS_SOFT
 
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
@@ -127,19 +137,19 @@ Shader "LwyShaders/TinyPBR" {
             #pragma shader_feature _ENABLE_MASK_MAP
 
             CBUFFER_START(UnityPerMaterial)
-            float4 _BaseMap_ST;
-            // float4 _MainTex_ST;
-            float4 _NormalMap_ST;
-            float4 _DetailNormalMap_ST;
-            float4 _MaskMap_ST;
-            half4 _BaseColor;
-            half3 _EmissionColor;
-            float _Metallic, _Roughness;
-            // float _SpecularPower;
-            float _NormalScale;
-            float _DNormalization = 0.318309891613572;
+                float4 _BaseMap_ST;
+                // float4 _MainTex_ST;
+                float4 _NormalMap_ST;
+                float4 _DetailNormalMap_ST;
+                float4 _MaskMap_ST;
+                half4 _BaseColor;
+                half3 _EmissionColor;
+                float _Metallic, _Roughness;
+                // float _SpecularPower;
+                float _NormalScale;
+                float _DNormalization;
 
-            //float T;
+                float T;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -147,11 +157,12 @@ Shader "LwyShaders/TinyPBR" {
             TEXTURE2D(_DetailNormalMap); SAMPLER(sampler_DetailNormalMap);
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
             TEXTURE2D(_EmissionMap);SAMPLER(sample_EmissionMap);
-
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/tinyForwardPass.hlsl"
+            
+            #include "tinyForwardPass2.hlsl"
 
             ENDHLSL
         }
+        
     }
     FallBack "SimpleLit"
 }
