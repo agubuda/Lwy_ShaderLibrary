@@ -54,8 +54,8 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            #include "Packages / com.unity.render - pipelines.universal / Shaders / SimpleLitInput.hlsl"
-            #include "Packages / com.unity.render - pipelines.universal / Shaders / DepthOnlyPass.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
             ENDHLSL
         }
 
@@ -90,8 +90,8 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
 
-            #include "Packages / com.unity.render - pipelines.universal / Shaders / SimpleLitInput.hlsl"
-            #include "Packages / com.unity.render - pipelines.universal / Shaders / ShadowCasterPass.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
 
@@ -99,27 +99,28 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             Tags { "LightMode" = "SRPDefaultUnlit" }
             Name "TinyPBR_Transparent"
 
-            ZWrite off
+            ZWrite on
             ZTest on
-            Cull back
+            Cull off
 
             Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
 
-            #include "Packages / com.unity.render - pipelines.universal / ShaderLibrary / Core.hlsl"
-            #include "Packages / com.unity.render - pipelines.universal / ShaderLibrary / Lighting.hlsl"
-
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderVariablesFunctions.hlsl"
+            
             // #pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
 
             #pragma vertex vert
             #pragma fragment frag
 
-            #pragma multi_compile _fog
-            #pragma multi_compile  _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile  _SHADOWS_SOFT
+            #pragma multi_compile _ _fog
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _SHADOWS_SOFT
 
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
@@ -141,7 +142,6 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             // float _SpecularPower;
             float _NormalScale;
             float _DNormalization = 0.318309891613572;
-
             //float T;
             CBUFFER_END
 
@@ -151,7 +151,7 @@ Shader "LwyShaders/TinyPBR_Transparent" {
             TEXTURE2D(_MaskMap);SAMPLER(sampler_MaskMap);
             TEXTURE2D(_EmissionMap);SAMPLER(sample_EmissionMap);
 
-            #include "Packages / com.unity.render - pipelines.universal / ShaderLibrary / tinyForwardPass.hlsl"
+            #include "tinyForwardPass.hlsl"
 
             ENDHLSL
         }
