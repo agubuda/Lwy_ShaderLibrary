@@ -18,7 +18,7 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
         _RimColor ("Rim Color", Color) = (1, 1, 1, 1)
         _Exponent ("Exponent", float) = 100
         _AOMap ("AOmap", 2D) = "white" { }
-        _AOContrast ("AO contrast", float) = 1.5
+        _AOPower ("AO contrast", float) = 1.5
 
         _OutLineWidth ("Outline width", float) = 0.1
         _OutLineColor ("Outline color", color) = (0.2, 0.2, 0.2, 1)
@@ -32,6 +32,97 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
         Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
         Pass {
+            Name "DepthOnly"
+            Tags { "LightMode" = "DepthOnly" }
+
+            ZWrite On
+            ColorMask 0
+
+            HLSLPROGRAM
+            #pragma exclude_renderers gles gles3 glcore
+            #pragma target 4.5
+
+            #pragma vertex DepthOnlyVertex
+            #pragma fragment DepthOnlyFragment
+
+            // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            // CBUFFER_START(UnityPerMaterial)
+            // half4 _BaseColor;
+            // half4 _AnisotropyColor;
+            // half _Darkness;
+            // half _Glossness;
+            // half _Cutoff;
+            // half4 _SpecColor;
+            // half _SpecPower;
+
+            // half4 _BaseMap_ST;
+            // half4 _NormalMap_ST;
+            // half4 _NoiseMap_ST;
+            // half4 _AOMap_ST;
+
+            // half _NormalScale;
+            // half _NoisePower;
+            // half _AnisotropyPower;
+            // half _FrenelPower;
+            // half4 _RimColor;
+            // half _Exponent;
+            // half _FrenelLightness;
+            // half _AOPower;
+            // CBUFFER_END
+
+            struct Attributes
+            {
+                float4 position     : POSITION;
+                float2 texcoord     : TEXCOORD0;
+                // UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                // #if defined(_ALPHATEST_ON)
+                //     float2 uv       : TEXCOORD0;
+                // #endif
+                float4 positionCS   : SV_POSITION;
+                // UNITY_VERTEX_INPUT_INSTANCE_ID
+                // UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings DepthOnlyVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                // UNITY_SETUP_INSTANCE_ID(input);
+                // UNITY_TRANSFER_INSTANCE_ID(input, output);
+                // UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                // #if defined(_ALPHATEST_ON)
+                //     output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
+                // #endif
+                output.positionCS = TransformObjectToHClip(input.position.xyz);
+                return output;
+            }
+
+            half DepthOnlyFragment(Varyings input) : SV_TARGET
+            {
+                // UNITY_SETUP_INSTANCE_ID(input);
+                // UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                // #if defined(_ALPHATEST_ON)
+                //     Alpha(SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, _BaseColor, _Cutoff);
+                // #endif
+
+                // #if defined(LOD_FADE_CROSSFADE)
+                //     LODFadeCrossFade(input.positionCS);
+                // #endif
+
+                return input.positionCS.z;
+            }
+            // #endif
+            ENDHLSL
+        }
+
+        Pass {
             Tags { "LightMode" = "SRPDefaultUnlit" }
             Cull off
 
@@ -40,9 +131,9 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_fog
-            #pragma multi_compile  _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile  _SHADOWS_SOFT
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _SHADOWS_SOFT
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -52,7 +143,7 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
             // float4 _BaseMap_ST;
             // half4 _BaseColor;
             // half _Cutoff;
-            half _Surface;
+            // half _Surface;
 
             half4 _BaseColor;
             half4 _AnisotropyColor;
@@ -74,19 +165,19 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
             half4 _RimColor;
             half _Exponent;
             half _FrenelLightness;
-            half _AOContrast;
+            half _AOPower;
 
-            float4 _DetailAlbedoMap_ST;
-            half4 _EmissionColor;
-            half _Smoothness;
-            half _Metallic;
-            half _BumpScale;
-            half _Parallax;
-            half _OcclusionStrength;
-            half _ClearCoatMask;
-            half _ClearCoatSmoothness;
-            half _DetailAlbedoMapScale;
-            half _DetailNormalMapScale;
+            // float4 _DetailAlbedoMap_ST;
+            // half4 _EmissionColor;
+            // half _Smoothness;
+            // half _Metallic;
+            // half _BumpScale;
+            // half _Parallax;
+            // half _OcclusionStrength;
+            // half _ClearCoatMask;
+            // half _ClearCoatSmoothness;
+            // half _DetailAlbedoMapScale;
+            // half _DetailNormalMapScale;
             // half _SoftDepth;
             // half4 _RampMap;
             // half4 _RampMap_ST;
@@ -216,8 +307,8 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
                 //blin-phong
                 //cul bisector
                 half3 bisector = normalize(lightDir + viewDir);
-                half blinPhone = pow(saturate(dot(bisector, -reflectDir)), _Glossness);
-                half4 blinPhoneSpec = blinPhone * _SpecColor * lightColor * _SpecPower;
+                half blinnPhong = pow(saturate(dot(bisector, -reflectDir)), _Glossness);
+                half4 blinnPhongSpec = blinnPhong * _SpecColor * lightColor * _SpecPower;
 
                 //Anistropy
                 //set noise
@@ -249,16 +340,13 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
 
                 //final blend colors
                 // half4 finalColorPhong = anistropy + _BaseColor * remapLambert * half4(mlight.color, 1) * diffuseColor +phongSpecular;
-                half4 finalColorBlin = (_BaseColor + fresnelRimLight) * Lambert * half4(mlight.color, 0) * diffuseColor + blinPhoneSpec + anistropy ;
+                half4 finalColorBlin = (_BaseColor + fresnelRimLight) * (Lambert ) * half4(mlight.color, 0) * diffuseColor + blinnPhongSpec + anistropy ;
 
                 //Mix with fog
                 half3 diffuseColorFog;
                 diffuseColorFog = MixFog(finalColorBlin.xyz, inside.fogFactor);
 
-                //Reciving shadows
-                finalColorBlin *= (mlight.shadowAttenuation + 0.5);
-
-                return half4(finalColorBlin.rgb * saturate(clamp(AOMap, 0, 1) * _AOContrast), 1);
+                return half4(finalColorBlin.rgb * saturate(clamp(AOMap* _AOPower, 0, 1) ), 1);
                 // return AOMap;
 
             };
@@ -267,70 +355,74 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
         }
 
         Pass {
-            Name "DepthOnly"
-            Tags { "LightMode" = "DepthOnly" }
-
-            ZWrite On
-            ColorMask 0
+            Name "Outline"
+            Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "UniversalForward" }
+            Cull Front
 
             HLSLPROGRAM
-            #pragma exclude_renderers gles gles3 glcore
-            #pragma target 4.5
 
-            #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "OutlineUtil.hlsl"
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+            #pragma vertex vert
+            #pragma fragment frag
 
             CBUFFER_START(UnityPerMaterial)
-            half _Surface;
 
-            half4 _BaseColor;
-            half4 _AnisotropyColor;
-            half _Darkness;
-            half _Glossness;
-            half _Cutoff;
-            half4 _SpecColor;
-            half _SpecPower;
+            float _OutLineWidth;
+            float4 _OutLineColor;
 
-            half4 _BaseMap_ST;
-            half4 _NormalMap_ST;
-            half4 _NoiseMap_ST;
-            half4 _AOMap_ST;
-
-            half _NormalScale;
-            half _NoisePower;
-            half _AnisotropyPower;
-            half _FrenelPower;
-            half4 _RimColor;
-            half _Exponent;
-            half _FrenelLightness;
-            half _AOContrast;
-
-            float4 _DetailAlbedoMap_ST;
-            half4 _EmissionColor;
-            half _Smoothness;
-            half _Metallic;
-            half _BumpScale;
-            half _Parallax;
-            half _OcclusionStrength;
-            half _ClearCoatMask;
-            half _ClearCoatSmoothness;
-            half _DetailAlbedoMapScale;
-            half _DetailNormalMapScale;
             CBUFFER_END
 
-            // -------------------------------------
-            // Material Keywords
-            // #pragma shader_feature_local_fragment _ALPHATEST_ON
+            
+            struct a2v {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+                float4 tangent : TANGENT;
+                float2 uv : TEXCOORD0;
+                float3 vertColor : COLOR;
+            };
 
-            //--------------------------------------
-            // GPU Instancing
-            // #pragma multi_compile_instancing
-            // #pragma multi_compile _ DOTS_INSTANCING_ON
+            struct v2f {
+                float4 positionCS : SV_POSITION;
+                float3 positionWS : TEXCOORD0;
+                // float2 worldNormal : TEXCOORD1;
+                // float2 uv : TEXCOORD2;
+                 float3 vertColor : COLOR;
 
-            // #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+            };
+
+            v2f vert(a2v input) {
+                v2f o;
+                float4 positionOS = input.positionOS;
+                half3 normalOS=normalize(input.normalOS);
+
+                o.positionWS = TransformObjectToWorld(positionOS);
+                float3 positionVS = TransformWorldToView(o.positionWS);
+                float3 normalWS = TransformObjectToWorldNormal(normalOS);
+                o.positionWS = TransformPositionWSToOutlinePositionWS(o.positionWS,positionVS.z,normalWS,_OutLineWidth,input.vertColor.r);
+
+                // positionOS+=normalOS * _OutLineWidth * input.vertColor.r;
+                // o.positionCS=TransformObjectToHClip(positionOS);
+                o.positionCS = TransformWorldToHClip(o.positionWS);
+
+                // input.positionOS.xyz += input.tangent * 0.01 *_OutLineWidth;
+                // o.positionCS = TransformObjectToHClip(input.positionOS.xyz + input.normal * _OutLineWidth *0.1);
+                //o.positionCS = TransformObjectToHClip(input.positionOS);
+
+                //o.positionCS.xy += input.normal.xy * _OutLineWidth * 0.1 * o.positionCS.w ;
+                // o.vertColor = input.vertColor;
+
+                // o.uv = input.uv;
+
+                return o;
+            }
+
+            half4 frag(v2f input) : SV_TARGET {
+                return _OutLineColor;
+            }
+
             ENDHLSL
         }
 
@@ -374,7 +466,7 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
             half4 _RimColor;
             half _Exponent;
             half _FrenelLightness;
-            half _AOContrast;
+            half _AOPower;
 
             float4 _DetailAlbedoMap_ST;
             half4 _EmissionColor;
@@ -406,74 +498,5 @@ Shader "LwyShaders/Hair_Anisotropy_Phong" {
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
-
-        // Pass{
-        //     Tags { "Queue"="Geometry" "IgnoreProjector"="True" "LightMode"="SRPDefaultUnlit" }
-        //     Cull front
-
-        //     HLSLPROGRAM
-
-        //     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-        //     // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-
-        //     #pragma vertex vert
-        //     #pragma fragment frag
-
-        //     CBUFFER_START(UnityPerMaterial)
-
-        //         float _OutLineWidth;
-        //         float4 _OutLineColor;
-        //         half _Cutoff;
-
-        //     CBUFFER_END
-
-        //     TEXTURE2D(_BaseMap);
-        //     SAMPLER(sampler_BaseMap);
-
-        //     struct a2v{
-        //         float4 positionOS : POSITION;
-        //         float3 normal : NORMAL;
-        //         float4 tangent : TANGENT;
-        //         float2 uv : TEXCOORD0;
-        //         float3 vertColor : COLOR;
-
-        //     };
-
-        //     struct v2f{
-        //         float4 positionCS : SV_POSITION;
-        //         float3 positionWS : TEXCOORD0;
-        //         float2 worldNormal : TEXCOORD1;
-        //         float2 uv : TEXCOORD2;
-        //         // float3 vertColor : COLOR;
-        //     };
-
-        //     v2f vert(a2v input){
-        //         v2f o;
-
-        //         // input.positionOS.xyz += input.tangent * 0.01 *_OutLineWidth;
-        //         // o.positionCS = TransformObjectToHClip(input.positionOS.xyz + input.normal * _OutLineWidth *0.1);
-        //         o.positionCS = TransformObjectToHClip(input.positionOS);
-        //         o.uv = input.uv;
-
-        //         o.positionCS.xy += input.normal.xy * _OutLineWidth * 0.1 * o.positionCS.w * input.vertColor.r;
-        //         // o.vertColor = input.vertColor;
-
-        //         // o.uv = input.uv;
-
-        //         return o;
-        //     }
-
-        //     half4 frag(v2f input):SV_TARGET{
-        //         half4 diffuseColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-        //         // _OutLineColor.a *= diffuseColor.a;
-        //         clip(diffuseColor.a - _Cutoff);
-
-        //         return _OutLineColor;
-        //     }
-
-        //     ENDHLSL
-
-        // }
-
     }
 }
