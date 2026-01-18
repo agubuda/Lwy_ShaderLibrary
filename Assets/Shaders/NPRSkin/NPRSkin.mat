@@ -9,8 +9,12 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: NPRSkin
   m_Shader: {fileID: 4800000, guid: 6e2587267b5c3374fa79cce8de9a25e0, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _ENABLEAO
   - _ENABLEENVIROMENTLIGHT
+  - _ENABLE_SMOOTHNESS_MASK
   m_InvalidKeywords: []
   m_LightmapFlags: 6
   m_EnableInstancingVariants: 0
@@ -18,6 +22,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -111,8 +116,11 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _ENABLEAO: 1
     - _ENABLEENVIROMENTLIGHT: 1
     - _ENABLENORMALMAP: 0
+    - _ENABLE_SMOOTHNESS_MASK: 1
+    - _EmissionStrength: 1
     - _EnvironmentReflections: 1
     - _FresnelPower: 3
     - _GlossMapScale: 0
@@ -121,7 +129,7 @@ Material:
     - _HueBlue: 0
     - _HueGreen: -0.008
     - _HueRed: -0.108
-    - _LightInfluence: 0.712
+    - _LightInfluence: 1
     - _Metallic: 0
     - _NormalScale: 1
     - _OcclusionStrength: 1
@@ -131,9 +139,11 @@ Material:
     - _QueueOffset: 0
     - _RampColum: 0.17
     - _ReceiveShadows: 1
+    - _ShadowEnvMix: 0.689
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpacSmoothness: 0.529
+    - _SpacSoftEdge: 0.1
     - _SpecAOPower: 1
     - _SpecMaskPower: 1
     - _SpecPower: 11
@@ -143,6 +153,7 @@ Material:
     - _SrcBlend: 1
     - _Surface: 0
     - _Threshold: 0.02
+    - _UseEmission: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     - _enableEnviromentLight: 1
