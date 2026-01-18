@@ -49,7 +49,7 @@ Shader "LwyShaders/PBR/TinyPBR_Opaque"
         }
 
         // =================================================================================
-        // Pass 1: DepthOnly (保持不变)
+        // Pass 1: DepthOnly
         // =================================================================================
         Pass
         {
@@ -104,7 +104,7 @@ Shader "LwyShaders/PBR/TinyPBR_Opaque"
         }
 
         // =================================================================================
-        // Pass 2: ShadowCaster (保持不变)
+        // Pass 2: ShadowCaster
         // =================================================================================
         Pass
         {
@@ -192,7 +192,9 @@ Shader "LwyShaders/PBR/TinyPBR_Opaque"
             Cull [_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            // 修复A：PBR 反射计算通常需要 Shader Model 4.5 才能正确采样 Cubemap Mipmap
+            #pragma target 4.5
+            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -206,8 +208,13 @@ Shader "LwyShaders/PBR/TinyPBR_Opaque"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_fog
             
-            // 如果你的场景有烘焙光照图，一定要加上这个 keyword，否则烘焙后也是黑的
+            // 烘焙光照图支持
             #pragma multi_compile _ LIGHTMAP_ON 
+
+            // 修复B：添加反射探针相关的关键字
+            // 没有这些关键字，GlobalIllumination 函数无法获取反射数据，导致金属全黑
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
 
             #pragma shader_feature_local _ENABLE_MASK_MAP
             #pragma shader_feature_local _ALPHATEST_ON
@@ -319,7 +326,7 @@ Shader "LwyShaders/PBR/TinyPBR_Opaque"
                 // GI: 使用 Lightmap 或 SH
                 half3 bakedGI = SAMPLE_GI(input.lightmapUV, input.vertexSH, normalWS);
                 
-                // 计算 GI 时的 occlusion
+                // 计算 GI 时的 occlusion，这里会自动处理反射探针
                 half3 color = GlobalIllumination(brdfData, bakedGI, occlusion, input.positionWS, normalWS, viewDirWS);
 
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
