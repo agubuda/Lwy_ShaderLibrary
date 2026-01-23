@@ -38,6 +38,22 @@ public class SimpleMovementController : MonoBehaviour
 
     private void Start()
     {
+        // 检查 Obj2 是否忘记赋值了
+        if (Obj2 == null)
+        {
+            Debug.LogError("严重错误：请在 Inspector 面板中把飞机的模型拖给 Obj2 变量！");
+            // 禁用脚本，防止不停报错卡死编辑器
+            this.enabled = false;
+            return;
+        }
+
+        if (Obj == null)
+        {
+            Debug.LogError("严重错误：请在 Inspector 面板中把物体拖给 Obj 变量！");
+            this.enabled = false;
+            return;
+        }
+
         Debug.Log(T);
         T = Obj2.transform.localEulerAngles;
     }

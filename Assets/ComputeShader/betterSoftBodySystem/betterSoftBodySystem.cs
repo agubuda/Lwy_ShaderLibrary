@@ -29,24 +29,35 @@ public class betterSoftBodySystem : MonoBehaviour
     private Vector3[] verticesPosition;
     private void LateUpdate()
     {
+        // 设置通用参数
         meshComputeShader.SetInt("vertCount", vertCount);
         meshComputeShader.SetFloat("_MoveScale", _MoveScale);
         meshComputeShader.SetFloat("_Spring", _Spring);
         meshComputeShader.SetFloat("_Damper", _Damper);
 
+        bool canDispatch = false; // 标记是否准备好执行 Dispatch
+
+        // ================= 处理 SkinnedMeshRenderer =================
         if (skinnedMeshRenderer)
         {
             rootBoneLocalToWorld = skinnedMeshRenderer.rootBone.transform.localToWorldMatrix;
             meshComputeShader.SetMatrix("_LocalToWorld", rootBoneLocalToWorld);
 
+            // 【修复 1】获取 Buffer
             skinnedMeshBuffer = skinnedMeshRenderer.GetVertexBuffer();
 
-            meshComputeShader.SetBuffer(kernelIndex, "_skinnedPos", skinnedMeshBuffer);
-            skinnedMeshBuffer.Dispose();
+            // 【修复 2】必须判空！如果物体不可见，Unity 可能不会生成 Buffer
+            if (skinnedMeshBuffer != null)
+            {
+                meshComputeShader.SetBuffer(kernelIndex, "_skinnedPos", skinnedMeshBuffer);
+                // 注意：千万不要在这里 Dispose，要等 Dispatch 之后！
 
-            meshComputeShader.SetBuffer(kernelIndex, "_pos", computeBuffer);
+                meshComputeShader.SetBuffer(kernelIndex, "_pos", computeBuffer);
+                canDispatch = true; // 标记可以运行
+            }
         }
 
+        // ================= 处理 MeshFilter (普通网格) =================
         if (meshFilter)
         {
             localToWorld = transform.localToWorldMatrix;
@@ -55,22 +66,26 @@ public class betterSoftBodySystem : MonoBehaviour
             verticesPosition = mesh.vertices;
             computeBuffer.SetData(verticesPosition, 0, 0, vertCount);
             meshComputeShader.SetBuffer(kernelIndex, "_pos", computeBuffer);
+            canDispatch = true;
         }
 
-        meshComputeShader.SetBuffer(kernelIndex, "data", data);
-        meshComputeShader.Dispatch(kernelIndex, threadGroup, 1, 1);
+        // ================= 执行 Dispatch =================
+        if (canDispatch)
+        {
+            meshComputeShader.SetBuffer(kernelIndex, "data", data);
+            meshComputeShader.Dispatch(kernelIndex, threadGroup, 1, 1);
 
-        //// debug part
+            // 更新材质显示
+            material.SetBuffer("_Pos", computeBuffer);
+        }
 
-        //computeBuffer.GetData(aaa, 0, 0, vertCount);
-        //for (int i = 0; i < aaa.Length; i++)
-        //{
-        //    Debug.Log(aaa[i]);
-        //}
-
-        material.SetBuffer("_Pos", computeBuffer);
-
-        //material.SetConstantBuffer("_Pos", computeBuffer, 0, vertCount * 12);
+        // ================= 【修复 3】最后再销毁临时 Buffer =================
+        // GraphicsBuffer 需要手动释放，但必须在用完之后
+        if (skinnedMeshBuffer != null)
+        {
+            skinnedMeshBuffer.Dispose();
+            skinnedMeshBuffer = null; // 防止野指针
+        }
     }
 
     private void OnDisable()
