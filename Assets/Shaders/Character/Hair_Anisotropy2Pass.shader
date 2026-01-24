@@ -1,4 +1,4 @@
-﻿Shader "sfx/Character/Hair_Anisotropy2Pass" {
+Shader "sfx/Character/Hair_Anisotropy2Pass" {
     Properties {
         _MainColor ("Main Color", Color) = (1, 1, 1, 1)
         _MainTex ("Diffuse (RGB) Alpha (A)", 2D) = "white" { }
@@ -50,7 +50,7 @@
             half _NormalScale;
             CBUFFER_END
 
-            struct appdata_full {
+            struct a2v {
                 float4 vertex : POSITION;
                 float4 tangent : TANGENT;
                 float3 normal : NORMAL;
@@ -70,21 +70,21 @@
                 float4 vertex : SV_POSITION;
             };
 
-            v2f vert(appdata_full v) {
+            v2f vert(a2v input) {
                 v2f o = (v2f)0;
-                o.vertex = TransformObjectToHClip(v.vertex.xyz);
-                o.uv.xy = TRANSFORM_TEX(v.texcoord, _MainTex);
+                o.vertex = TransformObjectToHClip(input.vertex.xyz);
+                o.uv.xy = TRANSFORM_TEX(input.texcoord, _MainTex);
 
-                o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-                o.worldNormal = float4(TransformObjectToWorldNormal(v.normal), 0);
+                o.worldPos = mul(unity_ObjectToWorld, input.vertex).xyz;
+                o.worldNormal = float4(TransformObjectToWorldNormal(input.normal), 0);
                 return o;
             }
 
-            half4 frag(v2f i) : SV_Target {
+            half4 frag(v2f input) : SV_Target {
 
                 // Light mlight =GetMainlight();
 
-                half4 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                half4 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
                 clip(albedo.a - _Cutoff);
                 half4 finalColor = half4(0, 0, 0, albedo.a);
                 finalColor.rgb += (albedo.rgb * _MainColor.rgb) * _MainLightColor.rgb;
@@ -120,7 +120,7 @@
             half _NormalScale;
             CBUFFER_END
 
-            struct appdata_full {
+            struct a2v {
                 float4 vertex : POSITION;
                 float4 tangent : TANGENT;
                 float3 normal : NORMAL;
@@ -196,17 +196,17 @@
                 */
             }
 
-            v2f vert(appdata_full v) {
+            v2f vert(a2v input) {
                 v2f o = (v2f)0;
 
-                o.vertex = TransformObjectToHClip(v.vertex.xyz);
-                o.uv.xy = TRANSFORM_TEX(v.texcoord, _MainTex);
-                o.uv.zw = TRANSFORM_TEX(v.texcoord, _NormalTex);
+                o.vertex = TransformObjectToHClip(input.vertex.xyz);
+                o.uv.xy = TRANSFORM_TEX(input.texcoord, _MainTex);
+                o.uv.zw = TRANSFORM_TEX(input.texcoord, _NormalTex);
 
-                float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-                half3 worldNormal = TransformObjectToWorldNormal(v.normal);
-                half3 worldTangent = UnityObjectToWorldDir(v.tangent.xyz);
-                half3 worldBinormal = cross(worldNormal, worldTangent) * v.tangent.w;
+                float3 worldPos = mul(unity_ObjectToWorld, input.vertex).xyz;
+                half3 worldNormal = TransformObjectToWorldNormal(input.normal);
+                half3 worldTangent = UnityObjectToWorldDir(input.tangent.xyz);
+                half3 worldBinormal = cross(worldNormal, worldTangent) * input.tangent.w;
 
                 o.TtoW0 = float4(worldTangent.x, worldBinormal.x, worldNormal.x, worldPos.x);
                 o.TtoW1 = float4(worldTangent.y, worldBinormal.y, worldNormal.y, worldPos.y);
@@ -215,21 +215,21 @@
                 return o;
             }
 
-            half4 frag(v2f i) : SV_Target {
-                half4 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv.xy);
+            half4 frag(v2f input) : SV_Target {
+                half4 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv.xy);
                 half3 diffuseColor = albedo.rgb * _MainColor.rgb;
 
                 //法线相关
-                half3 bump = UnpackScaleNormal(SAMPLE_TEXTURE2D(_NormalTex, sampler_NormalTex, i.uv.zw), _NormalScale);
-                half3 worldNormal = normalize(half3(dot(i.TtoW0.xyz, bump), dot(i.TtoW1.xyz, bump), dot(i.TtoW2.xyz, bump)));
-                float3 worldPos = float3(i.TtoW0.w, i.TtoW1.w, i.TtoW2.w);
-                half3 worldTangent = normalize(half3(i.TtoW0.x, i.TtoW1.x, i.TtoW2.x));
-                half3 worldBinormal = normalize(half3(i.TtoW0.y, i.TtoW1.y, i.TtoW2.y));
+                half3 bump = UnpackScaleNormal(SAMPLE_TEXTURE2D(_NormalTex, sampler_NormalTex, input.uv.zw), _NormalScale);
+                half3 worldNormal = normalize(half3(dot(input.TtoW0.xyz, bump), dot(input.TtoW1.xyz, bump), dot(input.TtoW2.xyz, bump)));
+                float3 worldPos = float3(input.TtoW0.w, input.TtoW1.w, input.TtoW2.w);
+                half3 worldTangent = normalize(half3(input.TtoW0.x, input.TtoW1.x, input.TtoW2.x));
+                half3 worldBinormal = normalize(half3(input.TtoW0.y, input.TtoW1.y, input.TtoW2.y));
 
                 half3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
                 half3 worldLightDir = normalize(UnityWorldSpaceLightDir(worldPos));
 
-                half3 spec = SAMPLE_TEXTURE2D(_AnisoDir, sampler_AnisoDir, i.uv.xy).rgb;
+                half3 spec = SAMPLE_TEXTURE2D(_AnisoDir, sampler_AnisoDir, input.uv.xy).rgb;
                 //计算切线方向的偏移度
                 half shiftTex = spec.g;
                 half3 t1 = ShiftTangent(worldBinormal, worldNormal, _PrimaryShift + shiftTex);

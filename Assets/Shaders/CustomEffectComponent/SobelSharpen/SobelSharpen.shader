@@ -21,14 +21,14 @@ Shader "Hidden/Custom/SobelSharpen" {
             float _Intensity;
             int _Offset;
 
-            struct Attributes {
+            struct a2v {
                 float4 positionOS : POSITION;
                 float2 uv : TEXCOORD0;
                 uint vertexID : SV_VertexID;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
-            struct Varyings {
+            struct v2f {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float2 texcoord : TEXCOORD2;
@@ -36,8 +36,8 @@ Shader "Hidden/Custom/SobelSharpen" {
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            Varyings vert(Attributes input) {
-                Varyings output = (Varyings)0;
+            v2f vert(a2v input) {
+                v2f output = (v2f)0;
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
@@ -57,7 +57,7 @@ Shader "Hidden/Custom/SobelSharpen" {
                 return scrPos;
             }
 
-            float4 frag(Varyings input) : SV_Target {
+            float4 frag(v2f input) : SV_Target {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float2 scrPos = input.positionSS.xy / input.positionSS.w;

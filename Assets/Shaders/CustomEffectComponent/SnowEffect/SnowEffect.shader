@@ -31,13 +31,13 @@ Shader "Hidden/Custom/SnowEffect" {
             float4 _MaskMap_ST;
             // float4 _CameraDepthAttachment_ST;
 
-            struct Attributes {
+            struct a2v {
                 float4 positionOS : POSITION;
                 float2 uv : TEXCOORD0;
                 uint vertexID : SV_VERTEXID;
             };
 
-            struct Varyings {
+            struct v2f {
                 float2 uv : TEXCOORD0;
                 float2 uv2 : TEXCOORD1;
                 float4 positionSS : TEXCOORD2;
@@ -46,8 +46,8 @@ Shader "Hidden/Custom/SnowEffect" {
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            Varyings vert(Attributes input) {
-                Varyings output = (Varyings)0;
+            v2f vert(a2v input) {
+                v2f output = (v2f)0;
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
@@ -60,7 +60,7 @@ Shader "Hidden/Custom/SnowEffect" {
                 return output;
             }
 
-            float4 frag(Varyings input) : SV_Target {
+            float4 frag(v2f input) : SV_Target {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 // int2 positionSS  = input.uv * _ScreenSize.xy;

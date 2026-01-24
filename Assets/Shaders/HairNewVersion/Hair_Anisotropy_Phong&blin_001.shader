@@ -96,23 +96,23 @@ Shader "Unlit/Hair_Anisotropy_Phong_Blin_001" {
             TEXTURE2D(_CameraDepthTexture);
             SAMPLER(sampler_CameraDepthTexture);
 
-            v2f vert(a2v inside) {
+            v2f vert(a2v input) {
                 v2f o;
 
-                // VertexPositionInputs vertexInput = GetVertexPositionInputs(inside.vertex.xyz);
+                // VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
 
-                o.pos = TransformObjectToHClip(inside.vertex.xyz);
+                o.pos = TransformObjectToHClip(input.vertex.xyz);
 
-                o.worldNormal = TransformObjectToWorldNormal(inside.normal);
-                o.worldPos = TransformObjectToWorld(inside.vertex.xyz);
-                o.worldTangent = TransformObjectToWorldDir(inside.tangent.xyz);
+                o.worldNormal = TransformObjectToWorldNormal(input.normal);
+                o.worldPos = TransformObjectToWorld(input.vertex.xyz);
+                o.worldTangent = TransformObjectToWorldDir(input.tangent.xyz);
 
                 //cul bitangent
-                o.worlBbitangent = normalize(cross(o.worldNormal, o.worldTangent) * inside.tangent.w);
+                o.worlBbitangent = normalize(cross(o.worldNormal, o.worldTangent) * input.tangent.w);
 
-                // o.uv = TRANSFORM_TEX(inside.texcoord, _RampMap);
-                o.uv = TRANSFORM_TEX(inside.texcoord, _MainTex);
-                o.uv = TRANSFORM_TEX(inside.texcoord, _NormalMap);
+                // o.uv = TRANSFORM_TEX(input.texcoord, _RampMap);
+                o.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
+                o.uv = TRANSFORM_TEX(input.texcoord, _NormalMap);
 
                 //for depth tex
                 o.screenPos = ComputeScreenPos(o.pos);
@@ -130,10 +130,10 @@ Shader "Unlit/Hair_Anisotropy_Phong_Blin_001" {
                 return (x - t1) / (t2 - t1) * (s2 - s1) + s1;
             }
 
-            float4 frag(v2f inside) : SV_TARGET {
+            float4 frag(v2f input) : SV_TARGET {
 
                 //diffuse color
-                float4 diffuseColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, inside.uv);
+                float4 diffuseColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
                 clip(diffuseColor.a - _Cutoff);
 
                 //initialize lighting struct
@@ -142,14 +142,14 @@ Shader "Unlit/Hair_Anisotropy_Phong_Blin_001" {
                 half4 lightColor = half4(mlight.color, 0);
 
                 //normal map
-                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, inside.uv);
+                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
                 float3 bump = UnpackNormalScale(normalMap, _NormalScale);
-                inside.worldNormal = TransformTangentToWorld(bump, half3x3(inside.worldTangent, inside.worlBbitangent, inside.worldNormal));
+                input.worldNormal = TransformTangentToWorld(bump, half3x3(input.worldTangent, input.worlBbitangent, input.worldNormal));
 
                 //lambert
-                float Lambert = dot(mlight.direction, inside.worldNormal) * 0.5 + _Darkness;
+                float Lambert = dot(mlight.direction, input.worldNormal) * 0.5 + _Darkness;
 
-                // float4 rampColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, inside.uv) ;
+                // float4 rampColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, input.uv) ;
 
                 float4 remapLambert = Lambert;
                 if (Lambert < 0) {
@@ -161,14 +161,14 @@ Shader "Unlit/Hair_Anisotropy_Phong_Blin_001" {
                 //Phong
 
                 half3 lightDir = normalize(saturate(mlight.direction));
-                half3 viewDir = normalize(_WorldSpaceCameraPos.xyz - inside.worldPos);
-                half3 reflectDir = normalize(reflect(lightDir, inside.worldNormal));
+                half3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.worldPos);
+                half3 reflectDir = normalize(reflect(lightDir, input.worldNormal));
 
                 float phong = pow(saturate(dot(viewDir, -reflectDir)), _Glossness);
 
                 //phong product worldNormal
                 half4 normalColor = 0;
-                normalColor = half4(inside.worldNormal, 1);
+                normalColor = half4(input.worldNormal, 1);
                 // half4 specular=0;
                 // specular *= pow(normalColor.g,1);
 
@@ -182,26 +182,26 @@ Shader "Unlit/Hair_Anisotropy_Phong_Blin_001" {
 
                 //Anistropy
                 //set noise
-                float4 noiseMap = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, inside.uv);
-                float3 ShiftT = inside.worlBbitangent + inside.worldNormal * noiseMap * _NoisePower;
+                float4 noiseMap = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, input.uv);
+                float3 ShiftT = input.worlBbitangent + input.worldNormal * noiseMap * _NoisePower;
 
                 float dotTH = dot(ShiftT, viewDir);
                 float sinTH = sqrt(1.0 - dotTH * dotTH);
                 float dirAtten = smoothstep(1.0, 0.0, dotTH);
                 float finalDirAtten = dirAtten * pow(sinTH, 200);
                 //fresnel
-                half4 fresnelAnis = finalDirAtten * pow((saturate(dot(inside.worldNormal, viewDir))), _FrenelPower);
+                half4 fresnelAnis = finalDirAtten * pow((saturate(dot(input.worldNormal, viewDir))), _FrenelPower);
 
                 half4 anistropy = fresnelAnis * _AnisotropyColor * _AnisotropyPower * lightColor;
 
                 // depth tex
-                float2 scrPos = inside.screenPos.xy / inside.screenPos.w;
+                float2 scrPos = input.screenPos.xy / input.screenPos.w;
                 float depthTex = SAMPLE_TEXTURE2D(_CameraDepthTexture, sampler_CameraDepthTexture, scrPos).r;
                 float LinearDepth = LinearEyeDepth(depthTex, _ZBufferParams);
                 float a = saturate(LinearDepth);
 
-                // float4 depthCol = saturate((LinearDepth - inside.screenPos.w)/_SoftDepth);
-                // float4 depthCol2 = lerp(-100,100,(LinearDepth - inside.screenPos.w));
+                // float4 depthCol = saturate((LinearDepth - input.screenPos.w)/_SoftDepth);
+                // float4 depthCol2 = lerp(-100,100,(LinearDepth - input.screenPos.w));
 
                 // float4 depwithbase = _BaseColor * (1-depthCol2);
 
@@ -211,7 +211,7 @@ Shader "Unlit/Hair_Anisotropy_Phong_Blin_001" {
 
                 //Mix with fog
                 float3 diffuseColorFog;
-                diffuseColorFog = MixFog(finalColorPhong.xyz, inside.fogFactor);
+                diffuseColorFog = MixFog(finalColorPhong.xyz, input.fogFactor);
 
                 // if(lightDir = 0){return 0;}
                 return float4(diffuseColorFog, finalColorPhong.a);

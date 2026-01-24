@@ -1,4 +1,4 @@
-Shader "LwyShaders/SimpleSoftBody_Lambert" {
+Shader "LwyShaders/ClothSimulation_Lambert" {
     Properties {
         _BaseMap ("Texture", 2D) = "white" { }
         [MainColor] _BaseColor ("Base Color", Color) = (1,1,1,1)
@@ -7,7 +7,7 @@ Shader "LwyShaders/SimpleSoftBody_Lambert" {
     SubShader {
         Tags { "Queue" = "Geometry" "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
 
-        // 1. Depth Pass (Crucial for shadows and Z-buffer)
+        // 1. Depth Pass
         Pass {
             Name "DepthOnly"
             Tags { "LightMode" = "DepthOnly" }
@@ -106,14 +106,12 @@ Shader "LwyShaders/SimpleSoftBody_Lambert" {
                 half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
 
                 // 2. Simple Lambertian Diffuse
-                // max(0, N dot L)
                 float NdotL = max(0.0, dot(normalWS, lightDir));
                 
                 // 3. Lighting calculation
-                // Color = Albedo * LightColor * NdotL
                 float3 lighting = albedo.rgb * _MainLightColor.rgb * NdotL;
                 
-                // Add a tiny bit of ambient to prevent pitch black shadows
+                // Ambient
                 lighting += albedo.rgb * 0.1;
 
                 return half4(lighting, albedo.a);

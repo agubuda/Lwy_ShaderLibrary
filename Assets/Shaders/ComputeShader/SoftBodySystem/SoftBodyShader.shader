@@ -168,10 +168,10 @@ Shader "ComputeShader/softBodyShader" {
                 return (o);
             };
 
-            float4 frag(v2f inside) : SV_TARGET {
+            float4 frag(v2f input) : SV_TARGET {
 
                 //diffuse color
-                float4 diffuseColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, inside.uv);
+                float4 diffuseColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
                 clip(diffuseColor.a - _Cutoff);
 
                 //initialize lighting struct
@@ -180,16 +180,16 @@ Shader "ComputeShader/softBodyShader" {
                 half4 lightColor = half4(mlight.color, 0);
 
                 //normal map
-                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, inside.uv);
+                float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
                 float3 bump = SafeNormalize(UnpackNormalScale(normalMap, _NormalScale));
-                inside.worldNormal = TransformTangentToWorld(bump, half3x3(inside.worldTangent, inside.worlBbitangent, inside.worldNormal));
+                input.worldNormal = TransformTangentToWorld(bump, half3x3(input.worldTangent, input.worlBbitangent, input.worldNormal));
 
                 //lambert
-                float Lambert = dot(mlight.direction, inside.worldNormal) * 0.5 + _Darkness;
+                float Lambert = dot(mlight.direction, input.worldNormal) * 0.5 + _Darkness;
 
                 //Mix with fog
                 float3 diffuseColorFog;
-                diffuseColorFog = MixFog(diffuseColor.rgb, inside.fogFactor);
+                diffuseColorFog = MixFog(diffuseColor.rgb, input.fogFactor);
 
                 return diffuseColor * Lambert ;
             };

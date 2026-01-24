@@ -4,10 +4,12 @@
 #pragma kernel InitializeMesh
 #pragma kernel InitializeSkinnedMesh
 
+// --- Data Structures ---
+
 struct cacheData {
     float3 prevPosWS;
     float3 velocityWS;
-    float3 dPoseWS; // Not strictly needed for logic but kept for struct alignment
+    float3 dPoseWS;
 };
 
 struct skinnedMeshBuffer {
@@ -17,13 +19,25 @@ struct skinnedMeshBuffer {
     float2 uv2;
 };
 
+// Max 8 neighbors per vertex (should be enough for most meshes)
+struct NeighborData {
+    int count;
+    int indices[8];
+    float restLengths[8];
+};
+
+// --- Variables ---
+
 float4x4 _LocalToWorld;
 
 uint vertCount;
 float _MoveScale;
-float _Spring;
-float _Damper;
+float _Spring;      // Strength of pulling back to animation pose
+float _Damper;      // Air resistance
 float _DeltaTime;
+
+// Cloth Specific settings
+float _ClothStiffness; // How hard neighbors pull each other (Structural Spring)
 
 RWStructuredBuffer<float4> _VertexColor;
 RWStructuredBuffer<float3> _pos; // Output for Rendering
@@ -35,7 +49,11 @@ StructuredBuffer<float3> _InputPositions;
 // For Skinned Meshes
 RWStructuredBuffer<skinnedMeshBuffer> _skinnedPos;
 
-// --- Helper Function ---
+// Neighbor Info (Read Only)
+StructuredBuffer<NeighborData> _NeighborBuffer;
+
+// --- Helper Functions ---
+
 float3 CalculateTargetPos(float3 localPos)
 {
     return mul(_LocalToWorld, float4(localPos, 1.0)).xyz;
@@ -67,36 +85,73 @@ void InitializeSkinnedMesh(uint3 id : SV_DispatchThreadID) {
     data[id.x].dPoseWS = float3(0, 0, 0);
 }
 
+// --- Physics Logic ---
+
+float3 CalculateSpringForces(uint index, float3 currentPos, float3 targetPos, float3 velocity)
+{
+    // 1. Force: Pull towards Animation Target (Goal Matching)
+    float3 displacement = targetPos - currentPos;
+    float3 goalForce = _Spring * displacement;
+
+    // 2. Force: Pull towards Neighbors (Structural Springs)
+    float3 neighborForce = float3(0,0,0);
+    NeighborData nData = _NeighborBuffer[index];
+    
+    // We limit max neighbors to 8 to unroll loop roughly
+    for(int i = 0; i < nData.count; i++)
+    {
+        int nIndex = nData.indices[i];
+        float restLen = nData.restLengths[i];
+        
+        // Neighbor's current physics position
+        // Note: Using prevPosWS from current frame's buffer (might be slightly async but acceptable)
+        float3 nPos = data[nIndex].prevPosWS; 
+        
+        float3 dir = nPos - currentPos;
+        float dist = length(dir);
+        
+        // Hooke's Law: F = k * (currentLength - restLength)
+        // Avoid division by zero
+        if(dist > 0.0001)
+        {
+            float3 dirNorm = dir / dist;
+            float stretch = dist - restLen;
+            // Apply force
+            neighborForce += dirNorm * stretch * _ClothStiffness;
+        }
+    }
+
+    // 3. Force: Damping (Resist motion)
+    float3 dampForce = velocity * -_Damper;
+
+    return goalForce + neighborForce + dampForce;
+}
+
 // --- Update Kernels ---
 
 [numthreads(128, 1, 1)]
 void skinnedMeshModifier(uint3 id : SV_DispatchThreadID) {
     if (id.x >= vertCount) return;
 
-    // 1. Target (Animation) Position
     float3 targetPosWS = CalculateTargetPos(_skinnedPos[id.x].position);
     float weight = _VertexColor[id.x].r;
 
-    // Safety / Mask optimization
     if (weight < 1e-3) {
         _pos[id.x] = targetPosWS;
-        data[id.x].prevPosWS = targetPosWS; // Reset physics to match target
+        data[id.x].prevPosWS = targetPosWS;
         data[id.x].velocityWS = float3(0,0,0);
         return;
     }
 
-    // 2. Safety: Teleport check
     if (distance(data[id.x].prevPosWS, targetPosWS) > 2.0) {
         data[id.x].prevPosWS = targetPosWS;
         data[id.x].velocityWS = float3(0,0,0);
     }
 
-    // 3. Physics Simulation (Full Physics, unaffected by weight yet)
     float3 currentPosWS = data[id.x].prevPosWS;
     
-    // Spring brings Current towards Target
-    float3 displacement = targetPosWS - currentPosWS;
-    float3 forceWS = _Spring * displacement - data[id.x].velocityWS * _Damper;
+    // Calculate Combined Forces
+    float3 forceWS = CalculateSpringForces(id.x, currentPosWS, targetPosWS, data[id.x].velocityWS);
 
     float dt = _DeltaTime;
     dt = clamp(dt, 0.0, 0.05);
@@ -104,24 +159,17 @@ void skinnedMeshModifier(uint3 id : SV_DispatchThreadID) {
     data[id.x].velocityWS += forceWS * dt;
     float3 nextPosWS = currentPosWS + data[id.x].velocityWS * dt;
     
-    // 4. Update Physics State (Keep full physics state!)
-    // CRITICAL FIX: We save the UN-BLENDED position back to history.
-    // This allows the physics to keep momentum even if visual weight is low.
+    // Update State
     data[id.x].prevPosWS = nextPosWS;
 
-    // 5. Render Output Blend
-    // Apply constraints on the deviation vector first
+    // Render Output Blend
     float3 dPoseWS = (nextPosWS - targetPosWS);
-    
-    // Optional: Max deviation clamp (still good to have)
     float moveLen = length(dPoseWS);
     float maxDeviation = 0.5;
     if(moveLen > maxDeviation) {
         dPoseWS = (dPoseWS / moveLen) * maxDeviation;
     }
 
-    // Final Linear Blend: Target + Deviation * (Color * Scale)
-    // 0 = Exact Target, 1 = Full Physics result (clamped)
     float blendFactor = weight * _MoveScale;
     float3 finalPos = targetPosWS + dPoseWS * blendFactor;
     
@@ -148,8 +196,9 @@ void meshModifier(uint3 id : SV_DispatchThreadID) {
     }
 
     float3 currentPosWS = data[id.x].prevPosWS;
-    float3 displacement = targetPosWS - currentPosWS;
-    float3 forceWS = _Spring * displacement - data[id.x].velocityWS * _Damper;
+    
+    // Calculate Combined Forces
+    float3 forceWS = CalculateSpringForces(id.x, currentPosWS, targetPosWS, data[id.x].velocityWS);
 
     float dt = _DeltaTime;
     dt = clamp(dt, 0.0, 0.05);
@@ -157,7 +206,7 @@ void meshModifier(uint3 id : SV_DispatchThreadID) {
     data[id.x].velocityWS += forceWS * dt;
     float3 nextPosWS = currentPosWS + data[id.x].velocityWS * dt;
 
-    // Update Physics State (Full Physics)
+    // Update State
     data[id.x].prevPosWS = nextPosWS;
 
     // Render Output Blend
