@@ -71,7 +71,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: -8845900911407845427}
   - {fileID: 6036183727017704215}
-  m_RendererFeatureMap: cd2f3b19fd0b3d85173be25f1ed5c453
+  - {fileID: 292713147532899372}
+  m_RendererFeatureMap: cd2f3b19fd0b3d85173be25f1ed5c4532cf4c88b0eed0f04
   m_UseNativeRenderPass: 1
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -113,6 +114,20 @@ MonoBehaviour:
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &292713147532899372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0ec52cecc795714f93f274c2e71e87b, type: 3}
+  m_Name: GlobalVolumeFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  _baseProfile: {fileID: 0}
 --- !u!114 &2032762023677102690
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -151,6 +166,20 @@ MonoBehaviour:
       restoreCamera: 1
       offset: {x: 0, y: 0, z: 0, w: 0}
       cameraFieldOfView: 1
+--- !u!114 &2661138027609443956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f21d60ca1d132f42be94e61c25660b8, type: 3}
+  m_Name: GlobalVolumeFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  _baseProfile: {fileID: 0}
 --- !u!114 &6036183727017704215
 MonoBehaviour:
   m_ObjectHideFlags: 0
