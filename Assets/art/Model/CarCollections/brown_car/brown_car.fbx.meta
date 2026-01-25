@@ -1,12 +1,47 @@
 fileFormatVersion: 2
 guid: a36ac7bace093b441bac727af21a9591
 ModelImporter:
-  serializedVersion: 21300
+  serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material #190 Slot #1
+    second: {fileID: 2100000, guid: 68d8bafc4de30134caf4884efd3730b6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: chedeng
+    second: {fileID: 2100000, guid: 68d8bafc4de30134caf4884efd3730b6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cheqi
+    second: {fileID: 2100000, guid: 629d4cbd8a4f5a74d817c506f245cd40, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: chetai
+    second: {fileID: 2100000, guid: db0852a8ddbc935428ec9261aee9b283, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fangxiangpan
+    second: {fileID: 2100000, guid: db0852a8ddbc935428ec9261aee9b283, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: feijinshu
+    second: {fileID: 2100000, guid: fae5a2a00bcfeea45a538ddc19c1b781, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: jinshu
+    second: {fileID: 2100000, guid: d9f016b6e29055c47acd2566f4c4ef15, type: 2}
   materials:
-    materialImportMode: 0
-    materialName: 0
+    materialImportMode: 2
+    materialName: 2
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -40,6 +75,7 @@ ModelImporter:
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
+    importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
     importCameras: 0
@@ -67,6 +103,7 @@ ModelImporter:
     secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
     useFileScale: 1
+    strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 0
@@ -99,6 +136,7 @@ ModelImporter:
   humanoidOversampling: 1
   avatarSetup: 0
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 0
   remapMaterialsIfMaterialImportModeIsNone: 0
   additionalBone: 0
   userData: 

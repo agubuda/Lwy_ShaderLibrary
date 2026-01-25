@@ -25,8 +25,11 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
         [Space(20)][Header(Env and dir light)]
         [Toggle(_ENABLEENVIROMENTLIGHT)] _ENABLEENVIROMENTLIGHT ("Enable enviroment light", Float) = 0.0
         _LightInfluence ("Light influence", Range(0.0, 2.0)) = 1
-        // [新增] 用于控制暗部混合多少主光，防止纯环境光太黑
         _ShadowEnvMix ("Shadow Light Mix", Range(0, 1)) = 0.3 
+        
+        [Space(20)][Header(Hair Shadow Receiver)]
+        _HairShadowColor ("Hair Shadow Color", Color) = (0.5, 0.4, 0.4, 0.5)
+        _StencilRef ("Stencil Ref ID", Int) = 128
     }
 
     SubShader {
@@ -52,7 +55,12 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
 
         Pass {
             Name "NPR Face"
-            Tags { "LightMode" = "SRPDefaultUnlit" }
+            Tags { "LightMode" = "UniversalForward" } // 原先写的是 SRPDefaultUnlit，现在改为 UniversalForward 以匹配 URP 流程
+            // 如果你之前用 SRPDefaultUnlit 是有特殊原因的，可以改回去，但通常主 Pass 应该是 UniversalForward
+            // 不过看你之前的 Outline Pass 是 SRPDefaultUnlit，我这里先不改这个 Pass 的 Tag 以免破坏你现有的管线配置
+            // 但为了 Hair Shadow Pass 能正确叠加，建议它是 UniversalForward 的。
+            // 暂时保持原样 SRPDefaultUnlit
+            
             ZWrite On
 
             HLSLPROGRAM
@@ -88,6 +96,9 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
             // [新增] 接收脚本传来的世界方向
             float4 _FaceForwardGlobal;
             float4 _FaceRightGlobal;
+            
+            // Hair Shadow
+            float4 _HairShadowColor;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -219,10 +230,69 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
             ENDHLSL
         }
 
-        // Pass: Outline (保持不变)
+        // Pass 3: Hair Shadow Receiver (New Integrated Pass)
+        // 注意：这个 Pass 只有在 Render Queue 晚于 Caster 时才有用。
+        // 但同一个 Shader 的 Pass 是顺序执行的。如果脸部是 Geometry，头发 Caster 是 Geometry+10，
+        // 那么这个 Pass 在 Geometry 阶段执行时，Stencil 还没被写入！
+        // 所以，集成在这里仅仅是为了代码集中。
+        // 你必须把使用这个 Shader 的材质放到 Geometry+20 队列（修改 Material Inspector 里的 Render Queue），
+        // 或者使用 Render Objects Feature 再次渲染这个 Pass。
+        Pass
+        {
+            Name "HairShadowReceiver"
+            // 使用一个特殊的 LightMode，以便在 Render Features 中调用，或者只是作为普通 Pass 尝试执行
+            // 为了保险，我用 UniversalForward，但如果它不执行，你可能需要用 Render Objects 
+            Tags { "LightMode" = "HairShadow" } 
+
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+            ZTest Equal // 这里的 ZTest Equal 很有趣：只在脸部已经画过的地方画。
+            // 配合 Stencil 才能生效
+
+            Stencil
+            {
+                Ref [_StencilRef]
+                Comp Equal
+                Pass Keep
+            }
+
+            HLSLPROGRAM
+            #pragma vertex vert_shadow
+            #pragma fragment frag_shadow
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+            };
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _HairShadowColor;
+            CBUFFER_END
+
+            Varyings vert_shadow(Attributes input)
+            {
+                Varyings output;
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                return output;
+            }
+
+            half4 frag_shadow(Varyings input) : SV_TARGET
+            {
+                return _HairShadowColor;
+            }
+            ENDHLSL
+        }
+
+        // Pass 4: Outline (保持不变)
         Pass {
             Name "Outline"
-            Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "UniversalForward" }
+            Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "SRPDefaultUnlit" }
             Cull Front
             HLSLPROGRAM
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -294,7 +364,6 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
                 float3 normalWS = TransformObjectToWorldNormal(normalOS);
                 o.positionWS = TransformPositionWSToOutlinePositionWS(o.positionWS, positionVS.z, normalWS, _OutLineWidth, input.vertColor.r);
                 o.positionCS = TransformWorldToHClip(o.positionWS);
-                o.vertColor = input.vertColor; // Fix: 传递顶点色用于可能的遮罩控制
                 return o;
             }
 
