@@ -27,10 +27,6 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
         _LightInfluence ("Light influence", Range(0.0, 2.0)) = 1
         // [新增] 用于控制暗部混合多少主光，防止纯环境光太黑
         _ShadowEnvMix ("Shadow Light Mix", Range(0, 1)) = 0.3 
-
-        [Space(20)][Header(Hit Color)]
-        _HitColor ("Hit color", color) = (1.0,1.0,1.0,1.0)
-        _HitValue("Hit Value",Range(0.0,1.0))= 0.0
     }
 
     SubShader {
@@ -85,11 +81,13 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
             float4 _BaseColor;
             float _LerpMax, _SDFRampDarkness;
             float _LightInfluence;
-            float _HitValue;
-            float4 _HitColor;
             // --- [新增变量] ---
             float _OcclusionStrength;
             float _ShadowEnvMix;
+            
+            // [新增] 接收脚本传来的世界方向
+            float4 _FaceForwardGlobal;
+            float4 _FaceRightGlobal;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -149,8 +147,8 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
                 float4 SDFMap_R = SAMPLE_TEXTURE2D(_SDFMap, sampler_SDFMap, float2(1-input.uv.x,input.uv.y));
 
                 // 确保模型切线空间正确
-                float3 leftDir = normalize(input.tangentWS);
-                float3 frontDir = input.normalWS;
+                float3 leftDir = -_FaceRightGlobal.xyz;
+                float3 frontDir = _FaceForwardGlobal.xyz;
 
                 // 计算光照阈值
                 float FdotL = dot(frontDir.xz, normalize(LightDir.xz));
@@ -215,9 +213,6 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
                     float3 finalLightNoEnv = lerp(LightColor, simpleShadowLight, SDFFactor);
                     color.rgb *= finalLightNoEnv;
                 #endif
-
-                // Hit Color Logic
-                color = lerp(color, _HitColor, _HitValue);
 
                 return color;
             }

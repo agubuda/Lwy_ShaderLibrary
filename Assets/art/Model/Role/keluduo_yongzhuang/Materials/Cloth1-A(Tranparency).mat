@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Cloth1-A(Tranparency)
-  m_Shader: {fileID: 4800000, guid: 8ba14fb599fb962409b883bf905ba51d, type: 3}
+  m_Shader: {fileID: 4800000, guid: c06117e29b0eb8846be01aa5ed60cb89, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -16,6 +16,7 @@ Material:
   - _ENABLEAO
   - _ENABLEENVIROMENTLIGHT
   - _ENABLE_SMOOTHNESS_MASK
+  - _ZWRITE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -108,7 +109,7 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DetailNormalScale: 1
-    - _DstBlend: 0
+    - _DstBlend: 10
     - _DstBlendAlpha: 0
     - _ENABLEAO: 1
     - _ENABLEENVIROMENTLIGHT: 1
@@ -133,13 +134,14 @@ Material:
     - _RampColum: 0.8
     - _ReceiveShadows: 1
     - _ShadowEnvMix: 0.62
-    - _Smoothness: 0.1
+    - _Smoothness: 0.747
     - _SmoothnessTextureChannel: 0
     - _SpacSoftEdge: 0.1
     - _SpecPower: 8
     - _SpecRange: 0.1
+    - _Specular: 0.5
     - _SpecularHighlights: 1
-    - _SrcBlend: 1
+    - _SrcBlend: 5
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _UVSec: 0
@@ -147,7 +149,7 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 0.85490197}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _OutLineColor: {r: 0.29999998, g: 0.29999998, b: 0.29999998, a: 1}
