@@ -5,20 +5,22 @@ using System.Linq;
 public class ClothSimulationSystem : MonoBehaviour
 {
     [Header("Physics Settings")]
-    public float _Spring = 100.0f; // Goal matching strength
-    public float _ClothStiffness = 50.0f; // Neighbor pulling strength
+    public float _Spring = 100.0f; 
+    public float _ClothStiffness = 50.0f; 
     public float _Damper = 5.0f;
     public float _MoveScale = 1.0f;
     
     [Header("Simulation Quality")]
     [Range(30, 120)]
-    public int _SimulationRate = 60; 
+    public int _SimulationRate = 60;
+    
+    [Header("Normals")]
+    public bool _RecalculateNormals = true; // Switch
     
     [Header("References")]
     public ComputeShader meshComputeShader;
     public Material material;
 
-    // --- Structures matching HLSL ---
     struct NeighborData
     {
         public int count;
@@ -26,17 +28,31 @@ public class ClothSimulationSystem : MonoBehaviour
         public float d0, d1, d2, d3, d4, d5, d6, d7;
     }
 
+    struct VertexTriangleMap
+    {
+        public int count;
+        public int t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11;
+    }
+    
+    struct Triangle
+    {
+        public int v0, v1, v2;
+    }
+
     // Buffers
     private ComputeBuffer inputPosBuffer = null; 
+    private ComputeBuffer inputNormalBuffer = null; 
     private ComputeBuffer outputPosBuffer = null; 
+    private ComputeBuffer outputNormalBuffer = null; 
     private ComputeBuffer physicsDataBuffer = null; 
     private ComputeBuffer colorBuffer = null; 
-    private ComputeBuffer neighborBuffer = null; // New!
+    private ComputeBuffer neighborBuffer = null; 
     
-    // Skinned Mesh Specific
+    private ComputeBuffer triangleBuffer = null; 
+    private ComputeBuffer vertexTriangleMapBuffer = null; 
+    
     private GraphicsBuffer skinnedMeshBuffer = null;
     
-    // State
     private int kernelIndex;
     private int initKernelIndex; 
     private int threadGroup;
@@ -53,13 +69,18 @@ public class ClothSimulationSystem : MonoBehaviour
     private static readonly int ID_ClothStiffness = Shader.PropertyToID("_ClothStiffness");
     private static readonly int ID_Damper = Shader.PropertyToID("_Damper");
     private static readonly int ID_DeltaTime = Shader.PropertyToID("_DeltaTime");
+    private static readonly int ID_RecalculateNormals = Shader.PropertyToID("_RecalculateNormals");
     private static readonly int ID_LocalToWorld = Shader.PropertyToID("_LocalToWorld");
     private static readonly int ID_InputPositions = Shader.PropertyToID("_InputPositions");
+    private static readonly int ID_InputNormals = Shader.PropertyToID("_InputNormals");
     private static readonly int ID_Pos = Shader.PropertyToID("_pos");
+    private static readonly int ID_Normals = Shader.PropertyToID("_normals");
     private static readonly int ID_Data = Shader.PropertyToID("data");
     private static readonly int ID_VertexColor = Shader.PropertyToID("_VertexColor");
     private static readonly int ID_SkinnedPos = Shader.PropertyToID("_skinnedPos");
     private static readonly int ID_NeighborBuffer = Shader.PropertyToID("_NeighborBuffer");
+    private static readonly int ID_TriangleBuffer = Shader.PropertyToID("_TriangleBuffer");
+    private static readonly int ID_VertexTriangleMap = Shader.PropertyToID("_VertexTriangleMap");
 
     private void OnEnable()
     {
@@ -89,43 +110,33 @@ public class ClothSimulationSystem : MonoBehaviour
         }
     }
 
-    // --- Neighbor Generation Logic ---
     private NeighborData[] GenerateNeighbors(Mesh mesh)
     {
         int vCount = mesh.vertexCount;
         Vector3[] vertices = mesh.vertices;
         int[] triangles = mesh.triangles;
 
-        // Use HashSet to avoid duplicates
         HashSet<int>[] adjList = new HashSet<int>[vCount];
         for(int i=0; i<vCount; i++) adjList[i] = new HashSet<int>();
 
-        // Iterate triangles to find connections
         for (int i = 0; i < triangles.Length; i += 3)
         {
             int v0 = triangles[i];
             int v1 = triangles[i + 1];
             int v2 = triangles[i + 2];
 
-            // Add mutual connections
             adjList[v0].Add(v1); adjList[v0].Add(v2);
             adjList[v1].Add(v0); adjList[v1].Add(v2);
             adjList[v2].Add(v0); adjList[v2].Add(v1);
         }
 
-        // Convert to Struct Array
         NeighborData[] result = new NeighborData[vCount];
         for(int i=0; i<vCount; i++)
         {
             List<int> neighbors = adjList[i].ToList();
-            int count = Mathf.Min(neighbors.Count, 8); // Max 8
+            int count = Mathf.Min(neighbors.Count, 8); 
             
             result[i].count = count;
-            
-            // Fill indices and pre-calculate rest lengths
-            // For indices, defaults to 0 (which is valid but harmless if count is checked)
-            // But let's set -1 conceptually, though HLSL loop uses .count
-            
             if (count > 0) { result[i].n0 = neighbors[0]; result[i].d0 = Vector3.Distance(vertices[i], vertices[neighbors[0]]); }
             if (count > 1) { result[i].n1 = neighbors[1]; result[i].d1 = Vector3.Distance(vertices[i], vertices[neighbors[1]]); }
             if (count > 2) { result[i].n2 = neighbors[2]; result[i].d2 = Vector3.Distance(vertices[i], vertices[neighbors[2]]); }
@@ -138,6 +149,52 @@ public class ClothSimulationSystem : MonoBehaviour
         return result;
     }
 
+    private void GenerateGeometryData(Mesh mesh, out Triangle[] tris, out VertexTriangleMap[] map)
+    {
+        int[] indices = mesh.triangles;
+        int triCount = indices.Length / 3;
+        int vCount = mesh.vertexCount;
+
+        tris = new Triangle[triCount];
+        map = new VertexTriangleMap[vCount];
+
+        List<int>[] vToT = new List<int>[vCount];
+        for(int i=0; i<vCount; i++) vToT[i] = new List<int>();
+
+        for (int i = 0; i < triCount; i++)
+        {
+            int v0 = indices[i * 3 + 0];
+            int v1 = indices[i * 3 + 1];
+            int v2 = indices[i * 3 + 2];
+
+            tris[i] = new Triangle { v0 = v0, v1 = v1, v2 = v2 };
+
+            vToT[v0].Add(i);
+            vToT[v1].Add(i);
+            vToT[v2].Add(i);
+        }
+
+        for (int i = 0; i < vCount; i++)
+        {
+            List<int> tList = vToT[i];
+            int count = Mathf.Min(tList.Count, 12); 
+            map[i].count = count;
+            
+            if(count > 0) map[i].t0 = tList[0];
+            if(count > 1) map[i].t1 = tList[1];
+            if(count > 2) map[i].t2 = tList[2];
+            if(count > 3) map[i].t3 = tList[3];
+            if(count > 4) map[i].t4 = tList[4];
+            if(count > 5) map[i].t5 = tList[5];
+            if(count > 6) map[i].t6 = tList[6];
+            if(count > 7) map[i].t7 = tList[7];
+            if(count > 8) map[i].t8 = tList[8];
+            if(count > 9) map[i].t9 = tList[9];
+            if(count > 10) map[i].t10 = tList[10];
+            if(count > 11) map[i].t11 = tList[11];
+        }
+    }
+
     private void InitializeStaticMesh()
     {
         kernelIndex = meshComputeShader.FindKernel("meshModifier");
@@ -146,27 +203,39 @@ public class ClothSimulationSystem : MonoBehaviour
         Mesh mesh = meshFilter.sharedMesh;
         vertCount = mesh.vertexCount;
 
-        // Buffers
         inputPosBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float));
         inputPosBuffer.SetData(mesh.vertices);
         meshComputeShader.SetBuffer(kernelIndex, ID_InputPositions, inputPosBuffer);
         meshComputeShader.SetBuffer(initKernelIndex, ID_InputPositions, inputPosBuffer);
 
+        inputNormalBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float));
+        inputNormalBuffer.SetData(mesh.normals);
+        meshComputeShader.SetBuffer(kernelIndex, ID_InputNormals, inputNormalBuffer);
+
         outputPosBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float));
+        outputNormalBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float));
         physicsDataBuffer = new ComputeBuffer(vertCount, 3 * 3 * sizeof(float)); 
 
         colorBuffer = new ComputeBuffer(vertCount, 4 * sizeof(float));
         if (mesh.colors.Length > 0) colorBuffer.SetData(mesh.colors);
         else colorBuffer.SetData(new Color[vertCount]);
+        
         meshComputeShader.SetBuffer(kernelIndex, ID_VertexColor, colorBuffer);
         meshComputeShader.SetBuffer(initKernelIndex, ID_VertexColor, colorBuffer);
 
-        // Neighbor Buffer Generation
         NeighborData[] nData = GenerateNeighbors(mesh);
-        // Struct size: int + 8*int + 8*float = 4 + 32 + 32 = 68 bytes
         neighborBuffer = new ComputeBuffer(vertCount, 68); 
         neighborBuffer.SetData(nData);
         meshComputeShader.SetBuffer(kernelIndex, ID_NeighborBuffer, neighborBuffer);
+
+        GenerateGeometryData(mesh, out Triangle[] tris, out VertexTriangleMap[] map);
+        triangleBuffer = new ComputeBuffer(tris.Length, 12); 
+        triangleBuffer.SetData(tris);
+        vertexTriangleMapBuffer = new ComputeBuffer(vertCount, 52); 
+        vertexTriangleMapBuffer.SetData(map);
+        
+        meshComputeShader.SetBuffer(kernelIndex, ID_TriangleBuffer, triangleBuffer);
+        meshComputeShader.SetBuffer(kernelIndex, ID_VertexTriangleMap, vertexTriangleMapBuffer);
 
         BindBuffersToKernel(kernelIndex);
         BindBuffersToKernel(initKernelIndex);
@@ -180,6 +249,7 @@ public class ClothSimulationSystem : MonoBehaviour
         if (material != null)
         {
             material.SetBuffer("_Pos", outputPosBuffer);
+            material.SetBuffer("_Normals", outputNormalBuffer);
             material.SetBuffer("_VertexColor", colorBuffer);
         }
     }
@@ -193,19 +263,29 @@ public class ClothSimulationSystem : MonoBehaviour
         vertCount = mesh.vertexCount;
 
         outputPosBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float));
+        outputNormalBuffer = new ComputeBuffer(vertCount, 3 * sizeof(float));
         physicsDataBuffer = new ComputeBuffer(vertCount, 3 * 3 * sizeof(float));
 
         colorBuffer = new ComputeBuffer(vertCount, 4 * sizeof(float));
         if (mesh.colors.Length > 0) colorBuffer.SetData(mesh.colors);
         else colorBuffer.SetData(new Color[vertCount]);
+
         meshComputeShader.SetBuffer(kernelIndex, ID_VertexColor, colorBuffer);
         meshComputeShader.SetBuffer(initKernelIndex, ID_VertexColor, colorBuffer);
 
-        // Neighbor Buffer
         NeighborData[] nData = GenerateNeighbors(mesh);
         neighborBuffer = new ComputeBuffer(vertCount, 68); 
         neighborBuffer.SetData(nData);
         meshComputeShader.SetBuffer(kernelIndex, ID_NeighborBuffer, neighborBuffer);
+
+        GenerateGeometryData(mesh, out Triangle[] tris, out VertexTriangleMap[] map);
+        triangleBuffer = new ComputeBuffer(tris.Length, 12);
+        triangleBuffer.SetData(tris);
+        vertexTriangleMapBuffer = new ComputeBuffer(vertCount, 52); 
+        vertexTriangleMapBuffer.SetData(map);
+        
+        meshComputeShader.SetBuffer(kernelIndex, ID_TriangleBuffer, triangleBuffer);
+        meshComputeShader.SetBuffer(kernelIndex, ID_VertexTriangleMap, vertexTriangleMapBuffer);
 
         BindBuffersToKernel(kernelIndex);
         BindBuffersToKernel(initKernelIndex);
@@ -227,6 +307,7 @@ public class ClothSimulationSystem : MonoBehaviour
         if (material != null)
         {
             material.SetBuffer("_Pos", outputPosBuffer);
+            material.SetBuffer("_Normals", outputNormalBuffer);
             material.SetBuffer("_VertexColor", colorBuffer);
         }
     }
@@ -234,6 +315,7 @@ public class ClothSimulationSystem : MonoBehaviour
     private void BindBuffersToKernel(int kernel)
     {
         meshComputeShader.SetBuffer(kernel, ID_Pos, outputPosBuffer);
+        meshComputeShader.SetBuffer(kernel, ID_Normals, outputNormalBuffer); 
         meshComputeShader.SetBuffer(kernel, ID_Data, physicsDataBuffer);
     }
 
@@ -249,9 +331,17 @@ public class ClothSimulationSystem : MonoBehaviour
         meshComputeShader.SetInt(ID_VertCount, vertCount);
         meshComputeShader.SetFloat(ID_MoveScale, _MoveScale);
         meshComputeShader.SetFloat(ID_Spring, _Spring);
-        meshComputeShader.SetFloat(ID_ClothStiffness, _ClothStiffness); // New param
+        meshComputeShader.SetFloat(ID_ClothStiffness, _ClothStiffness);
         meshComputeShader.SetFloat(ID_Damper, _Damper);
         meshComputeShader.SetFloat(ID_DeltaTime, physicsStep);
+        meshComputeShader.SetInt(ID_RecalculateNormals, _RecalculateNormals ? 1 : 0);
+        
+        // Pass Switch to Material
+        if (material != null)
+        {
+            if (_RecalculateNormals) material.EnableKeyword("_RECALC_NORMALS_ON");
+            else material.DisableKeyword("_RECALC_NORMALS_ON");
+        }
 
         if (skinnedMeshRenderer != null)
         {
@@ -283,15 +373,23 @@ public class ClothSimulationSystem : MonoBehaviour
     private void ReleaseBuffers()
     {
         if (inputPosBuffer != null) inputPosBuffer.Release();
+        if (inputNormalBuffer != null) inputNormalBuffer.Release();
         if (outputPosBuffer != null) outputPosBuffer.Release();
+        if (outputNormalBuffer != null) outputNormalBuffer.Release();
         if (physicsDataBuffer != null) physicsDataBuffer.Release();
         if (colorBuffer != null) colorBuffer.Release();
-        if (neighborBuffer != null) neighborBuffer.Release(); // New buffer
+        if (neighborBuffer != null) neighborBuffer.Release();
+        if (triangleBuffer != null) triangleBuffer.Release();
+        if (vertexTriangleMapBuffer != null) vertexTriangleMapBuffer.Release();
         
         inputPosBuffer = null;
+        inputNormalBuffer = null;
         outputPosBuffer = null;
+        outputNormalBuffer = null;
         physicsDataBuffer = null;
         colorBuffer = null;
         neighborBuffer = null;
+        triangleBuffer = null;
+        vertexTriangleMapBuffer = null;
     }
 }

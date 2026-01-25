@@ -7,11 +7,9 @@ Shader "LwyShaders/ClothSimulation_Lambert" {
     SubShader {
         Tags { "Queue" = "Geometry" "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
 
-        // 1. Depth Pass
         Pass {
             Name "DepthOnly"
             Tags { "LightMode" = "DepthOnly" }
-
             ZWrite On
             ColorMask 0
             Cull Off 
@@ -47,7 +45,6 @@ Shader "LwyShaders/ClothSimulation_Lambert" {
             ENDHLSL
         }
 
-        // 2. Main Lighting Pass (Simple Lambert)
         Pass {
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
@@ -58,11 +55,13 @@ Shader "LwyShaders/ClothSimulation_Lambert" {
             #pragma target 4.5
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile_local _ _RECALC_NORMALS_ON
             
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             StructuredBuffer<float3> _Pos;
+            StructuredBuffer<float3> _Normals;
             
             CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -87,12 +86,20 @@ Shader "LwyShaders/ClothSimulation_Lambert" {
             Varyings vert(Attributes input) {
                 Varyings output = (Varyings)0;
 
-                // Read position from Compute Buffer
+                // Position always from Buffer
                 float3 positionWS = _Pos[input.vertexID];
-                
                 output.positionWS = positionWS;
                 output.positionCS = TransformWorldToHClip(positionWS);
-                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                
+                #if _RECALC_NORMALS_ON
+                    // High Quality: Read calculated normal from Compute Shader
+                    float3 normalWS = _Normals[input.vertexID];
+                    output.normalWS = normalize(normalWS);
+                #else
+                    // Performance: Use Unity's original normal (skinned or static)
+                    output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                #endif
+
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
 
                 return output;
@@ -100,18 +107,12 @@ Shader "LwyShaders/ClothSimulation_Lambert" {
 
             half4 frag(Varyings input) : SV_TARGET {
                 
-                // 1. Basic Data
                 float3 normalWS = normalize(input.normalWS);
                 float3 lightDir = normalize(_MainLightPosition.xyz);
                 half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
 
-                // 2. Simple Lambertian Diffuse
-                float NdotL = max(0.0, dot(normalWS, lightDir));
-                
-                // 3. Lighting calculation
+                float NdotL = abs(dot(normalWS, lightDir));
                 float3 lighting = albedo.rgb * _MainLightColor.rgb * NdotL;
-                
-                // Ambient
                 lighting += albedo.rgb * 0.1;
 
                 return half4(lighting, albedo.a);

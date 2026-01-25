@@ -19,11 +19,19 @@ struct skinnedMeshBuffer {
     float2 uv2;
 };
 
-// Max 8 neighbors per vertex
 struct NeighborData {
     int count;
     int indices[8];
     float restLengths[8];
+};
+
+struct VertexTriangleMap {
+    int count;
+    int tIndices[12];
+};
+
+struct Triangle {
+    int v0, v1, v2;
 };
 
 // --- Variables ---
@@ -35,32 +43,59 @@ float _MoveScale;
 float _Spring;      
 float _Damper;      
 float _DeltaTime;
-
-// Cloth Specific settings
 float _ClothStiffness; 
-
-// Stability settings
-float _MaxVelocity; // Max speed allowed per frame (prevents explosion)
-float _MaxDeviation; // Max distance from prediction allowed
+int _RecalculateNormals; // Switch
 
 RWStructuredBuffer<float4> _VertexColor;
 RWStructuredBuffer<float3> _pos; 
+RWStructuredBuffer<float3> _normals; 
 RWStructuredBuffer<cacheData> data; 
 
-// For Static Meshes
+// Inputs
 StructuredBuffer<float3> _InputPositions; 
+StructuredBuffer<float3> _InputNormals; 
 
-// For Skinned Meshes
+// Skinned
 RWStructuredBuffer<skinnedMeshBuffer> _skinnedPos;
 
-// Neighbor Info (Read Only)
+// Topology
 StructuredBuffer<NeighborData> _NeighborBuffer;
+StructuredBuffer<Triangle> _TriangleBuffer;
+StructuredBuffer<VertexTriangleMap> _VertexTriangleMap;
 
 // --- Helper Functions ---
 
 float3 CalculateTargetPos(float3 localPos)
 {
     return mul(_LocalToWorld, float4(localPos, 1.0)).xyz;
+}
+
+// --- High Quality Geometry Normal Recalculation ---
+float3 RecalculateNormalGeometry(uint index)
+{
+    float3 smoothNormal = float3(0,0,0);
+    VertexTriangleMap map = _VertexTriangleMap[index];
+    
+    // Accumulate face normals from surrounding triangles
+    for(int i = 0; i < map.count; i++)
+    {
+        int triIndex = map.tIndices[i];
+        Triangle tri = _TriangleBuffer[triIndex];
+        
+        float3 p0 = _pos[tri.v0];
+        float3 p1 = _pos[tri.v1];
+        float3 p2 = _pos[tri.v2];
+        
+        // Face Normal = cross(edge1, edge2)
+        // Area weighted naturally by cross product magnitude
+        float3 faceNormal = cross(p1 - p0, p2 - p0);
+        smoothNormal += faceNormal;
+    }
+    
+    // If no triangles (detached vertex) or degenerate, fallback
+    if (length(smoothNormal) < 1e-6) return float3(0,1,0);
+
+    return normalize(smoothNormal);
 }
 
 // --- Initialization Kernels ---
@@ -72,6 +107,7 @@ void InitializeMesh(uint3 id : SV_DispatchThreadID) {
     float3 targetPosWS = CalculateTargetPos(_InputPositions[id.x]);
 
     _pos[id.x] = targetPosWS;
+    _normals[id.x] = float3(0,1,0); 
     data[id.x].prevPosWS = targetPosWS;
     data[id.x].velocityWS = float3(0, 0, 0);
     data[id.x].dPoseWS = float3(0, 0, 0);
@@ -84,6 +120,7 @@ void InitializeSkinnedMesh(uint3 id : SV_DispatchThreadID) {
     float3 targetPosWS = CalculateTargetPos(_skinnedPos[id.x].position);
 
     _pos[id.x] = targetPosWS;
+    _normals[id.x] = float3(0,1,0);
     data[id.x].prevPosWS = targetPosWS;
     data[id.x].velocityWS = float3(0, 0, 0);
     data[id.x].dPoseWS = float3(0, 0, 0);
@@ -93,11 +130,9 @@ void InitializeSkinnedMesh(uint3 id : SV_DispatchThreadID) {
 
 float3 CalculateSpringForces(uint index, float3 currentPos, float3 targetPos, float3 velocity)
 {
-    // 1. Goal Matching
     float3 displacement = targetPos - currentPos;
     float3 goalForce = _Spring * displacement;
 
-    // 2. Structural Springs (Neighbors)
     float3 neighborForce = float3(0,0,0);
     NeighborData nData = _NeighborBuffer[index];
     
@@ -105,7 +140,6 @@ float3 CalculateSpringForces(uint index, float3 currentPos, float3 targetPos, fl
     {
         int nIndex = nData.indices[i];
         float restLen = nData.restLengths[i];
-        
         float3 nPos = data[nIndex].prevPosWS; 
         
         float3 dir = nPos - currentPos;
@@ -119,9 +153,7 @@ float3 CalculateSpringForces(uint index, float3 currentPos, float3 targetPos, fl
         }
     }
 
-    // 3. Damping
     float3 dampForce = velocity * -_Damper;
-
     return goalForce + neighborForce + dampForce;
 }
 
@@ -131,71 +163,60 @@ float3 CalculateSpringForces(uint index, float3 currentPos, float3 targetPos, fl
 void skinnedMeshModifier(uint3 id : SV_DispatchThreadID) {
     if (id.x >= vertCount) return;
 
-    // 1. Target Data
     float3 targetPosWS = CalculateTargetPos(_skinnedPos[id.x].position);
+    
+    // For rigid parts or if recalc is off, use transformed static normal
+    // Note: We don't have skinned normal buffer bound here easily without another buffer copy.
+    // So for skinned meshes, if recalc is OFF, we might have static looking normals unless we pass skinned normals.
+    // Assuming user wants quality on skinned mesh, geometry recalc is best.
+    float3 refNormal = float3(0,1,0); 
+
     float weight = _VertexColor[id.x].r;
 
-    // Optimization: Skip calculation for rigid parts
     if (weight < 1e-3) {
         _pos[id.x] = targetPosWS;
         data[id.x].prevPosWS = targetPosWS;
         data[id.x].velocityWS = float3(0,0,0);
+        
+        if (_RecalculateNormals) _normals[id.x] = RecalculateNormalGeometry(id.x);
+        else _normals[id.x] = float3(0,1,0); // Fallback / Static
         return;
     }
 
-    // Safety: Reset on Teleport
     if (distance(data[id.x].prevPosWS, targetPosWS) > 2.0) {
         data[id.x].prevPosWS = targetPosWS;
         data[id.x].velocityWS = float3(0,0,0);
     }
 
-    // 2. Prediction (Kalman-lite)
-    // Based on previous velocity, guess where we should be
     float dt = clamp(_DeltaTime, 0.0, 0.05);
     float3 currentPosWS = data[id.x].prevPosWS;
     float3 predictedPos = currentPosWS + data[id.x].velocityWS * dt;
 
-    // 3. Physics Solve
     float3 forceWS = CalculateSpringForces(id.x, currentPosWS, targetPosWS, data[id.x].velocityWS);
     
-    // Update Velocity
     float3 newVelocity = data[id.x].velocityWS + forceWS * dt;
     
-    // Velocity Cap (Stability)
-    // Prevent velocity from exploding (e.g. max 10m/s)
     float maxVel = 10.0; 
     float velLen = length(newVelocity);
-    if (velLen > maxVel) {
-        newVelocity = (newVelocity / velLen) * maxVel;
-    }
+    if (velLen > maxVel) newVelocity = (newVelocity / velLen) * maxVel;
 
-    // Calculate Proposed Position
     float3 nextPosWS = currentPosWS + newVelocity * dt;
 
-    // 4. Constraint: Prediction Clamp (Anti-Jitter / Anti-Pop)
-    // Instead of multi-frame averaging, we limit how far we can deviate from our "momentum prediction".
-    // This effectively filters out high-frequency noise (physics explosions).
     float3 deviationFromPrediction = nextPosWS - predictedPos;
     float devLen = length(deviationFromPrediction);
     
-    // Allow some deviation (physics happening), but clamp extreme jumps
-    // The threshold can be dynamic, but 0.1m per frame deviation is usually plenty.
     float maxDev = 0.1; 
     if (devLen > maxDev) {
-        // Smoothly pull back to prediction
         nextPosWS = predictedPos + (deviationFromPrediction / devLen) * maxDev;
-        // Correct velocity to match the clamped position (conserve energy conservation roughly)
         newVelocity = (nextPosWS - currentPosWS) / (dt + 1e-5); 
     }
 
-    // 5. Update State
     data[id.x].velocityWS = newVelocity;
     data[id.x].prevPosWS = nextPosWS;
 
-    // 6. Render Output Blend
     float3 dPoseWS = (nextPosWS - targetPosWS);
     float moveLen = length(dPoseWS);
-    float maxDeviation = 0.5; // Visual max stretch constraint
+    float maxDeviation = 0.5; 
     if(moveLen > maxDeviation) {
         dPoseWS = (dPoseWS / moveLen) * maxDeviation;
     }
@@ -204,6 +225,14 @@ void skinnedMeshModifier(uint3 id : SV_DispatchThreadID) {
     float3 finalPos = targetPosWS + dPoseWS * blendFactor;
     
     _pos[id.x] = finalPos;
+    
+    // Normal Output
+    if (_RecalculateNormals) {
+        _normals[id.x] = RecalculateNormalGeometry(id.x);
+    } else {
+        // Fallback for performance: Just use Up or maybe a rough approximation
+        _normals[id.x] = float3(0,1,0); 
+    }
 }
 
 [numthreads(128, 1, 1)]
@@ -211,12 +240,18 @@ void meshModifier(uint3 id : SV_DispatchThreadID) {
     if (id.x >= vertCount) return;
 
     float3 targetPosWS = CalculateTargetPos(_InputPositions[id.x]);
+    float3 staticNormal = mul((float3x3)_LocalToWorld, _InputNormals[id.x]);
+    staticNormal = normalize(staticNormal);
+
     float weight = _VertexColor[id.x].r;
 
     if (weight < 1e-3) {
         _pos[id.x] = targetPosWS;
         data[id.x].prevPosWS = targetPosWS;
         data[id.x].velocityWS = float3(0,0,0);
+        
+        // Rigid parts should follow rotation
+        _normals[id.x] = staticNormal;
         return;
     }
 
@@ -234,9 +269,7 @@ void meshModifier(uint3 id : SV_DispatchThreadID) {
     float3 newVelocity = data[id.x].velocityWS + forceWS * dt;
     float maxVel = 10.0; 
     float velLen = length(newVelocity);
-    if (velLen > maxVel) {
-        newVelocity = (newVelocity / velLen) * maxVel;
-    }
+    if (velLen > maxVel) newVelocity = (newVelocity / velLen) * maxVel;
 
     float3 nextPosWS = currentPosWS + newVelocity * dt;
 
@@ -262,4 +295,11 @@ void meshModifier(uint3 id : SV_DispatchThreadID) {
     float3 finalPos = targetPosWS + dPoseWS * blendFactor;
     
     _pos[id.x] = finalPos;
+    
+    // Normal Output
+    if (_RecalculateNormals) {
+        _normals[id.x] = RecalculateNormalGeometry(id.x);
+    } else {
+        _normals[id.x] = staticNormal;
+    }
 }
