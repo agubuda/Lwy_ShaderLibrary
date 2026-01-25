@@ -19,7 +19,7 @@ struct skinnedMeshBuffer {
     float2 uv2;
 };
 
-// Max 8 neighbors per vertex (should be enough for most meshes)
+// Max 8 neighbors per vertex
 struct NeighborData {
     int count;
     int indices[8];
@@ -32,16 +32,20 @@ float4x4 _LocalToWorld;
 
 uint vertCount;
 float _MoveScale;
-float _Spring;      // Strength of pulling back to animation pose
-float _Damper;      // Air resistance
+float _Spring;      
+float _Damper;      
 float _DeltaTime;
 
 // Cloth Specific settings
-float _ClothStiffness; // How hard neighbors pull each other (Structural Spring)
+float _ClothStiffness; 
+
+// Stability settings
+float _MaxVelocity; // Max speed allowed per frame (prevents explosion)
+float _MaxDeviation; // Max distance from prediction allowed
 
 RWStructuredBuffer<float4> _VertexColor;
-RWStructuredBuffer<float3> _pos; // Output for Rendering
-RWStructuredBuffer<cacheData> data; // Physics State
+RWStructuredBuffer<float3> _pos; 
+RWStructuredBuffer<cacheData> data; 
 
 // For Static Meshes
 StructuredBuffer<float3> _InputPositions; 
@@ -89,39 +93,33 @@ void InitializeSkinnedMesh(uint3 id : SV_DispatchThreadID) {
 
 float3 CalculateSpringForces(uint index, float3 currentPos, float3 targetPos, float3 velocity)
 {
-    // 1. Force: Pull towards Animation Target (Goal Matching)
+    // 1. Goal Matching
     float3 displacement = targetPos - currentPos;
     float3 goalForce = _Spring * displacement;
 
-    // 2. Force: Pull towards Neighbors (Structural Springs)
+    // 2. Structural Springs (Neighbors)
     float3 neighborForce = float3(0,0,0);
     NeighborData nData = _NeighborBuffer[index];
     
-    // We limit max neighbors to 8 to unroll loop roughly
     for(int i = 0; i < nData.count; i++)
     {
         int nIndex = nData.indices[i];
         float restLen = nData.restLengths[i];
         
-        // Neighbor's current physics position
-        // Note: Using prevPosWS from current frame's buffer (might be slightly async but acceptable)
         float3 nPos = data[nIndex].prevPosWS; 
         
         float3 dir = nPos - currentPos;
         float dist = length(dir);
         
-        // Hooke's Law: F = k * (currentLength - restLength)
-        // Avoid division by zero
         if(dist > 0.0001)
         {
             float3 dirNorm = dir / dist;
             float stretch = dist - restLen;
-            // Apply force
             neighborForce += dirNorm * stretch * _ClothStiffness;
         }
     }
 
-    // 3. Force: Damping (Resist motion)
+    // 3. Damping
     float3 dampForce = velocity * -_Damper;
 
     return goalForce + neighborForce + dampForce;
@@ -133,9 +131,11 @@ float3 CalculateSpringForces(uint index, float3 currentPos, float3 targetPos, fl
 void skinnedMeshModifier(uint3 id : SV_DispatchThreadID) {
     if (id.x >= vertCount) return;
 
+    // 1. Target Data
     float3 targetPosWS = CalculateTargetPos(_skinnedPos[id.x].position);
     float weight = _VertexColor[id.x].r;
 
+    // Optimization: Skip calculation for rigid parts
     if (weight < 1e-3) {
         _pos[id.x] = targetPosWS;
         data[id.x].prevPosWS = targetPosWS;
@@ -143,29 +143,59 @@ void skinnedMeshModifier(uint3 id : SV_DispatchThreadID) {
         return;
     }
 
+    // Safety: Reset on Teleport
     if (distance(data[id.x].prevPosWS, targetPosWS) > 2.0) {
         data[id.x].prevPosWS = targetPosWS;
         data[id.x].velocityWS = float3(0,0,0);
     }
 
+    // 2. Prediction (Kalman-lite)
+    // Based on previous velocity, guess where we should be
+    float dt = clamp(_DeltaTime, 0.0, 0.05);
     float3 currentPosWS = data[id.x].prevPosWS;
-    
-    // Calculate Combined Forces
+    float3 predictedPos = currentPosWS + data[id.x].velocityWS * dt;
+
+    // 3. Physics Solve
     float3 forceWS = CalculateSpringForces(id.x, currentPosWS, targetPosWS, data[id.x].velocityWS);
-
-    float dt = _DeltaTime;
-    dt = clamp(dt, 0.0, 0.05);
-
-    data[id.x].velocityWS += forceWS * dt;
-    float3 nextPosWS = currentPosWS + data[id.x].velocityWS * dt;
     
-    // Update State
+    // Update Velocity
+    float3 newVelocity = data[id.x].velocityWS + forceWS * dt;
+    
+    // Velocity Cap (Stability)
+    // Prevent velocity from exploding (e.g. max 10m/s)
+    float maxVel = 10.0; 
+    float velLen = length(newVelocity);
+    if (velLen > maxVel) {
+        newVelocity = (newVelocity / velLen) * maxVel;
+    }
+
+    // Calculate Proposed Position
+    float3 nextPosWS = currentPosWS + newVelocity * dt;
+
+    // 4. Constraint: Prediction Clamp (Anti-Jitter / Anti-Pop)
+    // Instead of multi-frame averaging, we limit how far we can deviate from our "momentum prediction".
+    // This effectively filters out high-frequency noise (physics explosions).
+    float3 deviationFromPrediction = nextPosWS - predictedPos;
+    float devLen = length(deviationFromPrediction);
+    
+    // Allow some deviation (physics happening), but clamp extreme jumps
+    // The threshold can be dynamic, but 0.1m per frame deviation is usually plenty.
+    float maxDev = 0.1; 
+    if (devLen > maxDev) {
+        // Smoothly pull back to prediction
+        nextPosWS = predictedPos + (deviationFromPrediction / devLen) * maxDev;
+        // Correct velocity to match the clamped position (conserve energy conservation roughly)
+        newVelocity = (nextPosWS - currentPosWS) / (dt + 1e-5); 
+    }
+
+    // 5. Update State
+    data[id.x].velocityWS = newVelocity;
     data[id.x].prevPosWS = nextPosWS;
 
-    // Render Output Blend
+    // 6. Render Output Blend
     float3 dPoseWS = (nextPosWS - targetPosWS);
     float moveLen = length(dPoseWS);
-    float maxDeviation = 0.5;
+    float maxDeviation = 0.5; // Visual max stretch constraint
     if(moveLen > maxDeviation) {
         dPoseWS = (dPoseWS / moveLen) * maxDeviation;
     }
@@ -195,21 +225,32 @@ void meshModifier(uint3 id : SV_DispatchThreadID) {
         data[id.x].velocityWS = float3(0,0,0);
     }
 
+    float dt = clamp(_DeltaTime, 0.0, 0.05);
     float3 currentPosWS = data[id.x].prevPosWS;
-    
-    // Calculate Combined Forces
+    float3 predictedPos = currentPosWS + data[id.x].velocityWS * dt;
+
     float3 forceWS = CalculateSpringForces(id.x, currentPosWS, targetPosWS, data[id.x].velocityWS);
+    
+    float3 newVelocity = data[id.x].velocityWS + forceWS * dt;
+    float maxVel = 10.0; 
+    float velLen = length(newVelocity);
+    if (velLen > maxVel) {
+        newVelocity = (newVelocity / velLen) * maxVel;
+    }
 
-    float dt = _DeltaTime;
-    dt = clamp(dt, 0.0, 0.05);
+    float3 nextPosWS = currentPosWS + newVelocity * dt;
 
-    data[id.x].velocityWS += forceWS * dt;
-    float3 nextPosWS = currentPosWS + data[id.x].velocityWS * dt;
+    float3 deviationFromPrediction = nextPosWS - predictedPos;
+    float devLen = length(deviationFromPrediction);
+    float maxDev = 0.1; 
+    if (devLen > maxDev) {
+        nextPosWS = predictedPos + (deviationFromPrediction / devLen) * maxDev;
+        newVelocity = (nextPosWS - currentPosWS) / (dt + 1e-5); 
+    }
 
-    // Update State
+    data[id.x].velocityWS = newVelocity;
     data[id.x].prevPosWS = nextPosWS;
 
-    // Render Output Blend
     float3 dPoseWS = (nextPosWS - targetPosWS);
     float moveLen = length(dPoseWS);
     float maxDeviation = 0.5;
