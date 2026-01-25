@@ -130,6 +130,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1670035610668631648, guid: ada62c118b10a604c87b0e3d8e27a712, type: 3}
+      propertyPath: field of view
+      value: 28.072487
+      objectReference: {fileID: 0}
+    - target: {fileID: 1670035610668631648, guid: ada62c118b10a604c87b0e3d8e27a712, type: 3}
+      propertyPath: m_FocalLength
+      value: 48
+      objectReference: {fileID: 0}
     - target: {fileID: 1670035610668631649, guid: ada62c118b10a604c87b0e3d8e27a712, type: 3}
       propertyPath: m_RootOrder
       value: 1
