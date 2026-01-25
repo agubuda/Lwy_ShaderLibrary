@@ -12,7 +12,7 @@ namespace TAToolbox
     // =========================================================
     public class Page_FolderSizeAnalyzer : TAToolPage
     {
-        public override string PageName => "文件夹大小分析";
+        public override string PageName => "10.文件夹大小分析";
 
         // --- 数据结构 ---
         private class FolderNode
