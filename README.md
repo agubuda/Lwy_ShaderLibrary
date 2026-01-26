@@ -22,20 +22,20 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_003_0001.png?raw=true">
 </div>
+·TA与美术常用的引擎内Toolbox集合。<br>
+  <div align = "center">
+   <img src = " https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/2026-01-26%20093707.png?raw=true">
+  </div>
 ·基于深度描边与基于菲涅尔的特效Shader
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_003_0000.png?raw=true">
-</div>
-<div align = "center">
-  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_006_0161.png?raw=true">
 </div>
 ·基本的Matcap
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_007_0002.png?raw=true">
 </div>
 ·Compute shader软体物理<br>
-·TA与美术常用的引擎内Toolbox集合。<br>
-   <img src = " https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/2026-01-26%20093707.png?raw=true">
+
 ·URP后处理丢失A通道<br>
 ·URP lit 1单位以内点光源爆闪修复<br>
 
