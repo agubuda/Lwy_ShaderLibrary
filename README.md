@@ -13,6 +13,9 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 ·简单的NPR Shader沙盘，持续更新中
 <div align = "left">
 <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_002_0001.png">
+<img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_013_0001.png">
+  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_014_0001.png">
+  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_015_0001.png">
 <br>
 ·Tiny PBR shader
 <div align = "left">
