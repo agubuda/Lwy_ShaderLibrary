@@ -1,13 +1,14 @@
-Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
+Shader "LwyShaders/NPR/NPR_Transparent" {
     Properties {
+        [Header(Base Settings)]
         [MainTexture] _BaseMap ("Albedo", 2D) = "white" { }
-        [MainColor] _BaseColor ("Base Color", Color) =  (1,1,1,1)
+        [MainColor] _BaseColor ("Base Color (Alpha controls Opacity)", Color) =  (1,1,1,1)
         
-        // 剔除模式控制 (0=Off双面, 2=Back单面)
-        [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull Mode (0=Double, 2=Single)", Float) = 2
-
-        // --- [新增] 描边开关 ---
-        [Enum(Off, 0, On, 1)] _EnableOutline ("Enable Outline", Float) = 1.0
+        // --- [新增] 剔除模式控制 (0=Off双面, 2=Back单面) ---
+        [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull Mode (0=Double, 2=Single)", Float) = 0
+        
+        // ZWrite 控制
+        [Enum(Off, 0, On, 1)] _ZWrite("Z Write", Float) = 1.0
 
         [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP (" Enable normal map", float) = 0
         [Normal] _BumpMap ("Normal map", 2D) = "bump" { }
@@ -16,29 +17,27 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
         _RampMap ("Ramp Map", 2D) = "White" { }
         _RampColum ("Ramp colum", Range(0,1)) = 0.8
 
-        // --- Specular (Width/Softness) ---
+        // --- Specular Settings ---
         [Space(20)][Header(Spec Settings)]
         [HDR]_SpecColor("_SpecColor", color) = (1.0, 1.0, 1.0, 1.0)
         _SpecWidth ("Specular Width", Range(0, 1)) = 0.05       
         _SpecSoftness ("Specular Softness", Range(0.001, 1)) = 0.01 
+        
+        // 高光光源偏移 (仅 XZ 轴)
+        _SpecLightAlign ("Spec Light -> View Shift (XZ Only)", Range(0, 1)) = 0.0
 
-        [Space(20)][Header(Outline settings)]
-        _OutLineWidth ("Outline width", float) = 1.5
-        _OutLineColor ("Outline color", color) = (0.3, 0.3, 0.3, 1)
-
-        // --- Rim Light (深度检测 + 硬边控制) ---
+        // --- Rim Light Settings ---
         [Space(20)][Header(Rim light settings)]
         _RimColor ("RimColor", color) = (0.8, 0.9, 0.9, 1)
-        _OffsetMul ("Depth Offset (Sample Distance)", Range(0, 0.05)) = 0.0055
-        _RimWidth ("Rim Width (Fresnel)", Range(0, 1)) = 0.5         
+        _RimWidth ("Rim Width", Range(0, 1)) = 0.1         
         _RimSoftness ("Rim Softness", Range(0.001, 1)) = 0.01 
         _RimLightAlign ("Light Align Mask", Range(-1, 1)) = 0.0 
 
         [Space(20)][Header(Mask Map Settings)]
-        _MaskMap ("Mask Map (G=AO, A=Smoothness)", 2D) = "white" { }
-        [Toggle(_ENABLEAO)] _ENABLEAO ("Enable AO (Green Ch)", float) = 1
+        _MaskMap ("Mask Map (A=Smoothness)", 2D) = "white" { }
         [Toggle(_ENABLE_SMOOTHNESS_MASK)] _ENABLE_SMOOTHNESS_MASK ("Enable Smoothness Mask (Alpha Ch)", float) = 1
 
+        // --- Emission Settings ---
         [Space(20)][Header(Emission Settings)]
         [Toggle(_USE_EMISSION)] _UseEmission ("Enable Emission", Float) = 0
         _EmissionMap ("Emission Map", 2D) = "white" {}
@@ -52,40 +51,27 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
     }
 
     SubShader {
-        Tags { "Queue" = "Geometry" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
-
-        // 1. DepthOnly Pass
-        Pass {
-            Name "DepthOnly"
-            Tags { "LightMode" = "DepthOnly" }
-            ZWrite On
-            ColorMask 0
-            Cull [_Cull] 
-            
-            HLSLPROGRAM
-            #pragma exclude_renderers gles gles3 glcore
-            #pragma target 4.5
-            #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/UnlitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
-            ENDHLSL
+        Tags { 
+            "Queue" = "Transparent" 
+            "RenderType" = "Transparent" 
+            "IgnoreProjector" = "True" 
+            "RenderPipeline" = "UniversalPipeline" 
         }
 
-        // 2. Main Lighting Pass
         Pass {
-            Name "NPR skin"
-            Tags { "LightMode" = "UniversalForward" }
-            ZWrite On
-            ZTest On
+            Name "NPR Transparent SpecAlign XZ"
+            Tags { "LightMode" = "UniversalForward" } 
+            
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite [_ZWrite]
+            ZTest LEqual
+            // [修改] 使用变量控制剔除
             Cull [_Cull]
 
             HLSLPROGRAM
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             #pragma vertex vert
             #pragma fragment frag
@@ -94,23 +80,21 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile _ _SHADOWS_SOFT
+            
             #pragma shader_feature _ENABLEENVIROMENTLIGHT
             #pragma shader_feature _ENABLENORMALMAP
-            #pragma shader_feature _ENABLEAO
             #pragma shader_feature _ENABLE_SMOOTHNESS_MASK
             #pragma shader_feature _USE_EMISSION
 
             CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
-            float _OutLineWidth;
             float _RampColum;
             float4 _RimColor, _BaseColor; 
             
             // Rim Params
-            float _OffsetMul;     
-            float _RimWidth;      
-            float _RimSoftness;   
-            float _RimLightAlign; 
+            float _RimWidth;
+            float _RimSoftness;
+            float _RimLightAlign;
 
             float _LightInfluence;
             float _ShadowEnvMix;
@@ -121,13 +105,15 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
             float _SpecWidth;
             float _SpecSoftness;
             float4 _SpecColor;
+            
+            float _SpecLightAlign;
 
             float4 _EmissionColor;
             float _EmissionStrength;
             
+            float _ZWrite;
+            // [新增]
             float _Cull;
-            // [新增] 描边开关变量
-            float _EnableOutline;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -178,9 +164,19 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
 
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 
+                // 1. 获取真实光源信息
                 Light MainLight = GetMainLight(input.shadowCoord);
                 float3 LightDir = normalize(float3(MainLight.direction));
                 float4 LightColor = float4(MainLight.color, 1);
+
+                // 2. 准备向量
+                float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
+                
+                // --- 计算 "高光用" 光源方向 (仅XZ轴跟随) ---
+                float3 lightDirXZ = normalize(float3(LightDir.x, 0, LightDir.z) + 1e-5);
+                float3 viewDirXZ  = normalize(float3(viewDir.x,  0, viewDir.z)  + 1e-5);
+                float3 blendedXZ = lerp(lightDirXZ, viewDirXZ, _SpecLightAlign);
+                float3 specLightDir = normalize(float3(blendedXZ.x, LightDir.y, blendedXZ.z));
 
                 #if _ENABLENORMALMAP
                     float sgn = input.tangentWS.w;
@@ -193,84 +189,64 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
 
                 float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
 
+                // =========================================================
+                // [修复] 双面渲染核心逻辑
+                // =========================================================
                 if (!isFrontFace) {
+                    // 1. 翻转背面法线，确保光照计算正确（否则背面是黑的）
                     normalWS = -normalWS;
-                    MainLight.shadowAttenuation = 1.0; 
+                    
+                    // 2. [关键修复] 透明物体背面通常会被正面投射阴影（自阴影）。
+                    // 这会导致内壁看起来很脏/黑。
+                    // 强制取消背面的阴影接收，让内壁显得通透。
+                    MainLight.shadowAttenuation = 1.0;
                 }
+                // =========================================================
 
-                float4 MaskMapData = float4(1,1,1,1);
-                #if defined(_ENABLEAO) || defined(_ENABLE_SMOOTHNESS_MASK)
-                    MaskMapData = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv);
+                float smoothnessMask = 1.0;
+                #if defined(_ENABLE_SMOOTHNESS_MASK)
+                    smoothnessMask = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv).a;
                 #endif
 
+                // --- Base Diffuse (Lambert & Ramp) ---
                 float Lambert = dot(LightDir, normalWS) * MainLight.shadowAttenuation;
                 float halfLambert = (Lambert * 0.5 + 0.5);
 
-                #if _ENABLEAO
-                    halfLambert *= clamp(MaskMapData.g, 0, 1);
-                #endif
-                
                 float4 rampLambertColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, float2(halfLambert, _RampColum));
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 difusse *= _BaseColor;
 
-                // Specular
-                float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
-                float3 HalfWay = normalize(viewDir + LightDir);
+                // ---------------------------------------------------------------------------------
+                // [Specular]
+                // ---------------------------------------------------------------------------------
+                float3 HalfWay = normalize(viewDir + specLightDir);
                 
                 float NdotH = saturate(dot(normalWS, HalfWay));
                 float specThreshold = 1.0 - _SpecWidth; 
                 float specShape = smoothstep(specThreshold, specThreshold + _SpecSoftness, NdotH);
 
                 float F0 = 0.04; 
-                float LdotH = saturate(dot(LightDir, HalfWay));
+                float LdotH = saturate(dot(specLightDir, HalfWay));
                 float fresnelTerm = F0 + (1.0 - F0) * pow(1.0 - LdotH, 5.0);
 
                 float specIntensity = specShape * fresnelTerm;
                 specIntensity *= MainLight.shadowAttenuation;
-
-                #if _ENABLEAO
-                    specIntensity *= clamp(MaskMapData.g, 0, 1);
-                #endif
-                
                 #if _ENABLE_SMOOTHNESS_MASK
-                    specIntensity *= MaskMapData.a;
+                    specIntensity *= smoothnessMask;
                 #endif
                 
                 float3 finalSpecColor = _SpecColor.rgb * LightColor.rgb * specIntensity; 
-                
-                // Env Light
-                float3 FinalLightColor = LightColor.rgb;
-                #if _ENABLEENVIROMENTLIGHT
-                    float3 ambient = SampleSH(normalWS);
-                    #if _ENABLEAO
-                         ambient *= MaskMapData.g;
-                    #endif
-                    float3 litLight = LightColor.rgb;
-                    float3 shadowLight = lerp(ambient, litLight, _ShadowEnvMix);
-                    FinalLightColor = lerp(shadowLight, litLight, saturate(halfLambert));
-                #endif
 
-                // Rim Light
-                float3 normalVS = TransformWorldToViewDir(normalWS, true); 
-                float depth = input.positionNDC.z / input.positionNDC.w;
-                float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
-                float2 RimOffsetUV = RimScreenUV + normalVS.xy * _OffsetMul;
+                // ---------------------------------------------------------------------------------
+                // [Rim Light]
+                // ---------------------------------------------------------------------------------
+                float NdotV = saturate(dot(normalWS, viewDir));
+                float fresnelBase = 1.0 - NdotV; 
 
-                float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams);
-                float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r;
-                float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
-                
-                float depthDiff = linearEyeOffsetDepth - linearEyeDepth; 
-                float depthMask = step(0.0001, depthDiff);
-
-                float fresnelBase = 1.0 - saturate(dot(normalWS, viewDir));
                 float rimThreshold = 1.0 - _RimWidth;
-                float rimGradient = smoothstep(rimThreshold, rimThreshold + _RimSoftness, fresnelBase);
+                float rimIntensity = smoothstep(rimThreshold, rimThreshold + _RimSoftness, fresnelBase);
 
-                float rimIntensity = depthMask * rimGradient;
-
-                float NdotL_Rim = dot(normalWS, LightDir);
+                float NdotL_Rim = dot(normalWS, specLightDir);
                 float rimLightMask = saturate(NdotL_Rim + _RimLightAlign);
                 
                 rimIntensity *= rimLightMask;
@@ -278,7 +254,21 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                 float4 fresnelDepthRim = rimIntensity * _RimColor;
                 float3 rimResult = fresnelDepthRim.rgb * rimIntensity * _RimColor.a;
 
-                // Combine
+                // ---------------------------------------------------------------------------------
+                // Environment Light
+                // ---------------------------------------------------------------------------------
+                float3 FinalLightColor = LightColor.rgb;
+                #if _ENABLEENVIROMENTLIGHT
+                    float3 ambient = SampleSH(normalWS);
+                    float3 litLight = LightColor.rgb;
+                    float3 shadowLight = lerp(ambient, litLight, _ShadowEnvMix);
+                    FinalLightColor = lerp(shadowLight, litLight, saturate(halfLambert));
+                #endif
+
+                // ---------------------------------------------------------------------------------
+                // Final Combine
+                // ---------------------------------------------------------------------------------
+                
                 float3 diffuseColorApplied;
                 #if _ENABLEENVIROMENTLIGHT
                     diffuseColorApplied = difusse.rgb * rampLambertColor.rgb * FinalLightColor * _LightInfluence;
@@ -295,92 +285,12 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                     float3 emissionResult = emissionMap.rgb * _EmissionColor.rgb * _EmissionStrength;
                     colorRGB += emissionResult;
                 #endif
-
-                return float4(colorRGB, 1.0);
-            }
-
-            ENDHLSL
-        }
-        
-        // 3. Outline Pass
-        Pass {
-            Name "Outline"
-            Tags { "Queue" = "Geometry" "IgnoreProjector" = "True" "LightMode" = "SRPDefaultUnlit" }
-            Cull Front
-            HLSLPROGRAM
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "OutlineUtil.hlsl"
-            #pragma vertex vert
-            #pragma fragment frag
-            CBUFFER_START(UnityPerMaterial)
-            float _OutLineWidth;
-            float4 _OutLineColor;
-            // [新增] 引入开关变量
-            float _EnableOutline;
-            CBUFFER_END
-
-            struct a2v {
-                float4 positionOS : POSITION;
-                float3 normalOS : NORMAL;
-                float3 vertColor : COLOR;
-            };
-            struct v2f {
-                float4 positionCS : SV_POSITION;
-                float3 positionWS : TEXCOORD0;
-                float3 vertColor : COLOR;
-            };
-
-            v2f vert(a2v input) {
-                v2f o = (v2f)0;
                 
-                // --- [新增] 描边开关逻辑 ---
-                if (_EnableOutline < 0.5) {
-                    // 坍缩顶点，不渲染
-                    o.positionCS = float4(0, 0, 0, 0);
-                    return o;
-                }
-                // -------------------------
-
-                float4 positionOS = input.positionOS;
-                half3 normalOS=normalize(input.normalOS);
-                o.positionWS = TransformObjectToWorld(positionOS);
-                float3 positionVS = TransformWorldToView(o.positionWS);
-                float3 normalWS = TransformObjectToWorldNormal(normalOS);
-                o.positionWS = TransformPositionWSToOutlinePositionWS(o.positionWS,positionVS.z,normalWS,_OutLineWidth,input.vertColor.r);
-                o.positionCS = TransformWorldToHClip(o.positionWS);
-                return o;
+                float finalAlpha = difusse.a; 
+                
+                return float4(colorRGB, finalAlpha);
             }
 
-            half4 frag(v2f input) : SV_TARGET {
-                return _OutLineColor;
-            }
-            ENDHLSL
-        }
-
-        // 4. ShadowCaster
-        Pass {
-            Name "ShadowCaster"
-            Tags { "LightMode" = "ShadowCaster" }
-            ZWrite On
-            ZTest LEqual
-            ColorMask 0
-            // [修改] 跟随属性剔除
-            Cull [_Cull] 
-            
-            HLSLPROGRAM
-            #pragma exclude_renderers gles gles3 glcore
-            #pragma target 4.5
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-            #pragma shader_feature_local_fragment _ALPHATEST_ON
-            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            #pragma multi_compile_instancing
-            #pragma multi_compile _ DOTS_INSTANCING_ON
-            #pragma vertex ShadowPassVertex
-            #pragma fragment ShadowPassFragment
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
     }

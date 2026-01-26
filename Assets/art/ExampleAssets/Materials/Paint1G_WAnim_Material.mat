@@ -24,17 +24,20 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Paint1G_WAnim_Material
-  m_Shader: {fileID: 4800000, guid: 5e5eca56e1993e741b41ac9c687d01a5, type: 3}
+  m_Shader: {fileID: 4800000, guid: 6e2587267b5c3374fa79cce8de9a25e0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _ENABLEAO
+  - _ENABLEENVIROMENTLIGHT
+  - _ENABLE_SMOOTHNESS_MASK
   m_InvalidKeywords:
   - _DISABLE_DECALS
   - _DISABLE_SSR_TRANSPARENT
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2000
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses:
   - TransparentDepthPrepass
@@ -47,6 +50,26 @@ Material:
     m_TexEnvs:
     - Texture2D_C69EB180:
         m_Texture: {fileID: 2800000, guid: e5c37ab0c7b37af4f981195d3caaf4b4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RampMap:
+        m_Texture: {fileID: 2800000, guid: f5dfe0ea1c11f204aafee5fc33616537, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_3ec74a86d8c1488d8ce597f8156fb7ab_Texture_1:
@@ -136,6 +159,7 @@ Material:
     - _AlphaToMaskInspectorValue: 0
     - _BlendMode: 0
     - _ConservativeDepthOffsetEnable: 0
+    - _Cull: 2
     - _CullMode: 2
     - _CullModeForward: 2
     - _DepthOffsetEnable: 0
@@ -143,17 +167,34 @@ Material:
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
     - _DstBlend: 0
+    - _ENABLEAO: 1
+    - _ENABLEENVIROMENTLIGHT: 1
+    - _ENABLENORMALMAP: 0
+    - _ENABLE_SMOOTHNESS_MASK: 1
+    - _EmissionStrength: 1
     - _EnableBlendModePreserveSpecularLighting: 0
     - _EnableFogOnTransparent: 1
+    - _EnableOutline: 1
+    - _LightInfluence: 1
+    - _OffsetMul: 0
     - _OpaqueCullMode: 2
+    - _OutLineWidth: 1.5
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _RampColum: 0.063
     - _RayTracing: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
+    - _RimLightAlign: 0
+    - _RimSoftness: 0.01
+    - _RimWidth: 0.1
+    - _ShadowEnvMix: 0.2
+    - _SpecLightAlign: 0
+    - _SpecSoftness: 0.01
+    - _SpecWidth: 0.05
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 8
@@ -174,6 +215,7 @@ Material:
     - _TransparentSortPriority: 0
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
+    - _UseEmission: 0
     - _UseShadowThreshold: 0
     - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 4
@@ -183,8 +225,12 @@ Material:
     - Color_23C9B10D: {r: 0, g: 0.61, b: 0.85, a: 0}
     - Color_A2AAE5B5: {r: 0.78999996, g: 0.8399999, b: 0.96999997, a: 0}
     - Vector2_C848BFFB: {r: 0.3, g: 0.8, b: 0, a: 0}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OutLineColor: {r: 0.29999998, g: 0.29999998, b: 0.29999998, a: 1}
+    - _RimColor: {r: 0.24213827, g: 0.74121785, b: 1, a: 1}
+    - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &5243367059023264178
 MonoBehaviour:

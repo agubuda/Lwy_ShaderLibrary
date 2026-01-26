@@ -1,4 +1,4 @@
-Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
+Shader "LwyShaders/NPR/NPR_Base" {
     Properties {
         [MainTexture] _BaseMap ("Albedo", 2D) = "white" { }
         [MainColor] _BaseColor ("Base Color", Color) =  (1,1,1,1)
@@ -6,7 +6,7 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
         // 剔除模式控制 (0=Off双面, 2=Back单面)
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull Mode (0=Double, 2=Single)", Float) = 2
 
-        // --- [新增] 描边开关 ---
+        // --- 描边开关 ---
         [Enum(Off, 0, On, 1)] _EnableOutline ("Enable Outline", Float) = 1.0
 
         [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP (" Enable normal map", float) = 0
@@ -126,7 +126,6 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
             float _EmissionStrength;
             
             float _Cull;
-            // [新增] 描边开关变量
             float _EnableOutline;
             CBUFFER_END
 
@@ -203,28 +202,42 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                     MaskMapData = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv);
                 #endif
 
-                float Lambert = dot(LightDir, normalWS) * MainLight.shadowAttenuation;
-                float halfLambert = (Lambert * 0.5 + 0.5);
+                // -----------------------------------------------------------------------
+                // [修改] 阴影与 Lambert 叠加计算
+                // -----------------------------------------------------------------------
+                
+                // 1. 计算纯几何 Lambert (0.0 ~ 1.0)
+                float NdotL = dot(LightDir, normalWS);
+                float halfLambert = NdotL * 0.5 + 0.5;
 
+                // 2. 处理阴影衰减 (去斑驳)
+                // URP的shadowAttenuation在边缘处可能会有噪点(Shadow Acne)。
+                // 使用 smoothstep 对阴影值进行"锐化"或"平滑"，过滤掉低精度的中间值。
+                // 这里的 (0.0, 0.25) 可以调节，值越小阴影边缘越硬，但越能去除斑驳。
+                float cleanShadowAtten = smoothstep(0.0, 0.25, MainLight.shadowAttenuation);
+
+                // 3. 叠加计算
+                // 将几何明暗与处理后的阴影相乘。
+                // 结果：如果被阴影覆盖(cleanShadowAtten=0)，RampCoord直接变为0 (采样Ramp最左侧深色)。
+                // 结果：如果没有阴影，则由 halfLambert 决定采样位置。
+                float rampCoord = saturate(halfLambert * cleanShadowAtten);
+
+                // 4. 应用 AO (如果开启)
                 #if _ENABLEAO
-                    halfLambert *= clamp(MaskMapData.g, 0, 1);
+                    rampCoord *= clamp(MaskMapData.g, 0, 1);
                 #endif
                 
-                // [Note] Ramp 采样:
-                // 使用 Half-Lambert (0~1) 作为 UV.x 采样渐变图。
-                // 这样可以通过绘制 Ramp 图来自由控制明暗交界线的硬度、位置和颜色变化。
-                float4 rampLambertColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, float2(halfLambert, _RampColum));
+                // 5. 采样 Ramp
+                float4 rampLambertColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, float2(rampCoord, _RampColum));
+                
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 difusse *= _BaseColor;
+                // -----------------------------------------------------------------------
 
                 // Specular
                 float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
                 float3 HalfWay = normalize(viewDir + LightDir);
                 
-                // [Note] 风格化高光 (Stylized Specular):
-                // 1. 计算 Blinn-Phong 的 NdotH。
-                // 2. 使用 smoothstep 代替 pow，可以获得更像 "色块" 的硬边缘高光，
-                //    或者通过调整 _SpecSoftness 获得软边缘。
                 float NdotH = saturate(dot(normalWS, HalfWay));
                 float specThreshold = 1.0 - _SpecWidth; 
                 float specShape = smoothstep(specThreshold, specThreshold + _SpecSoftness, NdotH);
@@ -234,7 +247,8 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                 float fresnelTerm = F0 + (1.0 - F0) * pow(1.0 - LdotH, 5.0);
 
                 float specIntensity = specShape * fresnelTerm;
-                specIntensity *= MainLight.shadowAttenuation;
+                // 高光也应用处理过的干净阴影
+                specIntensity *= cleanShadowAtten;
 
                 #if _ENABLEAO
                     specIntensity *= clamp(MaskMapData.g, 0, 1);
@@ -255,13 +269,11 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                     #endif
                     float3 litLight = LightColor.rgb;
                     float3 shadowLight = lerp(ambient, litLight, _ShadowEnvMix);
-                    FinalLightColor = lerp(shadowLight, litLight, saturate(halfLambert));
+                    // 环境光混合也使用新的 rampCoord
+                    FinalLightColor = lerp(shadowLight, litLight, rampCoord);
                 #endif
 
                 // Rim Light
-                // [Note] 深度偏移边缘光 (Depth-Based Rim):
-                // 原理：如果一个像素在 "视觉上" 处于物体的边缘，那么如果我们沿着法线方向稍微偏移一点再去采样深度，
-                // 采样到的深度应该会发生剧烈突变（因为偏移到了背景物体或者远处）。
                 float3 normalVS = TransformWorldToViewDir(normalWS, true); 
                 float depth = input.positionNDC.z / input.positionNDC.w;
                 float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
@@ -271,7 +283,6 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                 float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r;
                 float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
                 
-                // 计算深度差，如果差值够大，说明是边缘
                 float depthDiff = linearEyeOffsetDepth - linearEyeDepth; 
                 float depthMask = step(0.0001, depthDiff);
 
@@ -326,7 +337,6 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
             CBUFFER_START(UnityPerMaterial)
             float _OutLineWidth;
             float4 _OutLineColor;
-            // [新增] 引入开关变量
             float _EnableOutline;
             CBUFFER_END
 
@@ -344,13 +354,10 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
             v2f vert(a2v input) {
                 v2f o = (v2f)0;
                 
-                // --- [新增] 描边开关逻辑 ---
                 if (_EnableOutline < 0.5) {
-                    // 坍缩顶点，不渲染
                     o.positionCS = float4(0, 0, 0, 0);
                     return o;
                 }
-                // -------------------------
 
                 float4 positionOS = input.positionOS;
                 half3 normalOS=normalize(input.normalOS);
@@ -375,7 +382,6 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
             ZWrite On
             ZTest LEqual
             ColorMask 0
-            // [修改] 跟随属性剔除
             Cull [_Cull] 
             
             HLSLPROGRAM
