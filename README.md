@@ -17,7 +17,7 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 </div>
 ·Tiny PBR shader
 <div align = "center">
-  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_005_0001.png?raw=true">
+  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_004_0001.png?raw=true">
 </div>
 ·基于深度描边与基于菲涅尔的特效Shader
 <div align = "center">
