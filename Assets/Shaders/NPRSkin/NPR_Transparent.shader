@@ -210,9 +210,6 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                     halfLambert *= clamp(MaskMapData.g, 0, 1);
                 #endif
                 
-                // [Note] Ramp 采样:
-                // 使用 Half-Lambert (0~1) 作为 UV.x 采样渐变图。
-                // 这样可以通过绘制 Ramp 图来自由控制明暗交界线的硬度、位置和颜色变化。
                 float4 rampLambertColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, float2(halfLambert, _RampColum));
                 float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 difusse *= _BaseColor;
@@ -221,10 +218,6 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                 float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
                 float3 HalfWay = normalize(viewDir + LightDir);
                 
-                // [Note] 风格化高光 (Stylized Specular):
-                // 1. 计算 Blinn-Phong 的 NdotH。
-                // 2. 使用 smoothstep 代替 pow，可以获得更像 "色块" 的硬边缘高光，
-                //    或者通过调整 _SpecSoftness 获得软边缘。
                 float NdotH = saturate(dot(normalWS, HalfWay));
                 float specThreshold = 1.0 - _SpecWidth; 
                 float specShape = smoothstep(specThreshold, specThreshold + _SpecSoftness, NdotH);
@@ -259,9 +252,6 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                 #endif
 
                 // Rim Light
-                // [Note] 深度偏移边缘光 (Depth-Based Rim):
-                // 原理：如果一个像素在 "视觉上" 处于物体的边缘，那么如果我们沿着法线方向稍微偏移一点再去采样深度，
-                // 采样到的深度应该会发生剧烈突变（因为偏移到了背景物体或者远处）。
                 float3 normalVS = TransformWorldToViewDir(normalWS, true); 
                 float depth = input.positionNDC.z / input.positionNDC.w;
                 float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
@@ -271,7 +261,6 @@ Shader "LwyShaders/NPR/NPR_Base_DepthRim_Smoothstep" {
                 float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r;
                 float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
                 
-                // 计算深度差，如果差值够大，说明是边缘
                 float depthDiff = linearEyeOffsetDepth - linearEyeDepth; 
                 float depthMask = step(0.0001, depthDiff);
 

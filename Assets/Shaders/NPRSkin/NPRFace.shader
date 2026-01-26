@@ -161,15 +161,23 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
                 float3 leftDir = -_FaceRightGlobal.xyz;
                 float3 frontDir = _FaceForwardGlobal.xyz;
 
-                // 计算光照阈值
+                // [Note] 面部阴影计算核心逻辑 (SDF Face Shadow):
+                // 1. 计算 "面部朝向" 与 "光照方向" 的关系 (FdotL)。
+                //    使用二次方曲线 ((-x+1)/2)^2 将 [-1, 1] 映射到平滑的 [0, 1] 衰减曲线，用于控制阴影阈值。
                 float FdotL = dot(frontDir.xz, normalize(LightDir.xz));
                 FdotL = ((-FdotL + 1.0) * 0.5) * ((-FdotL + 1.0) * 0.5);
                 float ctrl = saturate(FdotL); // 修复 clamp 参数顺序问题
 
+                // 2. 采样 SDF 面部光照图。
+                //    根据光线是来自左侧还是右侧，选择采样原图还是翻转的图 (SDFMap_R)。
+                //    SDF图中存储的是 "在这个角度下，此处是否应该变黑" 的阈值。
                 float ilm = dot(LightDir.xz, leftDir.xz) > 0 ? SDFMap.r : SDFMap_R.r;
 
+                // 3. 比较:
+                //    ilm (SDF阈值) vs ctrl (当前光照强度)。
+                //    step(ilm, ctrl) 决定是亮部(0)还是暗部(1)。
                 isShadow = step(ilm, ctrl);
-                float bias = smoothstep(0, _LerpMax, abs(ctrl - ilm));
+                float bias = smoothstep(0, _LerpMax, abs(ctrl - ilm)); // 边缘软化
 
                 float SDFFactor = 0;
                 if (ctrl > 0.99 || isShadow == 1)
@@ -178,6 +186,9 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
                 }
 
                 // --- [核心修改 1] AO 融入 SDF ---
+                // [Note] AO 处理思路:
+                // 在二次元渲染中，AO不仅仅是变暗，而是强制该区域进入 "阴影状态"。
+                // 所以我们计算一个权重，取 max(现有阴影, AO带来的阴影)，确保深陷区域使用 ShadowColor。
                 // 采样 AO 图 (假设在 R 通道)
                 float ao = SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, input.uv).r;
                 // 计算 AO 带来的额外阴影权重 (AO越黑，值越大)
@@ -201,8 +212,9 @@ Shader "LwyShaders/NPR/NPRFace_NormalBased_Fixed" {
                     float3 litLightColor = LightColor;
 
                     // C. 构建背光面光照 (Shadow Light)
+                    // [Note] 阴影色策略:
                     // 在背光面，物体主要反射环境光(Ambient)。
-                    // 但纯环境光通常太暗，为了保持卡通感，我们通常会混入一点点主光颜色(Bounce)
+                    // 但纯环境光通常太暗，为了保持卡通感，我们通常会混入一点点主光颜色(Bounce/Subsurface Scattering approximation)。
                     // 这里使用 _ShadowEnvMix 控制混合比例 (0 = 纯环境光, 1 = 纯主光)
                     // 你原来的逻辑 (ambient+2*light)/3 大约等同于混合了 0.66 的主光
                     float3 shadowLightColor = lerp(ambient, LightColor, _ShadowEnvMix);

@@ -19,7 +19,10 @@ float GetOutlineCameraFovAndDistanceFixMultiplier(float positionVS_Z)
     float cameraMulFix;
     if(unity_OrthoParams.w == 0)
     {
-
+        // [Note] 透视补偿:
+        // 在透视投影中，物体越远越小。为了保持描边在屏幕上的像素宽度一致，
+        // 我们需要根据距离 (positionVS_Z) 放大描边的偏移量。
+        // 同时乘上 FOV，确保改变相机 FOV 时描边粗细视觉上不变。
         cameraMulFix = abs(positionVS_Z);
 
         cameraMulFix = ApplyOutlineDistanceFadeOut(cameraMulFix);
