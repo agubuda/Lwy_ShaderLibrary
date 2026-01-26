@@ -34,8 +34,8 @@ Switch to Android. There may be unhandled compatibility issues under other graph
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_007_0002.png?raw=true">
 </div>
 ·Compute shader软体物理<br>
-·TA与美术常用的引擎内Toolbox集合。
-   <img src = " https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/2026-01-26%20093707.png">
+·TA与美术常用的引擎内Toolbox集合。<br>
+   <img src = " https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/2026-01-26%20093707.png?raw=true">
 ·URP后处理丢失A通道<br>
 ·URP lit 1单位以内点光源爆闪修复<br>
 
