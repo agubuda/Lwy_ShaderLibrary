@@ -6,18 +6,21 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 
 自己的shader沙盘。<br>
 最近主要在更新基于Compute Shader计算逐顶点的物理。包含一个简单的弹簧质点与简单布料模拟。
-如果问题请联系作者。<br>
+持续更新中，如果问题请联系作者。<br>
 切换到Android，其他未处理图形api兼容性问题。<br>
 工作于URP管线，针对移动端进行性能评估。<br>
 ---截图持续整理中---<br>
-<br>
-·移动端URP光照场景实践
+·简单的NPR Shader沙盘，持续更新中
 <div align = "center">
-  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_003_0001.png?raw=true">
-</div>
+<img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_002_0001.png">
+<br>
 ·Tiny PBR shader
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_004_0001.png?raw=true">
+</div>
+·Tiny PBR shader
+<div align = "center">
+  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_003_0001.png?raw=true">
 </div>
 ·基于深度描边与基于菲涅尔的特效Shader
 <div align = "center">
@@ -31,10 +34,8 @@ Switch to Android. There may be unhandled compatibility issues under other graph
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_007_0002.png?raw=true">
 </div>
 ·Compute shader软体物理<br>
-尚未整理截图，项目内查看。<br>
+·TA与美术常用的引擎内Toolbox集合。
 ·URP后处理丢失A通道<br>
-尚未整理截图，项目内查看。<br>
 ·URP lit 1单位以内点光源爆闪修复<br>
-尚未整理截图，项目内查看。<br>
 
 
