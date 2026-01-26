@@ -16,7 +16,7 @@ Switch to Android. There may be unhandled compatibility issues under other graph
 ·移动端URP光照场景实践
 <div align = "center">
   <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/image_002_0002.png?raw=true">
-  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_003_0001.png?raw=true“>
+  <img src = "https://github.com/agubuda/Lwy_ShaderLibrary/blob/master/Recordings/Image%20Sequence_003_0001.png?raw=true">
 </div>
 ·Tiny PBR shader
 <div align = "center">
