@@ -123,6 +123,7 @@ Material:
     - _ENABLENORMALMAP: 0
     - _ENABLE_SMOOTHNESS_MASK: 1
     - _EmissionStrength: 1
+    - _EnableOutline: 1
     - _EnvironmentReflections: 1
     - _FresnelPower: 3
     - _GlossMapScale: 1
@@ -138,12 +139,18 @@ Material:
     - _QueueOffset: 0
     - _RampColum: 0
     - _ReceiveShadows: 1
+    - _RimLightAlign: 0
+    - _RimSoftness: 0.01
+    - _RimWidth: 0.327
     - _ShadowEnvMix: 0.405
     - _Smoothness: 0.1
     - _SmoothnessTextureChannel: 0
     - _SpacSoftEdge: 0.1
+    - _SpecLightAlign: 0
     - _SpecPower: 8
     - _SpecRange: 0.1
+    - _SpecSoftness: 0.01
+    - _SpecWidth: 0.05
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1

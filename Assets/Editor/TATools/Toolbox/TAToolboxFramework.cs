@@ -78,6 +78,8 @@ namespace TAToolbox
 
             _pages.Add(new Page_FolderSizeAnalyzer());
 
+            _pages.Add(new Page_TextureSwizzler());
+
             // 初始化选中
             if (_pages.Count > 0) _pages[_selectedPageIndex].OnEnable();
             UpdateSelection();
