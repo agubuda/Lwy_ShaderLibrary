@@ -27,7 +27,7 @@ namespace Lwy.Scripts.Profiling
             public string oldName; // For backwards compatibility
             public int callCount;
             public float accTime;
-            public Profiling.Recorder recorder;
+            public Recorder recorder;
         }
 
         private enum MarkerId
