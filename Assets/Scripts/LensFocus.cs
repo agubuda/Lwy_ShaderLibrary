@@ -1,74 +1,93 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-public class LensFocus : MonoBehaviour
+namespace Lwy.Scripts.Rendering
 {
-    private DepthOfField dofComponent;
-    // Start is called before the first frame update
-
-    public Volume GetVolume;
-    public float focusSpeed;
-
-    private void Start()
+    /// <summary>
+    /// Adjusts the DepthOfField focus distance based on a raycast from the camera.
+    /// Simulates an autofocus camera lens.
+    /// </summary>
+    public class LensFocus : MonoBehaviour
     {
-        DepthOfField tmp;
+        [Header("Settings")]
+        public Volume targetVolume;
+        public float focusSpeed = 5f;
+        public float maxFocusDistance = 100f;
+        public LayerMask hitLayers = -1; // Default to Everything
 
-        if (GetVolume.profile.TryGet<DepthOfField>(out tmp))
+        private DepthOfField dofComponent;
+        private float currentHitDistance;
+        private bool isHit;
+        private RaycastHit rayHit;
+
+        private void Start()
         {
-            dofComponent = tmp;
-        }
-    }
-
-    // Update is called once per frame
-
-    private Ray raycast;
-    private RaycastHit hit;
-    private bool isHit;
-    private float hitDistance;
-
-    private void FixedUpdate()
-    {
-        //set ray of camera
-
-        raycast = new Ray(transform.position, transform.forward * 100);
-        isHit = false;
-        Debug.DrawRay(transform.position, Vector3.forward, Color.red);
-
-        if (Physics.Raycast(raycast, out hit, 100f))
-        {
-            isHit = true;
-            hitDistance = Vector3.Distance(transform.position, hit.point);
-            Debug.Log("hit");
-        }
-        else
-        {
-            if (hitDistance < 100f)
+            if (targetVolume == null)
             {
-                hitDistance++;
+                Debug.LogError("LensFocus: Target Volume is not assigned.");
+                enabled = false;
+                return;
+            }
+
+            if (targetVolume.profile.TryGet(out DepthOfField dof))
+            {
+                dofComponent = dof;
+            }
+            else
+            {
+                Debug.LogWarning("LensFocus: DepthOfField override not found in the assigned Volume profile.");
             }
         }
 
-        SetFocus();
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (isHit)
+        private void FixedUpdate()
         {
-            Gizmos.DrawSphere(hit.point, 0.1f);
-            Debug.DrawRay(transform.position, transform.forward * Vector3.Distance(transform.position, hit.point));
+            PerformRaycast();
+            UpdateFocus();
         }
-        else
-        {
-            Debug.DrawRay(transform.position, transform.forward * 100f);
-        }
-    }
 
-    private void SetFocus()
-    {
-        dofComponent.focusDistance.value = Mathf.Lerp(dofComponent.focusDistance.value, hitDistance, Time.deltaTime * focusSpeed);
+        private void PerformRaycast()
+        {
+            Ray ray = new Ray(transform.position, transform.forward);
+            
+            if (Physics.Raycast(ray, out rayHit, maxFocusDistance, hitLayers))
+            {
+                isHit = true;
+                currentHitDistance = Vector3.Distance(transform.position, rayHit.point);
+            }
+            else
+            {
+                isHit = false;
+                // If nothing hit, focus smoothly towards max distance (or infinity)
+                if (currentHitDistance < maxFocusDistance)
+                {
+                    currentHitDistance = Mathf.MoveTowards(currentHitDistance, maxFocusDistance, 1f); // Slowly drift out
+                }
+            }
+        }
+
+        private void UpdateFocus()
+        {
+            if (dofComponent != null)
+            {
+                float currentFocus = dofComponent.focusDistance.value;
+                dofComponent.focusDistance.value = Mathf.Lerp(currentFocus, currentHitDistance, Time.deltaTime * focusSpeed);
+            }
+        }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = isHit ? Color.green : Color.red;
+            
+            if (isHit)
+            {
+                Gizmos.DrawLine(transform.position, rayHit.point);
+                Gizmos.DrawSphere(rayHit.point, 0.1f);
+            }
+            else
+            {
+                Gizmos.DrawRay(transform.position, transform.forward * maxFocusDistance);
+            }
+        }
     }
 }

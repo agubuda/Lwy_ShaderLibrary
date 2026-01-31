@@ -1,40 +1,50 @@
 using UnityEngine;
 
-public class ShowFPS : MonoBehaviour
+namespace Lwy.Scripts.UI
 {
-    //设置帧率
-
-    public float f_UpdateInterval = 0.5F;
-
-    private float f_LastInterval;
-
-    private int i_Frames = 0;
-
-    private float f_Fps;
-
-    private void Start()
+    /// <summary>
+    /// Displays a simple Frame Per Second (FPS) counter on the screen using OnGUI.
+    /// </summary>
+    public class ShowFPS : MonoBehaviour
     {
-        Application.targetFrameRate = -1;
-        f_LastInterval = Time.realtimeSinceStartup;
-        i_Frames = 0;
-    }
+        [Tooltip("How often to update the FPS text (in seconds).")]
+        public float updateInterval = 0.5f;
 
-    private void OnGUI()
-    {
-        GUI.Label(new Rect(0, 100, 200, 200), "FPS:" + f_Fps.ToString("f2"));
-    }
+        private float lastIntervalTime;
+        private int framesCount = 0;
+        private float currentFps;
 
-    private void Update()
-    {
-        ++i_Frames;
-
-        if (Time.realtimeSinceStartup > f_LastInterval + f_UpdateInterval)
+        private void Start()
         {
-            f_Fps = i_Frames / (Time.realtimeSinceStartup - f_LastInterval);
+            // Don't limit frame rate to let it go as high as possible for testing
+            Application.targetFrameRate = -1; 
+            
+            lastIntervalTime = Time.realtimeSinceStartup;
+            framesCount = 0;
+        }
 
-            i_Frames = 0;
+        private void Update()
+        {
+            framesCount++;
+            float timeNow = Time.realtimeSinceStartup;
 
-            f_LastInterval = Time.realtimeSinceStartup;
+            if (timeNow > lastIntervalTime + updateInterval)
+            {
+                currentFps = framesCount / (timeNow - lastIntervalTime);
+                framesCount = 0;
+                lastIntervalTime = timeNow;
+            }
+        }
+
+        private void OnGUI()
+        {
+            // Draw a simple label
+            // GUI.Label is legacy but fine for simple debug tools
+            GUIStyle style = new GUIStyle();
+            style.fontSize = 24;
+            style.normal.textColor = Color.green;
+
+            GUI.Label(new Rect(20, 20, 200, 50), $"FPS: {currentFps:F2}", style);
         }
     }
 }

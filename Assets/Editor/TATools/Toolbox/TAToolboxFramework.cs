@@ -71,14 +71,19 @@ namespace TAToolbox
             // 3. 模型动画工具
             _pages.Add(new Page_FBXImporter());
             _pages.Add(new Page_FbxClipRenamer());
+            _pages.Add(new Page_HeatmapCopier());
             
             // 4. 材质工具
             _pages.Add(new Page_MaterialPropertyBatcher());
             _pages.Add(new Page_MaterialShaderReplacer());
 
             _pages.Add(new Page_FolderSizeAnalyzer());
+            _pages.Add(new Page_GameViewCapture());
 
             _pages.Add(new Page_TextureSwizzler());
+
+            // 5. 外部同步工具
+            _pages.Add(new Page_ArtSync());
 
             // 初始化选中
             if (_pages.Count > 0) _pages[_selectedPageIndex].OnEnable();

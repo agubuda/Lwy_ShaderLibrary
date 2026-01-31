@@ -4,8 +4,17 @@ using UnityEngine.InputSystem;
 
 using UnityEngine;
 
-namespace UnityTemplateProjects
+namespace Lwy.Scripts.CameraControl
 {
+    /// <summary>
+    /// A simple fly-camera controller for navigating scenes in Play Mode.
+    /// Controls:
+    ///  - WASD / Arrows / Left Stick: Move
+    ///  - Q/E / Bumpers: Up/Down
+    ///  - Right Mouse / Right Stick: Rotate
+    ///  - Shift / Stick Click: Boost speed
+    ///  - Scroll Wheel: Adjust boost factor
+    /// </summary>
     public class SimpleCameraController : MonoBehaviour
     {
         private class CameraState
@@ -84,8 +93,7 @@ namespace UnityTemplateProjects
         InputAction verticalMovementAction;
         InputAction lookAction;
         InputAction boostFactorAction;
-        bool        mouseRightButtonPressed;
-
+        
         void Start()
         {
             var map = new InputActionMap("Simple Camera Controller");
@@ -136,65 +144,46 @@ namespace UnityTemplateProjects
             direction.z = moveDelta.y;
             direction.y = verticalMovementAction.ReadValue<Vector2>().y;
 #else
-            if (Input.GetKey(KeyCode.W))
-            {
-                direction += Vector3.forward;
-            }
-            if (Input.GetKey(KeyCode.S))
-            {
-                direction += Vector3.back;
-            }
-            if (Input.GetKey(KeyCode.A))
-            {
-                direction += Vector3.left;
-            }
-            if (Input.GetKey(KeyCode.D))
-            {
-                direction += Vector3.right;
-            }
-            if (Input.GetKey(KeyCode.Q))
-            {
-                direction += Vector3.down;
-            }
-            if (Input.GetKey(KeyCode.E))
-            {
-                direction += Vector3.up;
-            }
+            if (Input.GetKey(KeyCode.W)) direction += Vector3.forward;
+            if (Input.GetKey(KeyCode.S)) direction += Vector3.back;
+            if (Input.GetKey(KeyCode.A)) direction += Vector3.left;
+            if (Input.GetKey(KeyCode.D)) direction += Vector3.right;
+            if (Input.GetKey(KeyCode.Q)) direction += Vector3.down;
+            if (Input.GetKey(KeyCode.E)) direction += Vector3.up;
 #endif
             return direction;
         }
 
         private void Update()
         {
-            // Exit Sample
-
             if (IsEscapePressed())
             {
-                Application.Quit();
+                // In Editor, stop playing. In Build, quit.
 #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
 #endif
             }
 
-            // Hide and lock cursor when right mouse button pressed
+            // Lock cursor when holding right mouse button
             if (IsRightMouseButtonDown())
             {
                 Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
             }
 
-            // Unlock and show cursor when right mouse button released
             if (IsRightMouseButtonUp())
             {
-                Cursor.visible = true;
                 Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
             }
 
-            // Rotation
+            // Input Handling
             if (IsCameraRotationAllowed())
             {
                 var mouseMovement = GetInputLookRotation() * k_MouseSensitivityMultiplier * mouseSensitivity;
-                if (invertY)
-                    mouseMovement.y = -mouseMovement.y;
+                if (invertY) mouseMovement.y = -mouseMovement.y;
 
                 var mouseSensitivityFactor = mouseSensitivityCurve.Evaluate(mouseMovement.magnitude);
 
@@ -202,27 +191,23 @@ namespace UnityTemplateProjects
                 m_TargetCameraState.pitch += mouseMovement.y * mouseSensitivityFactor;
             }
 
-            // Translation
             var translation = GetInputTranslationDirection() * Time.deltaTime;
 
-            // Speed up movement when shift key held
             if (IsBoostPressed())
             {
                 translation *= 10.0f;
             }
 
-            // Modify movement by a boost factor (defined in Inspector and modified in play mode through the mouse scroll wheel)
             boost += GetBoostFactor();
             translation *= Mathf.Pow(2.0f, boost);
 
             m_TargetCameraState.Translate(translation);
 
-            // Framerate-independent interpolation
-            // Calculate the lerp amount, such that we get 99% of the way to our target in the specified time
+            // Interpolation
             var positionLerpPct = 1f - Mathf.Exp((Mathf.Log(1f - 0.99f) / positionLerpTime) * Time.deltaTime);
             var rotationLerpPct = 1f - Mathf.Exp((Mathf.Log(1f - 0.99f) / rotationLerpTime) * Time.deltaTime);
+            
             m_InterpolatingCameraState.LerpTowards(m_TargetCameraState, positionLerpPct, rotationLerpPct);
-
             m_InterpolatingCameraState.UpdateTransform(transform);
         }
 
@@ -237,11 +222,10 @@ namespace UnityTemplateProjects
 
         private Vector2 GetInputLookRotation()
         {
-            // try to compensate the diff between the two input systems by multiplying with empirical values
 #if ENABLE_INPUT_SYSTEM
             var delta = lookAction.ReadValue<Vector2>();
-            delta *= 0.5f; // Account for scaling applied directly in Windows code by old input system.
-            delta *= 0.1f; // Account for sensitivity setting on old Mouse X and Y axes.
+            delta *= 0.5f; 
+            delta *= 0.1f; 
             return delta;
 #else
             return new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
@@ -282,7 +266,7 @@ namespace UnityTemplateProjects
         private bool IsRightMouseButtonDown()
         {
 #if ENABLE_INPUT_SYSTEM
-            return Mouse.current != null ? Mouse.current.rightButton.isPressed : false;
+            return Mouse.current != null ? Mouse.current.rightButton.wasPressedThisFrame : false;
 #else
             return Input.GetMouseButtonDown(1);
 #endif
@@ -291,7 +275,7 @@ namespace UnityTemplateProjects
         private bool IsRightMouseButtonUp()
         {
 #if ENABLE_INPUT_SYSTEM
-            return Mouse.current != null ? !Mouse.current.rightButton.isPressed : false;
+            return Mouse.current != null ? Mouse.current.rightButton.wasReleasedThisFrame : false;
 #else
             return Input.GetMouseButtonUp(1);
 #endif
