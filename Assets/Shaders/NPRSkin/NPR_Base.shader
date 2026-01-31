@@ -87,10 +87,12 @@ Shader "LwyShaders/NPR/NPR_Base" {
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "NPRFunctions.hlsl"
 
             #pragma vertex vert
             #pragma fragment frag
-
+            
+            // ... (Keywords remain unchanged) ...
             #pragma multi_compile_fog
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
@@ -170,12 +172,12 @@ Shader "LwyShaders/NPR/NPR_Base" {
 
                 float3 positionVS = TransformWorldToView(input.positionWS);
                 
-                // Get Light Info
+                // 1. 光照与方向准备
                 Light MainLight = GetMainLight(input.shadowCoord);
                 float3 LightDir = normalize(float3(MainLight.direction));
                 float3 LightColor = MainLight.color;
 
-                // Normal Map
+                // 2. 法线贴图处理
                 #if _ENABLENORMALMAP
                     float sgn = input.tangentWS.w;
                     half4 normalMap = SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv.xy);
@@ -187,127 +189,79 @@ Shader "LwyShaders/NPR/NPR_Base" {
 
                 float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
 
-                // Back Face Check: Flip Normal & Ignore Shadow
+                // 3. 背面修正
                 if (!isFrontFace) {
                     normalWS = -normalWS;
                     MainLight.shadowAttenuation = 1.0; 
                 }
 
-                // Mask Map: G=AO, A=Smoothness
-                float4 MaskMapData = float4(1,1,1,1);
-                #if defined(_ENABLEAO) || defined(_ENABLE_SMOOTHNESS_MASK)
-                    MaskMapData = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv);
+                // 4. 遮罩采样 (AO & Smoothness)
+                float ao, smoothnessMask;
+                float enableAO = 0;
+                float enableSmoothness = 0;
+                #if defined(_ENABLEAO)
+                    enableAO = 1;
                 #endif
+                #if defined(_ENABLE_SMOOTHNESS_MASK)
+                    enableSmoothness = 1;
+                #endif
+                
+                GetMaskData(_MaskMap, sampler_MaskMap, input.uv, enableAO, enableSmoothness, 1.0, ao, smoothnessMask);
 
-                // -----------------------------------------------------------------------
-                // [PBR Specular] LightColor * Intensity (Masked by AO)
-                // -----------------------------------------------------------------------
+
+                // 5. PBR 高光计算
                 float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
+                float3 specLightDir = CalculateReshapedLightDir(LightDir, viewDir, _SpecLightAlign);
                 
-                // Calculate Aligned Light Dir (XZ Only)
-                float3 lightDirXZ = normalize(float3(LightDir.x, 0, LightDir.z) + 1e-5);
-                float3 viewDirXZ  = normalize(float3(viewDir.x,  0, viewDir.z)  + 1e-5);
-                float3 blendedXZ = lerp(lightDirXZ, viewDirXZ, _SpecLightAlign);
-                float3 specLightDir = normalize(float3(blendedXZ.x, LightDir.y, blendedXZ.z));
-
-                float3 HalfWay = normalize(viewDir + specLightDir);
-                float NdotH = saturate(dot(normalWS, HalfWay));
-                float specThreshold = 1.0 - _SpecWidth; 
-                
-                // 1. Shape & Fresnel
-                float specShape = smoothstep(specThreshold, specThreshold + _SpecSoftness, NdotH);
-                float F0 = 0.04; 
-                float LdotH = saturate(dot(specLightDir, HalfWay));
-                float fresnelTerm = F0 + (1.0 - F0) * pow(1.0 - LdotH, 5.0);
-
-                // 2. Clean Shadow & Masks
                 float cleanShadowAtten = smoothstep(0.0, 0.25, MainLight.shadowAttenuation);
-                float specIntensity = specShape * fresnelTerm * cleanShadowAtten;
-
-                #if _ENABLEAO
-                    specIntensity *= clamp(MaskMapData.g, 0, 1);
-                #endif
-                #if _ENABLE_SMOOTHNESS_MASK
-                    specIntensity *= MaskMapData.a;
-                #endif
+                
+                float specRaw = CalculateNPRSpecularIntensity(normalWS, viewDir, specLightDir, _SpecWidth, _SpecSoftness);
+                float specIntensity = specRaw * cleanShadowAtten * ao * smoothnessMask;
 
                 float3 pbrSpecularColor = LightColor * _SpecColor.rgb * specIntensity;
 
-                // -----------------------------------------------------------------------
-                // [Diffuse] Albedo * Ramp * LightColor
-                // -----------------------------------------------------------------------
-                float NdotL = dot(LightDir, normalWS);
-                float halfLambert = NdotL * 0.5 + 0.5;
-                
-                // Shadow & AO Application
-                float rampCoord = saturate(halfLambert * cleanShadowAtten);
-                #if _ENABLEAO
-                    rampCoord *= clamp(MaskMapData.g, 0, 1);
-                #endif
-                
-                float3 rampColor = SAMPLE_TEXTURE2D(_RampMap, sampler_RampMap, float2(rampCoord, _RampColum)).rgb;
+                // 6. NPR 漫反射计算
                 float4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
-                
-                float3 pbrDiffuseColor = albedo.rgb * rampColor * LightColor;
+                float3 pbrDiffuseColor = CalculateNPRDiffuse(albedo.rgb, LightColor, LightDir, normalWS, 
+                                                             cleanShadowAtten, ao, 
+                                                             _RampMap, sampler_RampMap, _RampColum);
 
-                // -----------------------------------------------------------------------
-                // [Energy Conservation] Specular masks Diffuse
-                // -----------------------------------------------------------------------
+                // 7. 高光遮罩漫反射
                 float3 lightingResult = pbrDiffuseColor * (1.0 - specIntensity) + pbrSpecularColor;
 
-                // -----------------------------------------------------------------------
-                // [Environment Light] SH + Main Light Mix
-                // -----------------------------------------------------------------------
+                // 8. 环境光与阴影混合
                 #if _ENABLEENVIROMENTLIGHT
                     float3 ambient = SampleSH(normalWS);
-                    float3 envDiffuse = ambient * albedo.rgb;
-                    
-                    #if _ENABLEAO
-                        envDiffuse *= clamp(MaskMapData.g, 0, 1);
-                    #endif
+                    float3 envDiffuse = ambient * albedo.rgb * ao;
 
                     float3 litLight = lightingResult; 
                     float3 shadowLight = lerp(envDiffuse, litLight, _ShadowEnvMix);
                     
-                    // Mix based on Ramp
+                    float NdotL = dot(LightDir, normalWS);
+                    float halfLambert = NdotL * 0.5 + 0.5;
+                    float rampCoord = saturate(halfLambert * cleanShadowAtten * ao);
+                    
                     lightingResult = lerp(shadowLight, litLight, rampCoord);
                     lightingResult *= _LightInfluence;
                 #endif
 
-                // -----------------------------------------------------------------------
-                // [Rim Light] Depth Offset + Direction Mask
-                // -----------------------------------------------------------------------
+                // 9. 边缘光计算 (含深度修正)
                 float3 normalVS = TransformWorldToViewDir(normalWS, true); 
                 float depth = input.positionNDC.z / input.positionNDC.w;
                 float2 RimScreenUV = float2(input.positionCS.x / _ScreenParams.x, input.positionCS.y / _ScreenParams.y);
                 float2 RimOffsetUV = RimScreenUV + normalVS.xy * _OffsetMul;
 
-                // Depth Sampling
                 float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams);
                 float offsetDepth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, RimOffsetUV).r;
                 float linearEyeOffsetDepth = LinearEyeDepth(offsetDepth, _ZBufferParams);
                 
-                // Depth Mask
                 float depthDiff = linearEyeOffsetDepth - linearEyeDepth; 
                 float depthMask = step(0.0001, depthDiff);
 
-                // Shape & Direction
-                float fresnelBase = 1.0 - saturate(dot(normalWS, viewDir));
-                float rimThreshold = 1.0 - _RimWidth;
-                float rimGradient = smoothstep(rimThreshold, rimThreshold + _RimSoftness, fresnelBase);
-                float NdotL_Rim = dot(normalWS, specLightDir);
-                float rimLightMask = saturate(NdotL_Rim + _RimLightAlign);
-                
-                float rimIntensity = depthMask * rimGradient * rimLightMask;
-                
-                // AO Mask for Rim (Optional, currently disabled)
-                // #if _ENABLEAO
-                //    rimIntensity *= clamp(MaskMapData.g, 0, 1);
-                // #endif
+                float rimIntensity = CalculateNPRRimIntensity(normalWS, viewDir, specLightDir, _RimWidth, _RimSoftness, _RimLightAlign);
+                lightingResult += _RimColor.rgb * (rimIntensity * depthMask) * _RimColor.a;
 
-                lightingResult += _RimColor.rgb * rimIntensity * _RimColor.a;
-
-                // Emission
+                // 10. 自发光叠加
                 #if _USE_EMISSION
                     float4 emissionMap = SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv);
                     lightingResult += emissionMap.rgb * _EmissionColor.rgb * _EmissionStrength;
