@@ -76,6 +76,12 @@ Shader "LwyShaders/NPR/NPR_Transparent" {
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
             TEXTURE2D(_EmissionMap); SAMPLER(sampler_EmissionMap);
 
+            // Required by ShadowCasterPass.hlsl
+            half Alpha(float2 uv)
+            {
+                return SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv).a * _BaseColor.a;
+            }
+
             struct a2v {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
@@ -277,7 +283,6 @@ Shader "LwyShaders/NPR/NPR_Transparent" {
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }

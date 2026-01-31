@@ -1,4 +1,4 @@
-Shader "Universal Render Pipeline/CRLuo/CRLuo_Particle_Alpha_uv" {
+Shader "LwyShaders/CRLuo_Particle_Alpha_uv" {
     //面板属性
     Properties {
         [Toggle(_UVOne_Key)] _UVOne_Key ("曲线动画开关", Float) = 0
