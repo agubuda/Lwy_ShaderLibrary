@@ -1,232 +1,175 @@
 Shader "LwyShaders/Matcap" {
     Properties {
-        [Space(20)][Header(base settings)]
-        _BaseMap ("Texture", 2D) = "white" { }
-        _BaseColor ("baseColor", color) = (0, 0, 0, 1)
+        [Space(20)][Header(Base Settings)]
+        [MainTexture] _BaseMap ("Texture", 2D) = "white" { }
+        [MainColor] _BaseColor ("Base Color", Color) = (0, 0, 0, 1)
+        [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull Mode", Float) = 2
 
-        [Space(20)][Header(base settings)]
+        [Space(20)][Header(Matcap Settings)]
         _MatCap ("Mat Cap", 2D) = "black" { }
-        _MatCapIntensity ("Matcap intensity", float) = 1
+        _MatCapIntensity ("Matcap Intensity", float) = 1
 
-        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP (" Enable normal map", float) = 0
-        _NormalMap ("Normal map", 2D) = "White" { }
-        _NormalScale ("Normal scale", float) = 1
+        [Space(20)][Header(Normal Map)]
+        [Toggle(_ENABLENORMALMAP)] _ENABLENORMALMAP ("Enable Normal Map", float) = 0
+        [Normal] _NormalMap ("Normal Map", 2D) = "bump" { }
+        _NormalScale ("Normal Scale", float) = 1
 
-        [HDR]_RimColor ("RimColor", color) = (0.8, 0.7, 0.7, 1)
-        _FresnelPower ("Fresnel power", Range(0, 10)) = 3
-        _FresnelStepValue ("_FresnelStepValue", Range(0, 1)) = 0.1
-        _FresnelStepValue2 ("_FresnelStepValue2", Range(0, 1)) = 0.2
+        [Space(20)][Header(Rim Light)]
+        [HDR]_RimColor ("Rim Color", Color) = (0.8, 0.7, 0.7, 1)
+        _FresnelPower ("Fresnel Power", Range(0, 10)) = 3
+        _FresnelStepValue ("Fresnel Smooth Min", Range(0, 1)) = 0.1
+        _FresnelStepValue2 ("Fresnel Smooth Max", Range(0, 1)) = 0.2
 
-        [Space(20)][Header(AO map)]
-        _MaskMap ("Mask Map", 2D) = "white" { }//as urp default settings, g = AO, a = Metalic
-        _AOPower ("AO power", Range(0, 6)) = 1
+        [Space(20)][Header(Mask Map)]
+        _MaskMap ("Mask Map (R=Rim Mask, G=AO)", 2D) = "white" { }
+        _AOPower ("AO Power", Range(0, 6)) = 1
     }
 
     SubShader {
-
         Tags { "Queue" = "Geometry" "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" }
 
-        pass {
-            Name "ghostEffect"
-            Tags { "LightMode" = "SRPDefaultUnlit" }
-
-            Cull back
-            ZTest LEqual
-            // Blend SrcAlpha OneMinusSrcAlpha
-
-            HLSLPROGRAM
-
+        HLSLINCLUDE
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-            #pragma vertex vert
-            #pragma fragment frag
-
-            #pragma multi_compile_fog
-
-            #pragma multi_compile  _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile  _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile  _SHADOWS_SOFT
-            #pragma shader_feature _ENABLENORMALMAP
-
             CBUFFER_START(UnityPerMaterial)
-
-            float4 _BaseMap_ST;
-            float4 _MainTex_ST;
-            float _NormalScale, _FresnelStepValue2;
-            float _OutLineWidth;
-            float4 _RimColor;
-            float _FresnelPower;
-            float _AOPower;
-            float _LightInfluence;
-            float _FresnelStepValue;
-            float4 _BaseColor;
-            float4 _NormalMap_ST;
-            float _MatCapIntensity;
-
+                float4 _BaseMap_ST;
+                float4 _BaseColor;
+                float4 _MatCap_ST;
+                float _MatCapIntensity;
+                float4 _NormalMap_ST;
+                float _NormalScale;
+                float4 _RimColor;
+                float _FresnelPower;
+                float _FresnelStepValue;
+                float _FresnelStepValue2;
+                float4 _MaskMap_ST;
+                float _AOPower;
+                float _Cull;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
-            TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
-            TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
             TEXTURE2D(_MatCap); SAMPLER(sampler_MatCap);
+            TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
+            TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
 
-            struct a2v {
+            // ShadowCaster helper
+            half Alpha(float2 uv) {
+                return SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv).a * _BaseColor.a;
+            }
+        ENDHLSL
+
+        Pass {
+            Name "MatcapPass"
+            Tags { "LightMode" = "UniversalForward" }
+
+            Cull [_Cull]
+            ZTest LEqual
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_fog
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma shader_feature _ENABLENORMALMAP
+
+            struct Attributes {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
-                float2 texcoord : TEXCOORD0;
-                // float4 color : COLOR;
-                // float2 secondTexcoord : TEXCOORD1;
-
+                float2 uv : TEXCOORD0;
             };
 
-            struct v2f {
+            struct Varyings {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
-                // float3 positionVS : TEXCOORD4;
-                float2 uv : TEXCOORD1;
-                // float fogCoord : TEXCOORD2;
-                float3 normalWS : TEXCOORD3;
-                // float3 normalVS : TEXCOORD5;
-                // float4 positionNDC : TEXCOORD6;
-                // float4 scrPos : TEXCOORD7;
-                // float4 shadowCoord : TEXCOORD8;
-                float3 tangentWS : TEXCOORD9;
-                float3 bitangentWS : TEXCOORD10;
-                // float4 vertexColor :TEXCOORD11;
-
+                float3 normalWS : TEXCOORD1;
+                float3 tangentWS : TEXCOORD2;
+                float3 bitangentWS : TEXCOORD3;
+                float2 uv : TEXCOORD4;
             };
 
-            v2f vert(a2v input) {
-                v2f o;
-
-                o.positionCS = TransformObjectToHClip(input.positionOS.xyzw);
-                o.positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                o.normalWS = TransformObjectToWorldNormal(input.normalOS.xyz, true);
-                o.tangentWS = TransformObjectToWorldDir(input.tangentOS.xyz);
-
-                o.bitangentWS = normalize(cross(o.normalWS, o.tangentWS) * input.tangentOS.w);
-
-                //scr pos
-                // o.scrPos = ComputeScreenPos(o.positionCS);
-
-                // //recive shadow
-                // o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
-
-                o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-                // o.vertexColor = input.color;
-
-                return o;
+            Varyings vert(Attributes input) {
+                Varyings output;
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                
+                // Helper to calculate world normal, tangent, bitangent
+                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+                output.normalWS = normalInput.normalWS;
+                output.tangentWS = normalInput.tangentWS;
+                output.bitangentWS = normalInput.bitangentWS;
+                
+                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                return output;
             }
 
-            float4 frag(v2f input) : SV_TARGET {
+            half4 frag(Varyings input) : SV_TARGET {
+                // 1. Normal Processing
+                float3 normalWS = normalize(input.normalWS);
+                float3 tangentWS = normalize(input.tangentWS);
+                float3 bitangentWS = normalize(input.bitangentWS);
 
-                float3 positionVS = TransformWorldToView(input.positionWS);
-                float3 normalVS = TransformWorldToViewDir(normalize(input.normalWS), true);
-
-                float3 matCapUV = mul(UNITY_MATRIX_V, float4(input.normalWS.xyz, 0));
-
-                //initialize main light
-                Light MainLight = GetMainLight();
-                half3 LightDir = normalize(half3(MainLight.direction));
-                half3 LightColor = MainLight.color.rgb;
-
-                //mat cap
-                half4 MatCapColor = SAMPLE_TEXTURE2D(_MatCap, sampler_MatCap, matCapUV.xy * 0.49 + 0.5);
-
-                //Normal map
                 #if _ENABLENORMALMAP
-                    float4 normalMap = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
-                    float3 bump = UnpackNormalScale(normalMap, _NormalScale);
-
-                    float3x3 TBN = {
-                        input.bitangentWS, input.tangentWS, input.normalWS
-                    };
-                    bump.z = pow((1 - pow(bump.x, 2) - pow(bump.y, 2)), 0.5);
-                    input.normalWS = mul(bump, TBN);
+                    float4 normalSample = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv);
+                    float3 normalTangent = UnpackNormalScale(normalSample, _NormalScale);
+                    // Standard TBN
+                    float3x3 tbn = float3x3(tangentWS, bitangentWS, normalWS);
+                    normalWS = normalize(mul(normalTangent, tbn));
                 #endif
 
-                //Mask map
-                float4 MaskMap = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv);
+                // 2. Matcap Lookup (View Space Normal)
+                // Crucial: Calculate this AFTER normal mapping
+                float3 normalVS = TransformWorldToViewNormal(normalWS);
+                // Map [-1, 1] to [0, 1]
+                float2 matcapUV = normalVS.xy * 0.5 + 0.5;
+                half4 matcapColor = SAMPLE_TEXTURE2D(_MatCap, sampler_MatCap, matcapUV);
 
-                // //Blinn_phong
-                float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - input.positionWS);
+                // 3. Base Properties
+                half4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
+                half4 baseColor = baseMap * _BaseColor;
+                
+                // 4. Lighting & Rim
+                float3 viewDir = normalize(GetWorldSpaceViewDir(input.positionWS));
 
-                //Lambert & ramp
+                // Rim
+                float NdotV = saturate(dot(normalWS, viewDir));
+                float fresnel = pow(1.0 - NdotV, _FresnelPower);
+                float rimMask = smoothstep(_FresnelStepValue, _FresnelStepValue2, fresnel);
+                
+                // Mask Map (R=Rim Mask, G=AO)
+                half4 maskMap = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.uv);
+                rimMask *= maskMap.r; 
+                
+                half3 finalRim = _RimColor.rgb * rimMask;
 
-                // float Lambert = dot(LightDir, input.normalWS)  ;
-                // float halfLambert = (Lambert * 0.5 + 0.5) * pow(abs(MaskMap.g), _AOPower)  ;
+                // Combine: Base + Matcap + Rim
+                // Matcap usually replaces lighting, but here it's added/blended
+                half3 finalColor = baseColor.rgb + (matcapColor.rgb * _MatCapIntensity);
+                finalColor += finalRim;
 
-                // float stepHalfLambert = smoothstep(_darkArea, _darkAreaEdge, halfLambert);
-                // stepHalfLambert = clamp(stepHalfLambert, _darkness, _brightness);
-
-                float4 difusse = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
-
-                //frenel rim
-                float4 fresnelRim = pow(1 - saturate(dot(normalize(input.normalWS), viewDir)), _FresnelPower);
-                float4 finalFresnelRim = smoothstep(_FresnelStepValue, _FresnelStepValue2, fresnelRim);
-                finalFresnelRim *= fresnelRim ;
-                finalFresnelRim *= _RimColor;
-                finalFresnelRim *= MaskMap.r;
-
-                // if(((1 - smoothstep(0,0.3,Lambert) ) * ambient) = 0){}
-                float4 color = (difusse * _BaseColor) + MatCapColor * _MatCapIntensity ;
-
-                return color;
+                return half4(finalColor, baseColor.a);
             }
-
             ENDHLSL
         }
 
         Pass {
             Name "ShadowCaster"
             Tags { "LightMode" = "ShadowCaster" }
-
             ZWrite On
             ZTest LEqual
             ColorMask 0
-            Cull[_Cull]
+            Cull [_Cull]
 
             HLSLPROGRAM
             #pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
-
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ParallaxMapping.hlsl"
-            CBUFFER_START(UnityPerMaterial)
-
-            // float4 _BaseMap_ST;
-            float4 _MainTex_ST;
-            float _NormalScale, _FresnelStepValue2;
-            float _OutLineWidth;
-            float4 _RimColor;
-            float _FresnelPower;
-            float _AOPower;
-            float _LightInfluence;
-            float _FresnelStepValue;
-            // float4 _BaseColor;
-            float4 _NormalMap_ST;
-            float _MatCapIntensity;
-
-            CBUFFER_END
-
-            // -------------------------------------
-            // Material Keywords
-            #pragma shader_feature_local_fragment _ALPHATEST_ON
-            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
-            //--------------------------------------
-            // GPU Instancing
-            #pragma multi_compile_instancing
-            #pragma multi_compile _ DOTS_INSTANCING_ON
-
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
-
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            // This include relies on 'Alpha(uv)' being defined in HLSLINCLUDE
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
