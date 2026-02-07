@@ -241,56 +241,59 @@ namespace TAToolbox
         {
             var targets = itemList.Where(x => x.isSelected).ToList();
             if (targets.Count == 0) return;
+            string scanRootPath = Selection.activeObject != null ? AssetDatabase.GetAssetPath(Selection.activeObject) : null;
+            if (!AssetDatabase.IsValidFolder(scanRootPath)) scanRootPath = "Assets";
 
-            AssetDatabase.StartAssetEditing();
             int count = 0;
-            
+
             try 
             {
-                for (int i = 0; i < targets.Count; i++)
+                using (new AssetEditingScope())
                 {
-                    var item = targets[i];
-                    TextureImporter imp = AssetImporter.GetAtPath(item.path) as TextureImporter;
-                    if (imp == null) continue;
-
-                    bool changed = false;
-                    int maxSz = (int)targetSize;
-
-                    // 1. 设置 sRGB
-                    if (changeSRGB && imp.sRGBTexture != targetSRGB)
+                    for (int i = 0; i < targets.Count; i++)
                     {
-                        imp.sRGBTexture = targetSRGB;
-                        changed = true;
-                    }
+                        var item = targets[i];
+                        TextureImporter imp = AssetImporter.GetAtPath(item.path) as TextureImporter;
+                        if (imp == null) continue;
 
-                    // 2. 设置 Max Texture Size
-                    if (imp.maxTextureSize != maxSz)
-                    {
-                        imp.maxTextureSize = maxSz;
-                        changed = true;
-                    }
+                        bool changed = false;
+                        int maxSz = (int)targetSize;
 
-                    // 3. 设置压缩 (ASTC)
-                    if (mode == ProcessMode.ResizeAndASTC)
-                    {
-                        TextureImporterFormat astcFmt = GetUnityFormat(targetASTC);
-                        if (applyAndroid) changed |= SetPlatformSettings(imp, "Android", maxSz, astcFmt);
-                        if (applyiOS) changed |= SetPlatformSettings(imp, "iPhone", maxSz, astcFmt);
-                    }
+                        // 1. 设置 sRGB
+                        if (changeSRGB && imp.sRGBTexture != targetSRGB)
+                        {
+                            imp.sRGBTexture = targetSRGB;
+                            changed = true;
+                        }
 
-                    if (changed)
-                    {
-                        imp.SaveAndReimport();
-                        count++;
+                        // 2. 设置 Max Texture Size
+                        if (imp.maxTextureSize != maxSz)
+                        {
+                            imp.maxTextureSize = maxSz;
+                            changed = true;
+                        }
+
+                        // 3. 设置压缩 (ASTC)
+                        if (mode == ProcessMode.ResizeAndASTC)
+                        {
+                            TextureImporterFormat astcFmt = GetUnityFormat(targetASTC);
+                            if (applyAndroid) changed |= SetPlatformSettings(imp, "Android", maxSz, astcFmt);
+                            if (applyiOS) changed |= SetPlatformSettings(imp, "iPhone", maxSz, astcFmt);
+                        }
+
+                        if (changed)
+                        {
+                            imp.SaveAndReimport();
+                            count++;
+                        }
                     }
                 }
             }
             finally
             {
-                AssetDatabase.StopAssetEditing();
                 AssetDatabase.Refresh();
                 EditorUtility.DisplayDialog("完成", $"已处理 {count} 个贴图文件。", "确定");
-                ScanTextures(AssetDatabase.GetAssetPath(Selection.activeObject)); // 刷新状态
+                ScanTextures(scanRootPath);
             }
         }
 

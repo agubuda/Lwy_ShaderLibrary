@@ -75,6 +75,7 @@ Shader "LwyShaders/PBR/TinyPBR_Transparent"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile_fog
             #pragma multi_compile _ LIGHTMAP_ON 
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
@@ -117,7 +118,11 @@ Shader "LwyShaders/PBR/TinyPBR_Transparent"
                 float4 tangentWS : TEXCOORD2;
                 float2 uv : TEXCOORD3;
                 float2 uvDetail : TEXCOORD4;
-                float fogFactor : TEXCOORD5;
+                #ifdef _ADDITIONAL_LIGHTS_VERTEX
+                    half4 fogFactorAndVertexLight : TEXCOORD5;
+                #else
+                    float fogFactor : TEXCOORD5;
+                #endif
                 DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 6);
             };
 
@@ -132,7 +137,14 @@ Shader "LwyShaders/PBR/TinyPBR_Transparent"
 
                 o.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
                 o.uvDetail = TRANSFORM_TEX(input.texcoord, _DetailNormalMap);
-                o.fogFactor = ComputeFogFactor(o.positionCS.z);
+
+                half fogFactor = ComputeFogFactor(o.positionCS.z);
+                #ifdef _ADDITIONAL_LIGHTS_VERTEX
+                    half3 vertexLight = VertexLighting(o.positionWS, o.normalWS);
+                    o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
+                #else
+                    o.fogFactor = fogFactor;
+                #endif
                 
                 OUTPUT_LIGHTMAP_UV(input.texcoord1, unity_LightmapST, o.lightmapUV);
                 OUTPUT_SH(o.normalWS, o.vertexSH);
@@ -185,25 +197,41 @@ Shader "LwyShaders/PBR/TinyPBR_Transparent"
                 half3 color = GlobalIllumination(brdfData, bakedGI, occlusion, input.positionWS, normalWS, viewDirWS);
 
                 // 5. Direct Light (PBR)
+                half4 shadowMask = SAMPLE_SHADOWMASK(input.lightmapUV);
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                Light mainLight = GetMainLight(shadowCoord);
+                Light mainLight = GetMainLight(shadowCoord, input.positionWS, shadowMask);
                 
                 color += TinyPBR_DirectLight(mainLight, normalWS, viewDirWS, diffuseColor, roughness, perceptualRoughness, f0, occlusion);
 
                 // 6. Additional Lights
-                #ifdef _ADDITIONAL_LIGHTS
-                uint pixelLightCount = GetAdditionalLightsCount();
-                for(uint lightIndex = 0; lightIndex < pixelLightCount; ++lightIndex) {
-                    Light light = GetAdditionalLight(lightIndex, input.positionWS);
-                    color += TinyPBR_DirectLight(light, normalWS, viewDirWS, diffuseColor, roughness, perceptualRoughness, f0, occlusion);
-                }
+                #ifdef _ADDITIONAL_LIGHTS_VERTEX
+                    half3 vertexLight = input.fogFactorAndVertexLight.yzw;
+                #else
+                    half3 vertexLight = 0;
                 #endif
+
+                color += TinyPBR_AccumulateAdditionalLights(
+                    input.positionWS,
+                    input.positionCS,
+                    normalWS,
+                    viewDirWS,
+                    diffuseColor,
+                    roughness,
+                    perceptualRoughness,
+                    f0,
+                    occlusion,
+                    shadowMask,
+                    vertexLight);
 
                 // 7. Emission & Fog
                 half3 emission = SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb * _EmissionColor.rgb;
                 color += emission;
 
-                color = MixFog(color, input.fogFactor);
+                #ifdef _ADDITIONAL_LIGHTS_VERTEX
+                    color = MixFog(color, input.fogFactorAndVertexLight.x);
+                #else
+                    color = MixFog(color, input.fogFactor);
+                #endif
 
                 return half4(color, alpha);
             }
@@ -302,7 +330,11 @@ Shader "LwyShaders/PBR/TinyPBR_Transparent"
             float4 GetShadowPositionHClip(Attributes input) {
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
-                float3 lightDirection = _LightDirection;
+                #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                    float3 lightDirection = normalize(_LightPosition - positionWS);
+                #else
+                    float3 lightDirection = _LightDirection;
+                #endif
                 float invNdotL = 1.0 - saturate(dot(lightDirection, normalWS));
                 float scale = invNdotL * _ShadowBias.y;
                 positionWS += normalWS * scale.xxx;

@@ -90,21 +90,22 @@ namespace TAToolbox
             previewLogs.Clear();
             string fullPath = GetFullPath(rootPath);
             var files = Directory.GetFiles(fullPath, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-            
-            AssetDatabase.StartAssetEditing();
-            foreach (var file in files)
-            {
-                if (file.EndsWith(".meta")) continue;
-                string fileName = Path.GetFileName(file);
-                string newName = TryGetNewName(fileName);
-                if (string.IsNullOrEmpty(newName)) continue;
 
-                string relativePath = "Assets" + file.Substring(Application.dataPath.Length).Replace('\\', '/');
-                string error = AssetDatabase.RenameAsset(relativePath, newName);
-                if (string.IsNullOrEmpty(error)) previewLogs.Add($"[成功] {fileName} -> {newName}");
-                else previewLogs.Add($"[失败] {error}");
+            using (new AssetEditingScope())
+            {
+                foreach (var file in files)
+                {
+                    if (file.EndsWith(".meta")) continue;
+                    string fileName = Path.GetFileName(file);
+                    string newName = TryGetNewName(fileName);
+                    if (string.IsNullOrEmpty(newName)) continue;
+
+                    string relativePath = "Assets" + file.Substring(Application.dataPath.Length).Replace('\\', '/');
+                    string error = AssetDatabase.RenameAsset(relativePath, newName);
+                    if (string.IsNullOrEmpty(error)) previewLogs.Add($"[成功] {fileName} -> {newName}");
+                    else previewLogs.Add($"[失败] {error}");
+                }
             }
-            AssetDatabase.StopAssetEditing();
             AssetDatabase.Refresh();
         }
     }

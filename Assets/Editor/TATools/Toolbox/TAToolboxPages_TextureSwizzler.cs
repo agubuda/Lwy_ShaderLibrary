@@ -125,7 +125,6 @@ namespace TAToolbox
             TextureImporter imp = AssetImporter.GetAtPath(path) as TextureImporter;
             bool wasReadable = imp.isReadable;
             TextureImporterCompression wasCompression = imp.textureCompression;
-            bool wasSrgb = imp.sRGBTexture;
 
             if (!wasReadable)
             {

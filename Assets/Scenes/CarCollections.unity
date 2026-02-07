@@ -405,7 +405,7 @@ Light:
   m_Type: 0
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 400
+  m_Intensity: 150
   m_Range: 21.316673
   m_SpotAngle: 66.36787
   m_InnerSpotAngle: 44.128143
@@ -4326,8 +4326,7 @@ MonoBehaviour:
   m_RequiresDepthTextureOption: 1
   m_RequiresOpaqueTextureOption: 1
   m_CameraType: 0
-  m_Cameras:
-  - {fileID: 2016219483}
+  m_Cameras: []
   m_RendererIndex: 0
   m_VolumeLayerMask:
     serializedVersion: 2
@@ -4442,8 +4441,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc24cba7d197e104088c971d3efa3f84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GetVolume: {fileID: 226043390}
+  targetVolume: {fileID: 0}
   focusSpeed: 10
+  maxFocusDistance: 100
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &2071602357
 GameObject:
   m_ObjectHideFlags: 0

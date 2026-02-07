@@ -158,7 +158,7 @@ namespace TAToolbox
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Unity目录:", GUILayout.Width(80));
-            targetFolder.objectReferenceValue = EditorGUILayout.ObjectField(targetFolder.objectReferenceValue, typeof(UnityEngine.Object), false);
+            targetFolder.objectReferenceValue = EditorGUILayout.ObjectField(targetFolder.objectReferenceValue, typeof(DefaultAsset), false);
             EditorGUILayout.EndHorizontal();
 
             // 详细设置
@@ -297,17 +297,8 @@ namespace TAToolbox
 
         private void CreateNewProfile(string rootPath)
         {
-            // 强制指定保存路径到脚本所在目录下的 ArtSyncProfiles 子文件夹
-            string folderPath = "Assets/Editor/TATools/Toolbox/ArtSyncProfiles";
-            
-            if (!Directory.Exists(folderPath))
-            {
-                Directory.CreateDirectory(folderPath);
-                AssetDatabase.Refresh();
-            }
-
             ArtSyncProfile newProfile = ScriptableObject.CreateInstance<ArtSyncProfile>();
-            string path = Path.Combine(folderPath, "NewArtSyncProfile.asset");
+            string path = Path.Combine(rootPath, "NewArtSyncProfile.asset");
             path = AssetDatabase.GenerateUniqueAssetPath(path);
             
             AssetDatabase.CreateAsset(newProfile, path);

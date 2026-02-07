@@ -34,26 +34,27 @@ namespace TAToolbox
         private void Process(string rootPath, TextureImporterFormat fmt, int size)
         {
             string[] guids = AssetDatabase.FindAssets("t:Texture", new[] { rootPath });
-            AssetDatabase.StartAssetEditing();
-            foreach (var guid in guids)
+            using (new AssetEditingScope())
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                TextureImporter imp = AssetImporter.GetAtPath(path) as TextureImporter;
-                if (imp && (imp.textureType == TextureImporterType.Default || imp.textureType == TextureImporterType.Sprite || imp.textureType == TextureImporterType.NormalMap))
+                foreach (var guid in guids)
                 {
-                    var android = imp.GetPlatformTextureSettings("Android");
-                    if (!android.overridden || android.format != fmt || android.maxTextureSize != size)
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    TextureImporter imp = AssetImporter.GetAtPath(path) as TextureImporter;
+                    if (imp && (imp.textureType == TextureImporterType.Default || imp.textureType == TextureImporterType.Sprite || imp.textureType == TextureImporterType.NormalMap))
                     {
-                        android.overridden = true;
-                        android.name = "Android";
-                        android.format = fmt;
-                        android.maxTextureSize = size;
-                        imp.SetPlatformTextureSettings(android);
-                        imp.SaveAndReimport();
+                        var android = imp.GetPlatformTextureSettings("Android");
+                        if (!android.overridden || android.format != fmt || android.maxTextureSize != size)
+                        {
+                            android.overridden = true;
+                            android.name = "Android";
+                            android.format = fmt;
+                            android.maxTextureSize = size;
+                            imp.SetPlatformTextureSettings(android);
+                            imp.SaveAndReimport();
+                        }
                     }
                 }
             }
-            AssetDatabase.StopAssetEditing();
             Debug.Log("预设应用完成。");
         }
     }

@@ -12,6 +12,12 @@ namespace TAToolbox
     {
         public override string PageName => "4. 贴图通道合并";
         public enum Ch { R=0, G=1, B=2, A=3 }
+
+        private struct ImporterState
+        {
+            public bool isReadable;
+            public TextureImporterCompression textureCompression;
+        }
         
         private string srcSuffix = "_AO";
         private string dstSuffix = "_MetallicSmoothness";
@@ -84,32 +90,42 @@ namespace TAToolbox
             }
 
             int count = 0;
-            foreach(var tgtPath in targetPaths)
+            try
             {
-                string tgtName = Path.GetFileNameWithoutExtension(tgtPath);
-                
-                // 同样逻辑提取 Target 的 BaseName
-                string baseName = tgtName.Substring(0, tgtName.Length - dstSuffix.Length);
-                
-                // 如果忽略大小写，Key 也要转小写来查找
-                string searchKey = isCaseSensitive ? baseName : baseName.ToLower();
-
-                if (srcMap.ContainsKey(searchKey))
+                for (int i = 0; i < targetPaths.Count; i++)
                 {
-                    EditorUtility.DisplayProgressBar("Merging", baseName, 0.5f);
-                    DoMerge(tgtPath, srcMap[searchKey]);
-                    count++;
+                    string tgtPath = targetPaths[i];
+                    string tgtName = Path.GetFileNameWithoutExtension(tgtPath);
+
+                    // 同样逻辑提取 Target 的 BaseName
+                    string baseName = tgtName.Substring(0, tgtName.Length - dstSuffix.Length);
+
+                    // 如果忽略大小写，Key 也要转小写来查找
+                    string searchKey = isCaseSensitive ? baseName : baseName.ToLower();
+
+                    if (srcMap.ContainsKey(searchKey))
+                    {
+                        float progress = targetPaths.Count == 0 ? 1f : (float)i / targetPaths.Count;
+                        EditorUtility.DisplayCancelableProgressBar("Merging", baseName, progress);
+                        DoMerge(tgtPath, srcMap[searchKey]);
+                        count++;
+                    }
                 }
             }
-            EditorUtility.ClearProgressBar();
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
             AssetDatabase.Refresh();
             Debug.Log($"合并了 {count} 对贴图。");
         }
 
         private void DoMerge(string tPath, string sPath)
         {
-            var tImp = ForceRead(tPath);
-            var sImp = ForceRead(sPath);
+            ImporterState tState;
+            ImporterState sState;
+            var tImp = ForceRead(tPath, out tState);
+            var sImp = ForceRead(sPath, out sState);
             
             Texture2D tTex = AssetDatabase.LoadAssetAtPath<Texture2D>(tPath);
             Texture2D sTex = AssetDatabase.LoadAssetAtPath<Texture2D>(sPath);
@@ -138,24 +154,29 @@ namespace TAToolbox
                 Debug.LogWarning($"尺寸不匹配，跳过: {Path.GetFileName(tPath)} vs {Path.GetFileName(sPath)}");
             }
             
-            Revert(tImp);
-            Revert(sImp);
+            Revert(tImp, tState);
+            Revert(sImp, sState);
         }
 
         private float GetVal(Color c, Ch ch) => ch==Ch.R?c.r : ch==Ch.G?c.g : ch==Ch.B?c.b : c.a;
         private void SetVal(ref Color c, Ch ch, float v) { if(ch==Ch.R)c.r=v; else if(ch==Ch.G)c.g=v; else if(ch==Ch.B)c.b=v; else c.a=v; }
         
-        private TextureImporter ForceRead(string p) {
+        private TextureImporter ForceRead(string p, out ImporterState state) {
             var imp = AssetImporter.GetAtPath(p) as TextureImporter;
+            state = new ImporterState
+            {
+                isReadable = imp.isReadable,
+                textureCompression = imp.textureCompression
+            };
             // 只有当不可读时才重新导入，减少等待时间
             if(!imp.isReadable) { imp.isReadable=true; imp.textureCompression = TextureImporterCompression.Uncompressed; imp.SaveAndReimport(); }
             return imp;
         }
-        private void Revert(TextureImporter imp) { 
-            // 恢复为不可读，并改回压缩 (这里默认改回 Compressed，如果原图是其他设置可能需要更复杂的逻辑备份)
-            imp.isReadable=false; 
-            imp.textureCompression=TextureImporterCompression.Compressed; 
-            imp.SaveAndReimport(); 
+        private void Revert(TextureImporter imp, ImporterState state) {
+            if (imp.isReadable == state.isReadable && imp.textureCompression == state.textureCompression) return;
+            imp.isReadable = state.isReadable;
+            imp.textureCompression = state.textureCompression;
+            imp.SaveAndReimport();
         }
     }
 }

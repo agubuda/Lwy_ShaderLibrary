@@ -46,39 +46,40 @@ namespace TAToolbox
         {
             string[] guids = AssetDatabase.FindAssets("t:Model", new[] { rootPath });
             int count = 0;
-            AssetDatabase.StartAssetEditing();
-            foreach (var g in guids)
+            using (new AssetEditingScope())
             {
-                string p = AssetDatabase.GUIDToAssetPath(g);
-                if (!p.ToLower().EndsWith(".fbx")) continue;
-                
-                ModelImporter imp = AssetImporter.GetAtPath(p) as ModelImporter;
-                if (imp)
+                foreach (var g in guids)
                 {
-                    SerializedObject so = new SerializedObject(imp);
-                    bool dirty = false;
-                    
-                    if (imp.importConstraints != impConstraints) { imp.importConstraints = impConstraints; dirty = true; }
-                    if (imp.importAnimation != impAnim) { imp.importAnimation = impAnim; dirty = true; }
-                    if (imp.resampleCurves != resample) { imp.resampleCurves = resample; dirty = true; }
-                    if (imp.animationCompression != comp) { imp.animationCompression = comp; dirty = true; }
-                    
-                    // Bake Simulation (SerializedProp)
-                    var bakeProp = so.FindProperty("m_BakeSimulation");
-                    if (bakeProp != null && bakeProp.boolValue != bakeAnim) { bakeProp.boolValue = bakeAnim; dirty = true; }
+                    string p = AssetDatabase.GUIDToAssetPath(g);
+                    if (!p.ToLower().EndsWith(".fbx")) continue;
 
-                    if (dirty)
+                    ModelImporter imp = AssetImporter.GetAtPath(p) as ModelImporter;
+                    if (imp)
                     {
-                        imp.animationRotationError = rotErr;
-                        imp.animationPositionError = posErr;
-                        imp.animationScaleError = sclErr;
-                        so.ApplyModifiedProperties();
-                        imp.SaveAndReimport();
-                        count++;
+                        SerializedObject so = new SerializedObject(imp);
+                        bool dirty = false;
+
+                        if (imp.importConstraints != impConstraints) { imp.importConstraints = impConstraints; dirty = true; }
+                        if (imp.importAnimation != impAnim) { imp.importAnimation = impAnim; dirty = true; }
+                        if (imp.resampleCurves != resample) { imp.resampleCurves = resample; dirty = true; }
+                        if (imp.animationCompression != comp) { imp.animationCompression = comp; dirty = true; }
+
+                        // Bake Simulation (SerializedProp)
+                        var bakeProp = so.FindProperty("m_BakeSimulation");
+                        if (bakeProp != null && bakeProp.boolValue != bakeAnim) { bakeProp.boolValue = bakeAnim; dirty = true; }
+
+                        if (dirty)
+                        {
+                            imp.animationRotationError = rotErr;
+                            imp.animationPositionError = posErr;
+                            imp.animationScaleError = sclErr;
+                            so.ApplyModifiedProperties();
+                            imp.SaveAndReimport();
+                            count++;
+                        }
                     }
                 }
             }
-            AssetDatabase.StopAssetEditing();
             Debug.Log($"更新了 {count} 个 FBX 文件。");
         }
     }

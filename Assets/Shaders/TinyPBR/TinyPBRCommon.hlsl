@@ -103,4 +103,37 @@ half3 TinyPBR_DirectLight(Light light, float3 normalWS, float3 viewDirWS,
     return (kD * albedo * diffuseTerm + specularTerm) * radiance;
 }
 
+half3 TinyPBR_AccumulateAdditionalLights(
+    float3 positionWS,
+    float4 positionCS,
+    float3 normalWS,
+    float3 viewDirWS,
+    float3 diffuseColor,
+    float roughness,
+    float perceptualRoughness,
+    float3 f0,
+    float occlusion,
+    half4 shadowMask,
+    half3 vertexLight)
+{
+    #if defined(_ADDITIONAL_LIGHTS)
+        half3 additionalColor = 0;
+
+        InputData inputData = (InputData)0;
+        inputData.positionWS = positionWS;
+        inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(positionCS);
+
+        LIGHT_LOOP_BEGIN(GetAdditionalLightsCount())
+            Light light = GetAdditionalLight(lightIndex, positionWS, shadowMask);
+            additionalColor += TinyPBR_DirectLight(light, normalWS, viewDirWS, diffuseColor, roughness, perceptualRoughness, f0, occlusion);
+        LIGHT_LOOP_END
+
+        return additionalColor;
+    #elif defined(_ADDITIONAL_LIGHTS_VERTEX)
+        return vertexLight * diffuseColor * occlusion;
+    #else
+        return 0;
+    #endif
+}
+
 #endif
